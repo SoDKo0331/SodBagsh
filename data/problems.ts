@@ -13,7 +13,8 @@ export const PROBLEMS: Problem[] = [
     examples: [
       { input: 'a = 5, b = 3', output: '8' },
       { input: 'a = 0, b = 0', output: '0' },
-      { input: 'a = 100, b = 250', output: '350' }
+      { input: 'a = 100, b = 250', output: '350' },
+      { input: 'a = 999, b = 1', output: '1000' }
     ],
     templates: {
       python: "a = 5\nb = 3\n# Энд кодоо бичнэ үү\n",
@@ -32,7 +33,8 @@ export const PROBLEMS: Problem[] = [
     examples: [
       { input: 'n = 4', output: 'Even' },
       { input: 'n = 7', output: 'Odd' },
-      { input: 'n = 100', output: 'Even' }
+      { input: 'n = 0', output: 'Even' },
+      { input: 'n = 101', output: 'Odd' }
     ],
     templates: {
       python: "n = 4\n# Энд кодоо бичнэ үү\n",
@@ -53,7 +55,8 @@ export const PROBLEMS: Problem[] = [
     examples: [
       { input: '[1, 5, 2, 8, 3]', output: '8' },
       { input: '[-10, -5, -20]', output: '-5' },
-      { input: '[100]', output: '100' }
+      { input: '[100]', output: '100' },
+      { input: '[5, 5, 5, 5]', output: '5' }
     ],
     templates: {
       python: "nums = [1, 5, 2, 8, 3]\n# Хамгийн ихийг олоорой\n",
@@ -73,7 +76,8 @@ export const PROBLEMS: Problem[] = [
       { input: 'n = 7', output: 'Yes' },
       { input: 'n = 10', output: 'No' },
       { input: 'n = 2', output: 'Yes' },
-      { input: 'n = 1', output: 'No' }
+      { input: 'n = 1', output: 'No' },
+      { input: 'n = 9', output: 'No' }
     ],
     templates: {
       python: "n = 7\n# Анхны тоо шалгах\n",
@@ -93,7 +97,8 @@ export const PROBLEMS: Problem[] = [
       { input: '"radar"', output: 'Yes' },
       { input: '"hello"', output: 'No' },
       { input: '"a"', output: 'Yes' },
-      { input: '"racecar"', output: 'Yes' }
+      { input: '"racecar"', output: 'Yes' },
+      { input: '"abba"', output: 'Yes' }
     ],
     templates: {
       python: "s = 'radar'\n# Палиндром шалгах\n",
@@ -114,7 +119,8 @@ export const PROBLEMS: Problem[] = [
     examples: [
       { input: 'n = 6', output: '0 1 1 2 3 5' },
       { input: 'n = 1', output: '0' },
-      { input: 'n = 3', output: '0 1 1' }
+      { input: 'n = 3', output: '0 1 1' },
+      { input: 'n = 2', output: '0 1' }
     ],
     templates: {
       python: "n = 6\n# 0 1 1 2 3 5 гэж хэвлэ\n",
@@ -133,12 +139,13 @@ export const PROBLEMS: Problem[] = [
     examples: [
       { input: '12, 8', output: '4' },
       { input: '7, 5', output: '1' },
-      { input: '100, 25', output: '25' }
+      { input: '100, 25', output: '25' },
+      { input: '48, 18', output: '6' }
     ],
     templates: {
       python: "a, b = 12, 8\n# GCD\n",
       c: "#include <stdio.h>\n\nint main() {\n    int a = 12, b = 8;\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
-      cpp: "#include <iostream>\n#include <numeric>\n\nint main() {\n    int a = 12, b = 8;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      cpp: "#include <iostream>\n\nint main() {\n    int a = 12, b = 8;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '4'
   }
