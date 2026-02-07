@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Problem } from '../types';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 interface ProblemSolvingViewProps {
   problem: Problem;
@@ -10,7 +10,7 @@ interface ProblemSolvingViewProps {
 }
 
 interface TerminalLine {
-  type: 'cmd' | 'out' | 'err' | 'success';
+  type: 'cmd' | 'out' | 'err' | 'success' | 'info';
   text: string;
 }
 
@@ -36,7 +36,51 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [terminalOutput]);
 
-  const handleRun = () => {
+  const verifyCodeWithAI = async (userCode: string, lang: string) => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
+    const prompt = `
+      Чи бол Код Шүүгч (Code Judge). 
+      Бодлогын нэр: ${problem.title}
+      Бодлогын нөхцөл: ${problem.description}
+      Хэл: ${lang}
+      Хэрэглэгчийн бичсэн код:
+      \`\`\`${lang}
+      ${userCode}
+      \`\`\`
+      
+      Дээрх код бодлогыг зөв шийдсэн эсэхийг шалгана уу. 
+      Хэрэв код нь зөвхөн бэлдэц (template) хэвээрээ байгаа эсвэл логик алдаатай бол 'success: false' гэж буцаана уу.
+      Мөн кодын гаралтын жишээг (output) болон алдаатай бол яагаад алдаатай байгааг (feedback) хэлнэ үү.
+    `;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              success: { type: Type.BOOLEAN, description: "Код зөв бол true, үгүй бол false" },
+              output: { type: Type.STRING, description: "Код ажиллахад гарах текст" },
+              feedback: { type: Type.STRING, description: "Алдаатай бол яагаад алдаатай байгаа тайлбар" }
+            },
+            required: ["success", "output", "feedback"]
+          }
+        }
+      });
+
+      const result = JSON.parse(response.text || "{}");
+      return result;
+    } catch (e) {
+      console.error("AI Verification failed", e);
+      return { success: false, output: "Error", feedback: "Шалгалт хийх явцад алдаа гарлаа." };
+    }
+  };
+
+  const handleRun = async () => {
     setIsRunning(true);
     const cmdMap = {
       python: "python solution.py",
@@ -45,20 +89,32 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
     };
     
     setTerminalOutput([{type: 'cmd', text: cmdMap[activeLanguage]}]);
+    setTerminalOutput(prev => [...prev, {type: 'info', text: "Compiling and running tests..."}]);
+
+    const result = await verifyCodeWithAI(code, activeLanguage);
 
     setTimeout(() => {
-      setTerminalOutput(prev => [
-        ...prev, 
-        {type: 'out', text: problem.expectedOutput},
-        {type: 'success', text: "All tests passed successfully!"}
-      ]);
-      setIsRunning(false);
-      
-      if (confirm("Бодлогыг зөв бодлоо! Хадгалах уу?")) {
-        onSolve(problem.id);
-        onBack();
+      if (result.success) {
+        setTerminalOutput(prev => [
+          ...prev, 
+          {type: 'out', text: result.output || problem.expectedOutput},
+          {type: 'success', text: "Гайхалтай! Бүх тестүүд амжилттай давлаа."}
+        ]);
+        setIsRunning(false);
+        
+        if (confirm("Бодлогыг зөв бодлоо! Хадгалах уу?")) {
+          onSolve(problem.id);
+          onBack();
+        }
+      } else {
+        setTerminalOutput(prev => [
+          ...prev, 
+          {type: 'err', text: "Тест амжилтгүй боллоо!"},
+          {type: 'out', text: result.feedback || "Код бодлогын нөхцөлийг бүрэн хангасангүй."}
+        ]);
+        setIsRunning(false);
       }
-    }, 1500);
+    }, 1000);
   };
 
   const askAi = async () => {
@@ -133,7 +189,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
           </div>
 
           <div>
-            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest mb-4">Жишээ</h4>
+            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest mb-4">Жишээ Тестүүд</h4>
             {problem.examples.map((ex, i) => (
               <div key={i} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-white/5 mb-4">
                 <div className="mb-2"><span className="text-[10px] font-black text-slate-400">INPUT:</span> <code className="text-xs ml-2">{ex.input}</code></div>
@@ -172,10 +228,11 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
                             l.type === 'cmd' ? 'text-blue-400/70 italic' : 
                             l.type === 'err' ? 'text-red-400' : 
                             l.type === 'success' ? 'text-primary font-bold' : 
+                            l.type === 'info' ? 'text-slate-500 italic' :
                             'text-primary font-medium'
                           }`}>
                              <span className="select-none text-slate-800 shrink-0">
-                                {l.type === 'cmd' ? '$' : l.type === 'err' ? '!' : '❯'}
+                                {l.type === 'cmd' ? '$' : l.type === 'err' ? '!' : l.type === 'info' ? 'i' : '❯'}
                              </span>
                              <span className="whitespace-pre-wrap">{l.text}</span>
                           </div>

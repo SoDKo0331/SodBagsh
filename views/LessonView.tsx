@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { LESSON_DATA } from '../data/lessons';
 import { StepContent, CodingTask, DebugStep } from '../types';
 
@@ -21,7 +21,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [selectedQuizOption, setSelectedQuizOption] = useState<string | null>(null);
   const [isTaskCompleted, setIsTaskCompleted] = useState(false);
-  const [terminalOutput, setTerminalOutput] = useState<{type: 'cmd' | 'out' | 'err' | 'success', text: string}[]>([]);
+  const [terminalOutput, setTerminalOutput] = useState<{type: 'cmd' | 'out' | 'err' | 'success' | 'info', text: string}[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [activeLanguage, setActiveLanguage] = useState<'python' | 'c' | 'cpp'>(initialLanguage);
@@ -62,7 +62,47 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     }
   };
 
-  const handleRunCode = () => {
+  const verifyCode = async (userCode: string, lang: string) => {
+    if (!currentTask) return { success: false, output: "", feedback: "" };
+    
+    // Fix: Using named parameter for GoogleGenAI and correct .text property access
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const prompt = `
+      Чи бол Код Шүүгч. 
+      Даалгавар: ${step.title}
+      Хүлээгдэж буй үр дүн: ${currentTask.expectedOutput}
+      Хэл: ${lang}
+      Код:
+      ${userCode}
+
+      Даалгавар биелсэн эсэхийг шалгана уу. 
+      JSON буцаах: { "success": boolean, "output": string, "feedback": string }
+    `;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              success: { type: Type.BOOLEAN },
+              output: { type: Type.STRING },
+              feedback: { type: Type.STRING }
+            },
+            required: ["success", "output", "feedback"]
+          }
+        }
+      });
+      return JSON.parse(response.text || "{}");
+    } catch (e) {
+      return { success: false, output: "Error", feedback: "Шалгаж чадсангүй." };
+    }
+  };
+
+  const handleRunCode = async () => {
     if (!currentTask) return;
     setIsRunning(true);
     setIsDebugMode(false);
@@ -73,15 +113,27 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     };
     
     setTerminalOutput(prev => [...prev, {type: 'cmd', text: cmdMap[activeLanguage]}]);
+    setTerminalOutput(prev => [...prev, {type: 'info', text: "Analyzing code integrity..."}]);
+
+    const result = await verifyCode(currentTask.template, activeLanguage);
     
     setTimeout(() => {
-      setTerminalOutput(prev => [
-        ...prev, 
-        {type: 'out', text: currentTask.expectedOutput},
-        {type: 'success', text: "Process finished with exit code 0"}
-      ]);
-      setIsRunning(false);
-      setIsTaskCompleted(true);
+      if (result.success) {
+        setTerminalOutput(prev => [
+          ...prev, 
+          {type: 'out', text: result.output || currentTask.expectedOutput},
+          {type: 'success', text: "Бүх тестүүд амжилттай давлаа."}
+        ]);
+        setIsRunning(false);
+        setIsTaskCompleted(true);
+      } else {
+        setTerminalOutput(prev => [
+          ...prev, 
+          {type: 'err', text: "Даалгавар дутуу байна!"},
+          {type: 'out', text: result.feedback || "Кодоо гүйцээж бичээрэй."}
+        ]);
+        setIsRunning(false);
+      }
     }, 1000);
   };
 
@@ -138,11 +190,10 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
       Чи бол "CodeStep Tutor" нэртэй интерактив AI багш. 
       Сурагч ${activeLanguage === 'c' ? 'C хэл (C Language)' : activeLanguage === 'cpp' ? 'C++' : 'Python'} сурч байна.
       Хэв маяг: Найрсаг, маш энгийн, богино өгүүлбэртэй. 
-      Одоогийн хичээл: ${lesson.title} - ${step.title}.
-      Одоо ашиглаж буй кодчилол: ${activeLanguage}.
     `;
 
     try {
+      // Fix: Using named parameter for GoogleGenAI and correct .text property access
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -269,6 +320,24 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
                 </div>
               </div>
             )}
+
+            <div className="mt-10 flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-8">
+               <button 
+                onClick={() => setCurrentStepIdx(prev => Math.max(0, prev - 1))}
+                disabled={currentStepIdx === 0}
+                className="flex items-center gap-2 text-slate-400 font-black uppercase text-xs tracking-widest hover:text-primary transition-colors disabled:opacity-30"
+               >
+                 <span className="material-symbols-outlined text-sm">arrow_back</span> Өмнөх
+               </button>
+               {isTaskCompleted && (
+                 <button 
+                  onClick={handleNext}
+                  className="bg-primary text-slate-900 px-8 py-3 rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 animate-bounce"
+                 >
+                   Дараагийнх <span className="material-symbols-outlined text-sm align-middle ml-1">arrow_forward</span>
+                 </button>
+               )}
+            </div>
           </div>
         </section>
 
@@ -430,20 +499,15 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
                           line.type === 'cmd' ? 'text-blue-400/80 italic' : 
                           line.type === 'err' ? 'text-red-400 font-bold' : 
                           line.type === 'success' ? 'text-primary/70 text-sm' : 
+                          line.type === 'info' ? 'text-slate-500 italic' :
                           'text-primary font-bold'
                         }`}>
                            <span className="select-none text-slate-800 shrink-0">
-                              {line.type === 'cmd' ? '$' : line.type === 'err' ? '!' : '❯'}
+                              {line.type === 'cmd' ? '$' : line.type === 'err' ? '!' : line.type === 'info' ? 'i' : '❯'}
                            </span>
                            <span className="whitespace-pre-wrap">{line.text}</span>
                         </div>
                       ))}
-                      {isRunning && (
-                        <div className="flex gap-3 text-primary animate-pulse">
-                          <span className="select-none text-slate-800">❯</span>
-                          <span className="inline-block w-2 h-5 bg-primary mt-1"></span>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
@@ -460,96 +524,56 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
           )}
         </section>
 
-        <section 
-          className={`absolute right-0 top-0 bottom-0 z-40 bg-white dark:bg-slate-900 border-l-4 border-primary/20 shadow-[-20px_0_50px_rgba(0,0,0,0.2)] transition-all duration-500 flex flex-col ${isAiOpen ? 'w-1/3 translate-x-0' : 'w-1/3 translate-x-full'}`}
-        >
-           <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-2xl bg-primary flex items-center justify-center text-slate-900">
-                <span className="material-symbols-outlined font-black">smart_toy</span>
-              </div>
-              <h4 className="font-black text-lg">CodeStep Tutor</h4>
-            </div>
-            <button onClick={() => setIsAiOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors">
-              <span className="material-symbols-outlined text-slate-500">close</span>
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/30 dark:bg-transparent">
-            {chatMessages.map((msg, idx) => (
-              <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                <div className={`max-w-[90%] px-5 py-3 rounded-2xl text-sm leading-relaxed ${
-                  msg.role === 'user' 
-                    ? 'bg-primary text-slate-900 font-bold shadow-lg shadow-primary/20' 
-                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-2 border-slate-100 dark:border-slate-700 shadow-sm'
-                }`}>
-                  {msg.text}
+        {isAiOpen && (
+          <div className="w-1/3 bg-white dark:bg-slate-900 border-l-4 border-primary/20 flex flex-col animate-in slide-in-from-right duration-500 shadow-[-20px_0_50px_rgba(0,0,0,0.2)]">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-2xl bg-primary flex items-center justify-center text-slate-900 shadow-lg shadow-primary/20">
+                  <span className="material-symbols-outlined font-black">smart_toy</span>
                 </div>
+                <h4 className="font-black text-lg">CodeStep Tutor</h4>
               </div>
-            ))}
-            {isAiLoading && (
-              <div className="flex flex-col items-start animate-pulse">
-                <div className="bg-slate-100 dark:bg-slate-800 px-5 py-3 rounded-2xl flex gap-2 items-center">
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Багш бодож байна...</span>
-                </div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          <div className="p-5 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <form onSubmit={(e) => { e.preventDefault(); askAi(); }} className="flex gap-3">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Багшаас асуух зүйл байна уу?..."
-                className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-5 py-3 text-sm font-bold focus:ring-4 focus:ring-primary/20 transition-all placeholder:text-slate-400"
-              />
-              <button 
-                type="submit"
-                disabled={!chatInput.trim() || isAiLoading}
-                className="bg-primary text-slate-900 size-12 flex items-center justify-center rounded-2xl hover:scale-105 transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
-              >
-                <span className="material-symbols-outlined font-black">send</span>
+              <button onClick={() => setIsAiOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors">
+                <span className="material-symbols-outlined text-slate-500">close</span>
               </button>
-            </form>
-          </div>
-        </section>
-      </main>
-
-      <footer className="flex items-center justify-between border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#111814] px-10 py-5 shadow-2xl z-30">
-        <button 
-          onClick={() => currentStepIdx > 0 ? setCurrentStepIdx(prev => prev - 1) : onExit()}
-          className="flex h-14 items-center gap-2 rounded-2xl border-2 border-slate-200 dark:border-white/10 px-8 font-black text-slate-600 hover:bg-slate-50 transition-all uppercase tracking-widest text-xs"
-        >
-          <span className="material-symbols-outlined">arrow_back</span>
-          Буцах
-        </button>
-
-        <div className="flex items-center gap-8">
-           {isTaskCompleted && (
-            <div className="hidden lg:flex items-center gap-3 text-primary animate-in zoom-in duration-300">
-              <span className="material-symbols-outlined font-black text-3xl">task_alt</span>
-              <span className="font-black uppercase tracking-widest text-xs">Даалгавар биеллээ!</span>
             </div>
-          )}
-          <button 
-            onClick={handleNext}
-            disabled={!isTaskCompleted && step.type !== 'concept'}
-            className={`flex h-14 min-w-[200px] items-center justify-center gap-3 rounded-2xl px-10 font-black text-lg transition-all shadow-xl uppercase tracking-[0.15em] ${
-              !isTaskCompleted && step.type !== 'concept'
-                ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-50'
-                : 'bg-primary text-slate-900 shadow-primary/30 hover:scale-105 active:scale-95'
-            }`}
-          >
-            {isLastStep ? 'Дуусгах' : 'Үргэлжлүүлэх'}
-            <span className="material-symbols-outlined font-black">{isLastStep ? 'auto_awesome' : 'arrow_forward'}</span>
-          </button>
-        </div>
-      </footer>
-    </div>
-  );
-};
 
-export default LessonView;
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/30 dark:bg-transparent">
+              {chatMessages.map((msg, idx) => (
+                <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`max-w-[90%] px-5 py-3 rounded-2xl text-sm leading-relaxed ${
+                    msg.role === 'user' 
+                      ? 'bg-primary text-slate-900 font-bold shadow-lg shadow-primary/20' 
+                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-2 border-slate-100 dark:border-slate-700 shadow-sm'
+                  }`}>
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+              {isAiLoading && (
+                <div className="flex flex-col items-start animate-pulse">
+                  <div className="bg-slate-100 dark:bg-slate-800 px-5 py-3 rounded-2xl flex gap-2 items-center">
+                     <div className="flex gap-1">
+                        <div className="size-1.5 bg-primary rounded-full animate-bounce"></div>
+                        <div className="size-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                        <div className="size-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                     </div>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            <div className="p-5 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <form onSubmit={(e) => { e.preventDefault(); askAi(); }} className="flex gap-3">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Тусламж хэрэгтэй юу?..."
+                  className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-5 py-3 text-sm font-bold focus:ring-4 focus:ring-primary/20 transition-all placeholder:text-slate-400"
+                />
+                <button 
+                  type="submit"
+                  disabled={!chatInput.trim() || isAiLoading}
+                  className="bg-primary text-slate-900 size-12 flex items-center justify-center rounded-2xl hover:scale
