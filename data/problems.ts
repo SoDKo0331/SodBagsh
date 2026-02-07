@@ -2,7 +2,7 @@
 import { Problem } from '../types';
 
 export const PROBLEMS: Problem[] = [
-  // --- EASY PROBLEMS (Already existing + more) ---
+  // --- EASY PROBLEMS ---
   {
     id: 'p1',
     title: 'Хоёр тооны нийлбэр',
@@ -13,7 +13,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: 'a = 5, b = 3', output: '8' }],
     templates: {
       python: "a = 5\nb = 3\n# Энд кодоо бичнэ үү\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int a = 5, b = 3;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int a = 5, b = 3;\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n\nint main() {\n    int a = 5, b = 3;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '8'
   },
@@ -27,12 +28,13 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: 'n = 4', output: 'Even' }],
     templates: {
       python: "n = 4\n# Энд кодоо бичнэ үү\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int n = 4;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int n = 4;\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n\nint main() {\n    int n = 4;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: 'Even'
   },
 
-  // --- MEDIUM PROBLEMS (10 Tasks) ---
+  // --- MEDIUM PROBLEMS ---
   {
     id: 'm1',
     title: 'Массивын хамгийн их утга',
@@ -43,7 +45,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: '[1, 5, 2, 8, 3]', output: '8' }],
     templates: {
       python: "nums = [1, 5, 2, 8, 3]\n# Хамгийн ихийг олоорой\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {1, 5, 2, 8, 3};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {1, 5, 2, 8, 3};\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <vector>\n#include <algorithm>\n\nint main() {\n    std::vector<int> nums = {1, 5, 2, 8, 3};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '8'
   },
@@ -57,7 +60,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: '"hello"', output: '2' }],
     templates: {
       python: "s = 'hello'\n# Эгшиг тоолох\n",
-      c: "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    char s[] = \"hello\";\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    char s[] = \"hello\";\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <string>\n\nint main() {\n    std::string s = \"hello\";\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '2'
   },
@@ -71,7 +75,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: 'n = 123', output: '321' }],
     templates: {
       python: "n = 123\n# Урвуулах\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int n = 123;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int n = 123;\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n\nint main() {\n    int n = 123;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '321'
   },
@@ -85,7 +90,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: 'N = 5', output: '120' }],
     templates: {
       python: "n = 5\n# n! ол\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int n = 5;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int n = 5;\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n\nint main() {\n    int n = 5;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '120'
   },
@@ -99,7 +105,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: 'n = 7', output: 'Yes' }],
     templates: {
       python: "n = 7\n# Анхны тоо шалгах\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int n = 7;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int n = 7;\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n\nint main() {\n    int n = 7;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: 'Yes'
   },
@@ -113,7 +120,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: '[10, 20, 30]', output: '20' }],
     templates: {
       python: "nums = [10, 20, 30]\n# Дундаж ол\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {10, 20, 30};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {10, 20, 30};\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <vector>\n\nint main() {\n    std::vector<int> nums = {10, 20, 30};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '20'
   },
@@ -127,7 +135,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: '"radar"', output: 'Yes' }],
     templates: {
       python: "s = 'radar'\n# Палиндром шалгах\n",
-      c: "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    char s[] = \"radar\";\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    char s[] = \"radar\";\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <string>\n#include <algorithm>\n\nint main() {\n    std::string s = \"radar\";\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: 'Yes'
   },
@@ -141,7 +150,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: '3', output: '3 6 9 12 15' }],
     templates: {
       python: "n = 3\n# 3*1 3*2 .. 3*5\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int n = 3;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int n = 3;\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n\nint main() {\n    int n = 3;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '3 6 9 12 15'
   },
@@ -155,7 +165,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: '[5, 1, 5, 2, 5]', output: '3' }],
     templates: {
       python: "nums = [5, 1, 5, 2, 5]\n# 5-ыг тоол\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {5, 1, 5, 2, 5};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {5, 1, 5, 2, 5};\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <vector>\n#include <algorithm>\n\nint main() {\n    std::vector<int> nums = {5, 1, 5, 2, 5};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '3'
   },
@@ -169,12 +180,13 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: '123', output: '6' }],
     templates: {
       python: "n = 123\n# 1+2+3\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int n = 123;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int n = 123;\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n\nint main() {\n    int n = 123;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '6'
   },
 
-  // --- HARD PROBLEMS (10 Tasks) ---
+  // --- HARD PROBLEMS ---
   {
     id: 'h1',
     title: 'Фибоначчийн дараалал',
@@ -185,7 +197,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: 'n=6', output: '0 1 1 2 3 5' }],
     templates: {
       python: "n = 6\n# 0, 1, 1, 2, 3, 5\n",
-      c: "#include <stdio.h>\n\nint main() {\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n\nint main() {\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '0 1 1 2 3 5'
   },
@@ -199,7 +212,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: '3', output: '*\n**\n***' }],
     templates: {
       python: "n = 3\n# *\n# **\n# ***\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int n = 3;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int n = 3;\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n\nint main() {\n    int n = 3;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '*\n**\n***'
   },
@@ -213,7 +227,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: '[3, 1, 2]', output: '1 2 3' }],
     templates: {
       python: "nums = [3, 1, 2]\n# Sort and print with space\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {3, 1, 2};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {3, 1, 2};\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <vector>\n#include <algorithm>\n\nint main() {\n    std::vector<int> nums = {3, 1, 2};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '1 2 3'
   },
@@ -227,7 +242,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: 'matrix', output: '5' }],
     templates: {
       python: "matrix = [[1, 2], [3, 4]]\n# 1 + 4\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int m[2][2] = {{1, 2}, {3, 4}};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int m[2][2] = {{1, 2}, {3, 4}};\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <vector>\n\nint main() {\n    int m[2][2] = {{1, 2}, {3, 4}};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '5'
   },
@@ -241,7 +257,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: '12, 8', output: '4' }],
     templates: {
       python: "a, b = 12, 8\n# GCD\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int a = 12, b = 8;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int a = 12, b = 8;\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <numeric>\n\nint main() {\n    int a = 12, b = 8;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '4'
   },
@@ -255,7 +272,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: '5', output: '101' }],
     templates: {
       python: "n = 5\n# Binary format\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int n = 5;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int n = 5;\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <bitset>\n\nint main() {\n    int n = 5;\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '101'
   },
@@ -269,7 +287,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: 'nums', output: '10' }],
     templates: {
       python: "nums = [10, 5, 8, 20]\n# Second largest\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {10, 5, 8, 20};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {10, 5, 8, 20};\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <set>\n\nint main() {\n    std::vector<int> nums = {10, 5, 8, 20};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '10'
   },
@@ -283,7 +302,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: 'silent, listen', output: 'Yes' }],
     templates: {
       python: "s1, s2 = 'silent', 'listen'\n# Check anagram\n",
-      c: "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <string>\n#include <algorithm>\n\nint main() {\n    std::string s1 = \"silent\", s2 = \"listen\";\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: 'Yes'
   },
@@ -297,7 +317,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: '[1, 2, 3]', output: '3 1 2' }],
     templates: {
       python: "nums = [1, 2, 3]\n# Result: [3, 1, 2]\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {1, 2, 3};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {1, 2, 3};\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <vector>\n#include <algorithm>\n\nint main() {\n    std::vector<int> nums = {1, 2, 3};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '3 1 2'
   },
@@ -311,7 +332,8 @@ export const PROBLEMS: Problem[] = [
     examples: [{ input: 'nums', output: '1 2 3' }],
     templates: {
       python: "nums = [1, 2, 2, 3, 1]\n# Unique elements only\n",
-      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {1, 2, 2, 3, 1};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
+      c: "#include <stdio.h>\n\nint main() {\n    int nums[] = {1, 2, 2, 3, 1};\n    // Энд кодоо бичнэ үү\n    return 0;\n}",
+      cpp: "#include <iostream>\n#include <vector>\n#include <set>\n\nint main() {\n    std::vector<int> nums = {1, 2, 2, 3, 1};\n    // Энд кодоо бичнэ үү\n    return 0;\n}"
     },
     expectedOutput: '1 2 3'
   }

@@ -7,8 +7,8 @@ import { StepContent, CodingTask, DebugStep } from '../types';
 interface LessonViewProps {
   onExit: (completed?: boolean) => void;
   moduleId: string | null;
-  initialLanguage: 'python' | 'c';
-  onLanguageChange?: (lang: 'python' | 'c') => void;
+  initialLanguage: 'python' | 'c' | 'cpp';
+  onLanguageChange?: (lang: 'python' | 'c' | 'cpp') => void;
 }
 
 interface ChatMessage {
@@ -24,7 +24,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   const [terminalOutput, setTerminalOutput] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [activeLanguage, setActiveLanguage] = useState<'python' | 'c'>(initialLanguage);
+  const [activeLanguage, setActiveLanguage] = useState<'python' | 'c' | 'cpp'>(initialLanguage);
   
   // Debug State
   const [isDebugMode, setIsDebugMode] = useState(false);
@@ -34,7 +34,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: `Сайн уу! Би чиний 'CodeStep Tutor' багш байна. 🤖 Би чамд ${initialLanguage === 'c' ? 'C Language' : 'Python'} сурахад тусална. Юуг ойлгохгүй байна, надаас шууд асуугаарай!` }
+    { role: 'model', text: `Сайн уу! Би чиний 'CodeStep Tutor' багш байна. 🤖 Би чамд ${initialLanguage === 'c' ? 'C Language' : initialLanguage === 'cpp' ? 'C++' : 'Python'} сурахад тусална. Юуг ойлгохгүй байна, надаас шууд асуугаарай!` }
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -51,7 +51,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
 
   if (!lesson || !step) return <div className="p-10">Алдаа: Хичээл олдсонгүй.</div>;
 
-  const handleLanguageToggle = (lang: 'python' | 'c') => {
+  const handleLanguageToggle = (lang: 'python' | 'c' | 'cpp') => {
     setActiveLanguage(lang);
     setIsDebugMode(false);
     setTerminalOutput([]);
@@ -59,7 +59,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     
     // Notify tutor of language change if chat is open
     if (isAiOpen) {
-      setChatMessages(prev => [...prev, { role: 'model', text: `Одоо бид ${lang === 'c' ? 'C Language' : 'Python'} дээр үргэлжлүүлэн суралцах болно. Сонирхолтой байгаа биз? 🚀` }]);
+      setChatMessages(prev => [...prev, { role: 'model', text: `Одоо бид ${lang === 'c' ? 'C Language' : lang === 'cpp' ? 'C++' : 'Python'} дээр үргэлжлүүлэн суралцах болно. Сонирхолтой байгаа биз? 🚀` }]);
     }
   };
 
@@ -67,8 +67,12 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     if (!currentTask) return;
     setIsRunning(true);
     setIsDebugMode(false);
-    const cmd = activeLanguage === 'python' ? `$ python ${currentTask.fileName}` : `$ gcc ${currentTask.fileName} -o main && ./main`;
-    setTerminalOutput(prev => [...prev, cmd]);
+    const cmdMap = {
+      python: `$ python ${currentTask.fileName}`,
+      c: `$ gcc ${currentTask.fileName} -o main && ./main`,
+      cpp: `$ g++ ${currentTask.fileName} -o main && ./main`
+    };
+    setTerminalOutput(prev => [...prev, cmdMap[activeLanguage]]);
     
     setTimeout(() => {
       setTerminalOutput(prev => [...prev, currentTask.expectedOutput]);
@@ -124,7 +128,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
 
     const systemInstruction = `
       Чи бол "CodeStep Tutor" нэртэй интерактив AI багш. 
-      Сурагч ${activeLanguage === 'c' ? 'C хэл (C Language)' : 'Python'} сурч байна.
+      Сурагч ${activeLanguage === 'c' ? 'C хэл (C Language)' : activeLanguage === 'cpp' ? 'C++' : 'Python'} сурч байна.
       Хэв маяг: Найрсаг, маш энгийн, богино өгүүлбэртэй. 
       Одоогийн хичээл: ${lesson.title} - ${step.title}.
       Одоо ашиглаж буй кодчилол: ${activeLanguage}.
@@ -175,13 +179,19 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mr-4 border border-slate-200 dark:border-slate-700">
             <button 
               onClick={() => handleLanguageToggle('c')}
-              className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'c' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'c' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
             >
-              C Language
+              C
+            </button>
+            <button 
+              onClick={() => handleLanguageToggle('cpp')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'cpp' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+            >
+              C++
             </button>
             <button 
               onClick={() => handleLanguageToggle('python')}
-              className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'python' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'python' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
             >
               Python
             </button>
@@ -268,9 +278,9 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
             <>
               <div className="flex items-center justify-between border-b border-white/10 bg-[#2d2d2d] px-6 py-2">
                 <div className="flex items-center gap-2">
-                  <div className={`size-3 rounded-full ${activeLanguage === 'c' ? 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]' : 'bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.6)]'}`}></div>
+                  <div className={`size-3 rounded-full ${activeLanguage === 'c' ? 'bg-blue-400' : activeLanguage === 'cpp' ? 'bg-blue-600' : 'bg-yellow-400'}`}></div>
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                    {activeLanguage === 'c' ? 'C Source' : 'Python Script'}
+                    {activeLanguage === 'c' ? 'C Source' : activeLanguage === 'cpp' ? 'C++ Source' : 'Python Script'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -296,7 +306,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
                     {currentTask?.template.split('\n').map((line, i) => (
                       <div key={i} className={`relative group flex items-center gap-4 transition-all duration-300 ${isDebugMode && activeDebugStep?.lineIndex === i ? 'bg-primary/20 -mx-4 px-4 border-l-4 border-primary' : ''}`}>
                         <span className="flex-1">
-                          {line.includes('printf') || line.includes('print(') ? <><span className="code-syntax-function">{line.split('(')[0]}</span>({line.split('(')[1]}</> : 
+                          {line.includes('printf') || line.includes('print(') || line.includes('std::cout') ? <><span className="code-syntax-function">{line.split(/[(\s<]+/)[0]}</span>{line.substring(line.split(/[(\s<]+/)[0].length)}</> : 
                            line.includes('=') ? <><span className="code-syntax-keyword">{line.split('=')[0]}</span> = {line.split('=')[1]}</> : 
                            line.includes('#') || line.includes('int ') || line.includes('void ') || line.includes('return ') ? <span className="code-syntax-keyword">{line}</span> : line}
                         </span>
@@ -311,31 +321,53 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
                 </div>
 
                 {isDebugMode && (
-                  <div className="mt-4 p-4 bg-slate-900 rounded-2xl border-2 border-primary/30 shadow-2xl animate-in slide-in-from-bottom-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
-                        <span className="material-symbols-outlined text-sm">memory</span>
-                        Санах ой (Variables):
-                      </p>
+                  <div className="mt-4 p-5 bg-slate-900 rounded-3xl border-2 border-primary/30 shadow-2xl animate-in slide-in-from-bottom-4 flex flex-col max-h-[50%]">
+                    <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="size-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                          <span className="material-symbols-outlined text-xl">memory</span>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] leading-none mb-1">Санах ой (RAM)</p>
+                          <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none">Variable Watch</p>
+                        </div>
+                      </div>
                       <button 
                         onClick={stepDebug}
-                        className="bg-primary text-slate-900 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                        className="bg-primary text-slate-900 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
                       >
                         <span className="material-symbols-outlined text-sm">step_over</span>
                         Дараагийн мөр
                       </button>
                     </div>
-                    <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
+
+                    <div className="flex-1 overflow-y-auto custom-scrollbar">
                       {Object.keys(activeDebugStep?.variables || {}).length > 0 ? (
-                        Object.entries(activeDebugStep?.variables || {}).map(([key, val]) => (
-                          <div key={key} className="bg-white/5 px-4 py-2 rounded-xl border border-white/10 flex items-center gap-3">
-                            <span className="text-primary font-black text-xs font-mono">{key}</span>
-                            <span className="text-slate-400">=</span>
-                            <span className="text-yellow-400 font-mono text-xs">{JSON.stringify(val)}</span>
-                          </div>
-                        ))
+                        <div className="grid grid-cols-[1fr_auto_1.5fr] gap-x-4 gap-y-2 px-2">
+                          <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-1">Нэр (Name)</div>
+                          <div></div>
+                          <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-1">Утга (Value)</div>
+
+                          {Object.entries(activeDebugStep?.variables || {}).map(([key, val]) => (
+                            <React.Fragment key={key}>
+                              <div className="flex items-center gap-2 py-1">
+                                <span className="size-1.5 rounded-full bg-primary/40"></span>
+                                <span className="text-primary font-black text-sm font-mono">{key}</span>
+                              </div>
+                              <div className="flex items-center text-slate-600 font-mono text-xs">=</div>
+                              <div className="flex items-center py-1">
+                                <span className={`px-3 py-1 rounded-lg bg-white/5 font-mono text-sm border border-white/5 ${typeof val === 'number' ? 'text-yellow-400' : 'text-cyan-400'}`}>
+                                  {JSON.stringify(val)}
+                                </span>
+                              </div>
+                            </React.Fragment>
+                          ))}
+                        </div>
                       ) : (
-                        <span className="text-xs text-slate-600 italic">Санах ой хоосон байна.</span>
+                        <div className="flex flex-col items-center justify-center py-8 opacity-40">
+                          <span className="material-symbols-outlined text-4xl mb-2">inbox</span>
+                          <span className="text-xs text-slate-500 font-bold uppercase tracking-widest italic">Санах ой хоосон байна.</span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -345,7 +377,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
                   <div className="mt-4 p-4 bg-white/5 rounded-xl border border-white/10 border-dashed">
                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
                         <span className="material-symbols-outlined text-sm">info</span>
-                        Мөр бүрийн тайлбар ({activeLanguage === 'c' ? 'C' : 'Python'}):
+                        Мөр бүрийн тайлбар ({activeLanguage.toUpperCase()}):
                      </p>
                      <div className="space-y-1">
                         {currentTask?.explanation.map((exp, i) => (

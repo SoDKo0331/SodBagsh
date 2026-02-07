@@ -6,8 +6,8 @@ interface DashboardProps {
   modules: Module[];
   badges: Badge[];
   onStartLesson: (moduleId: string) => void;
-  activePath: 'python' | 'c';
-  onPathChange: (path: 'python' | 'c') => void;
+  activePath: 'python' | 'c' | 'cpp';
+  onPathChange: (path: 'python' | 'c' | 'cpp') => void;
   onViewBadges: () => void;
 }
 
@@ -27,15 +27,21 @@ const Dashboard: React.FC<DashboardProps> = ({ modules, badges, onStartLesson, a
           <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
             <button 
               onClick={() => onPathChange('python')}
-              className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activePath === 'python' ? 'bg-white dark:bg-slate-700 shadow-lg text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activePath === 'python' ? 'bg-white dark:bg-slate-700 shadow-lg text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
             >
               Python
             </button>
             <button 
               onClick={() => onPathChange('c')}
-              className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activePath === 'c' ? 'bg-white dark:bg-slate-700 shadow-lg text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activePath === 'c' ? 'bg-white dark:bg-slate-700 shadow-lg text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              C Language
+              C
+            </button>
+            <button 
+              onClick={() => onPathChange('cpp')}
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activePath === 'cpp' ? 'bg-white dark:bg-slate-700 shadow-lg text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              C++
             </button>
           </div>
           <button 
@@ -57,7 +63,7 @@ const Dashboard: React.FC<DashboardProps> = ({ modules, badges, onStartLesson, a
             </div>
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div>
-                <h3 className="font-black text-2xl mb-2">{activePath === 'c' ? 'C Language' : 'Python'} Сурах Явц</h3>
+                <h3 className="font-black text-2xl mb-2">{activePath === 'c' ? 'C Language' : activePath === 'cpp' ? 'C++' : 'Python'} Сурах Явц</h3>
                 <p className="text-sm text-slate-500 font-bold uppercase tracking-widest">Нийт {modules.length} хичээлээс {completedCount}-г дуусгав.</p>
               </div>
               <div className="text-right">

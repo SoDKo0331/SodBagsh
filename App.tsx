@@ -55,7 +55,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'dashboard' | 'lesson' | 'sandbox' | 'badges' | 'problems' | 'solving-problem'>('dashboard');
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
-  const [preferredLanguage, setPreferredLanguage] = useState<'python' | 'c'>('python');
+  const [preferredLanguage, setPreferredLanguage] = useState<'python' | 'c' | 'cpp'>('python');
 
   useEffect(() => {
     if (user) {

@@ -18,6 +18,7 @@ export interface Problem {
   templates: {
     python: string;
     c: string;
+    cpp: string;
   };
   expectedOutput: string; // Ирээдүйд илүү нарийн тест кейсүүд нэмж болно
 }
@@ -56,7 +57,7 @@ export interface DebugStep {
 }
 
 export interface CodingTask {
-  language: 'python' | 'c';
+  language: 'python' | 'c' | 'cpp';
   template: string;
   explanation: string[];
   expectedOutput: string;

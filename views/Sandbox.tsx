@@ -13,11 +13,12 @@ interface ChatMessage {
 
 const TEMPLATES = {
   python: "name = 'Super Coder'\nprint('Сайн уу, ' + name + '!')\n\nfor i in range(3):\n    print('Код бичих гоё байна!')",
-  c: "#include <stdio.h>\n\nint main() {\n    char name[] = \"Super Coder\";\n    printf(\"Сайн уу, %s!\\n\", name);\n    \n    for(int i=0; i<3; i++) {\n        printf(\"Код бичих гоё байна!\\n\");\n    }\n    return 0;\n}"
+  c: "#include <stdio.h>\n\nint main() {\n    char name[] = \"Super Coder\";\n    printf(\"Сайн уу, %s!\\n\", name);\n    \n    for(int i=0; i<3; i++) {\n        printf(\"Код бичих гоё байна!\\n\");\n    }\n    return 0;\n}",
+  cpp: "#include <iostream>\n#include <string>\n\nint main() {\n    std::string name = \"Super Coder\";\n    std::cout << \"Сайн уу, \" << name << \"!\" << std::endl;\n    \n    for(int i=0; i<3; i++) {\n        std::cout << \"Код бичих гоё байна!\" << std::endl;\n    }\n    return 0;\n}"
 };
 
 const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
-  const [activeLanguage, setActiveLanguage] = useState<'python' | 'c'>('python');
+  const [activeLanguage, setActiveLanguage] = useState<'python' | 'c' | 'cpp'>('python');
   const [code, setCode] = useState(TEMPLATES.python);
   const [output, setOutput] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -35,7 +36,7 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
-  const handleLanguageChange = (lang: 'python' | 'c') => {
+  const handleLanguageChange = (lang: 'python' | 'c' | 'cpp') => {
     if (confirm("Хэл солих үед одоогийн бичсэн код устах болно. Зөвшөөрөх үү?")) {
       setActiveLanguage(lang);
       setCode(TEMPLATES[lang]);
@@ -45,23 +46,21 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
 
   const runCode = () => {
     setIsRunning(true);
-    const cmd = activeLanguage === 'python' ? "$ python3 main.py" : "$ gcc main.c -o main && ./main";
-    setOutput(prev => [...prev, cmd]);
+    const cmdMap = {
+      python: "$ python3 main.py",
+      c: "$ gcc main.c -o main && ./main",
+      cpp: "$ g++ main.cpp -o main && ./main"
+    };
+    setOutput(prev => [...prev, cmdMap[activeLanguage]]);
     
     // Simple simulation of execution
     setTimeout(() => {
-      const mockResult: string[] = [];
-      if (activeLanguage === 'python') {
-        mockResult.push("Сайн уу, Super Coder!");
-        mockResult.push("Код бичих гоё байна!");
-        mockResult.push("Код бичих гоё байна!");
-        mockResult.push("Код бичих гоё байна!");
-      } else {
-        mockResult.push("Сайн уу, Super Coder!");
-        mockResult.push("Код бичих гоё байна!");
-        mockResult.push("Код бичих гоё байна!");
-        mockResult.push("Код бичих гоё байна!");
-      }
+      const mockResult: string[] = [
+        "Сайн уу, Super Coder!",
+        "Код бичих гоө байна!",
+        "Код бичих гоө байна!",
+        "Код бичих гоө байна!"
+      ];
       
       setOutput(prev => [...prev, ...mockResult]);
       setIsRunning(false);
@@ -77,7 +76,7 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
 
     const systemInstruction = `
       Чи бол "CodeStep Tutor" нэртэй интерактив AI багш. 
-      Сурагч Sandbox горимд ${activeLanguage === 'c' ? 'C хэл' : 'Python'} дээр код бичиж байна.
+      Сурагч Sandbox горимд ${activeLanguage.toUpperCase()} дээр код бичиж байна.
       Түүний бичсэн код: \n${code}\n
       Хэв маяг: Найрсаг, энгийн, кодын алдааг олох болон сайжруулахад нь туслаарай.
     `;
@@ -118,15 +117,21 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
           <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             <button 
               onClick={() => handleLanguageChange('python')}
-              className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'python' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'python' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
             >
               Python
             </button>
             <button 
               onClick={() => handleLanguageChange('c')}
-              className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'c' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'c' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
             >
-              C Language
+              C
+            </button>
+            <button 
+              onClick={() => handleLanguageChange('cpp')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'cpp' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
+            >
+              C++
             </button>
           </div>
           
@@ -155,7 +160,9 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
            <div className="px-6 py-2 bg-[#2d2d2d] flex items-center justify-between border-b border-white/5">
               <div className="flex items-center gap-2">
                  <div className={`size-2 rounded-full ${activeLanguage === 'python' ? 'bg-yellow-400' : 'bg-blue-400'}`}></div>
-                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{activeLanguage === 'python' ? 'main.py' : 'main.c'}</span>
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                   {activeLanguage === 'python' ? 'main.py' : activeLanguage === 'c' ? 'main.c' : 'main.cpp'}
+                 </span>
               </div>
            </div>
            <div className="flex flex-1 overflow-hidden relative">
@@ -265,7 +272,7 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
             </div>
             <div className="h-4 w-px bg-white/10"></div>
             <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
-               UTF-8 | {activeLanguage === 'python' ? 'Python 3.11' : 'GCC 13.2'}
+               UTF-8 | {activeLanguage === 'python' ? 'Python 3.11' : activeLanguage === 'c' ? 'GCC 13.2' : 'G++ 13.2'}
             </div>
          </div>
          <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">

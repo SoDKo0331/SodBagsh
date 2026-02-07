@@ -10,7 +10,7 @@ interface ProblemSolvingViewProps {
 }
 
 const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack, onSolve }) => {
-  const [activeLanguage, setActiveLanguage] = useState<'python' | 'c'>('python');
+  const [activeLanguage, setActiveLanguage] = useState<'python' | 'c' | 'cpp'>('python');
   const [code, setCode] = useState(problem.templates.python);
   const [terminalOutput, setTerminalOutput] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -23,13 +23,17 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
   const [isAiLoading, setIsAiLoading] = useState(false);
 
   useEffect(() => {
-    setCode(activeLanguage === 'python' ? problem.templates.python : problem.templates.c);
+    setCode(problem.templates[activeLanguage]);
   }, [activeLanguage, problem]);
 
   const handleRun = () => {
     setIsRunning(true);
-    const cmd = activeLanguage === 'python' ? "$ python solution.py" : "$ gcc solution.c -o solution && ./solution";
-    setTerminalOutput([cmd]);
+    const cmdMap = {
+      python: "$ python solution.py",
+      c: "$ gcc solution.c -o solution && ./solution",
+      cpp: "$ g++ solution.cpp -o solution && ./solution"
+    };
+    setTerminalOutput([cmdMap[activeLanguage]]);
 
     setTimeout(() => {
       // Энгийн тест шалгалт (Жишээ)
@@ -82,6 +86,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
           <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
             <button onClick={() => setActiveLanguage('python')} className={`px-4 py-1 rounded-md text-[10px] font-black uppercase ${activeLanguage === 'python' ? 'bg-primary text-slate-900' : 'text-slate-500'}`}>Python</button>
             <button onClick={() => setActiveLanguage('c')} className={`px-4 py-1 rounded-md text-[10px] font-black uppercase ${activeLanguage === 'c' ? 'bg-primary text-slate-900' : 'text-slate-500'}`}>C</button>
+            <button onClick={() => setActiveLanguage('cpp')} className={`px-4 py-1 rounded-md text-[10px] font-black uppercase ${activeLanguage === 'cpp' ? 'bg-primary text-slate-900' : 'text-slate-500'}`}>C++</button>
           </div>
           <button onClick={() => setIsAiOpen(!isAiOpen)} className="p-2 border-2 border-primary/20 rounded-lg text-primary hover:bg-primary/5 transition-all">
              <span className="material-symbols-outlined">smart_toy</span>
