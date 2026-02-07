@@ -5,6 +5,23 @@ export enum LessonStatus {
   LOCKED = 'locked'
 }
 
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
+export interface Problem {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: Difficulty;
+  category: string;
+  constraints: string[];
+  examples: { input: string; output: string }[];
+  templates: {
+    python: string;
+    c: string;
+  };
+  expectedOutput: string; // Ирээдүйд илүү нарийн тест кейсүүд нэмж болно
+}
+
 export interface Badge {
   id: string;
   title: string;

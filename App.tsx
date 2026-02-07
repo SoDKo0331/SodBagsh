@@ -4,7 +4,10 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './views/Dashboard';
 import LessonView from './views/LessonView';
 import Sandbox from './views/Sandbox';
+import ProblemBank from './views/ProblemBank';
+import ProblemSolvingView from './views/ProblemSolvingView';
 import { LessonStatus, Module, Badge } from './types';
+import { PROBLEMS } from './data/problems';
 
 const INITIAL_MODULES: Module[] = [
   { id: 'm1', number: 1, title: 'LEVEL 1: Эхлэл', description: 'Код гэж юу вэ? Хамгийн анхны тушаалаа компьютерт өгье.', status: LessonStatus.IN_PROGRESS, progressText: '0/2 Алхам', icon: 'campaign', badgeId: 'b1' },
@@ -24,60 +27,88 @@ const INITIAL_BADGES: Badge[] = [
 ];
 
 const App: React.FC = () => {
+  const [user, setUser] = useState<string | null>(localStorage.getItem('codequest_user'));
+  const [loginInput, setLoginInput] = useState('');
+
+  const storageKey = user ? `codequest_${user}_` : 'codequest_guest_';
+
   const [modules, setModules] = useState<Module[]>(() => {
-    const saved = localStorage.getItem('codequest_progress_v4');
+    const saved = localStorage.getItem(storageKey + 'progress');
     return saved ? JSON.parse(saved) : INITIAL_MODULES;
   });
   
   const [badges, setBadges] = useState<Badge[]>(() => {
-    const saved = localStorage.getItem('codequest_badges_v4');
+    const saved = localStorage.getItem(storageKey + 'badges');
     return saved ? JSON.parse(saved) : INITIAL_BADGES;
   });
 
+  const [solvedProblems, setSolvedProblems] = useState<string[]>(() => {
+    const saved = localStorage.getItem(storageKey + 'solved');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [streak, setStreak] = useState(() => {
-    const saved = localStorage.getItem('codequest_streak_v4');
+    const saved = localStorage.getItem(storageKey + 'streak');
     return saved ? parseInt(saved) : 1;
   });
 
-  const [currentView, setCurrentView] = useState<'dashboard' | 'lesson' | 'sandbox' | 'badges'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'lesson' | 'sandbox' | 'badges' | 'problems' | 'solving-problem'>('dashboard');
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
-  
-  const [preferredLanguage, setPreferredLanguage] = useState<'python' | 'c'>(() => {
-    const saved = localStorage.getItem('codequest_pref_lang');
-    return (saved as 'python' | 'c') || 'c';
-  });
+  const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
+  const [preferredLanguage, setPreferredLanguage] = useState<'python' | 'c'>('python');
 
   useEffect(() => {
-    localStorage.setItem('codequest_progress_v4', JSON.stringify(modules));
-    localStorage.setItem('codequest_badges_v4', JSON.stringify(badges));
-    localStorage.setItem('codequest_streak_v4', streak.toString());
-  }, [modules, badges, streak]);
-
-  useEffect(() => {
-    localStorage.setItem('codequest_pref_lang', preferredLanguage);
-  }, [preferredLanguage]);
-
-  // Handle streak on load
-  useEffect(() => {
-    const lastDate = localStorage.getItem('codequest_last_active');
-    const today = new Date().toDateString();
-    if (lastDate && lastDate !== today) {
-      const last = new Date(lastDate);
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      if (last.toDateString() === yesterday.toDateString()) {
-        const newStreak = streak + 1;
-        setStreak(newStreak);
-        if (newStreak >= 3) {
-          earnBadge('s1');
-        }
-      } else if (new Date(lastDate) < yesterday) {
-        setStreak(1);
-      }
+    if (user) {
+      localStorage.setItem(storageKey + 'progress', JSON.stringify(modules));
+      localStorage.setItem(storageKey + 'badges', JSON.stringify(badges));
+      localStorage.setItem(storageKey + 'solved', JSON.stringify(solvedProblems));
+      localStorage.setItem(storageKey + 'streak', streak.toString());
     }
-    localStorage.setItem('codequest_last_active', today);
-  }, []);
+  }, [modules, badges, streak, solvedProblems, user, storageKey]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginInput.trim()) {
+      localStorage.setItem('codequest_user', loginInput.trim());
+      setUser(loginInput.trim());
+      // Refresh state for new user
+      window.location.reload();
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('codequest_user');
+    setUser(null);
+    window.location.reload();
+  };
+
+  if (!user) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-background-dark font-display">
+        <div className="bg-white dark:bg-slate-900 p-12 rounded-[40px] shadow-2xl border-4 border-primary/20 max-w-md w-full text-center">
+          <div className="size-20 rounded-3xl bg-primary flex items-center justify-center text-slate-900 shadow-lg shadow-primary/30 mx-auto mb-8 rotate-3">
+            <span className="material-symbols-outlined text-5xl font-black">rocket_launch</span>
+          </div>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2">CodeQuest</h1>
+          <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-10">Аяллаа эхлүүлэхэд бэлэн үү?</p>
+          
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input 
+              type="text" 
+              placeholder="Өөрийн нэрээ оруулна уу..."
+              value={loginInput}
+              onChange={(e) => setLoginInput(e.target.value)}
+              className="w-full px-6 py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-4 focus:ring-primary/20 text-lg font-bold"
+            />
+            <button className="w-full bg-primary text-slate-900 py-4 rounded-2xl font-black text-xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+              Нэвтрэх
+            </button>
+          </form>
+          <p className="mt-8 text-[10px] text-slate-400 font-black uppercase tracking-widest leading-relaxed">Чиний бүх ахиц дэвшлийг <br/> энэ хөтөч дээр хадгалах болно.</p>
+        </div>
+      </div>
+    );
+  }
 
   const earnBadge = (badgeId: string) => {
     setBadges(prev => prev.map(b => b.id === badgeId ? { ...b, isEarned: true } : b));
@@ -88,16 +119,25 @@ const App: React.FC = () => {
     setCurrentView('lesson');
   };
 
+  const handleSelectProblem = (pid: string) => {
+    setSelectedProblemId(pid);
+    setCurrentView('solving-problem');
+  };
+
+  const handleSolveProblem = (pid: string) => {
+    if (!solvedProblems.includes(pid)) {
+      setSolvedProblems(prev => [...prev, pid]);
+    }
+  };
+
   const handleExitLesson = (completed?: boolean) => {
     if (completed && selectedModuleId) {
       const module = modules.find(m => m.id === selectedModuleId);
       if (module?.badgeId) {
         earnBadge(module.badgeId);
       }
-
       setModules(prev => prev.map(m => {
         if (m.id === selectedModuleId) return { ...m, status: LessonStatus.COMPLETED };
-        
         const finishedIdx = prev.findIndex(mod => mod.id === selectedModuleId);
         const nextIdx = finishedIdx + 1;
         if (prev[nextIdx] && prev[nextIdx].id === m.id && m.status === LessonStatus.LOCKED) {
@@ -110,13 +150,19 @@ const App: React.FC = () => {
     setSelectedModuleId(null);
   };
 
-  const handleNavChange = (view: 'dashboard' | 'sandbox' | 'badges') => {
-    setCurrentView(view);
-  };
+  const activeProblem = selectedProblemId ? PROBLEMS.find(p => p.id === selectedProblemId) : null;
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
-      {currentView !== 'lesson' && <Sidebar activeItem={currentView} streak={streak} onNavChange={handleNavChange} />}
+      {currentView !== 'lesson' && currentView !== 'solving-problem' && (
+        <Sidebar 
+          activeItem={currentView} 
+          streak={streak} 
+          userName={user}
+          onNavChange={(v) => setCurrentView(v as any)} 
+          onLogout={handleLogout}
+        />
+      )}
       
       <main className="flex-1 flex flex-col overflow-hidden">
         {currentView === 'dashboard' ? (
@@ -135,6 +181,17 @@ const App: React.FC = () => {
             initialLanguage={preferredLanguage}
             onLanguageChange={setPreferredLanguage}
           />
+        ) : currentView === 'problems' ? (
+          <ProblemBank 
+            onSelectProblem={handleSelectProblem} 
+            solvedProblems={solvedProblems} 
+          />
+        ) : currentView === 'solving-problem' && activeProblem ? (
+          <ProblemSolvingView 
+            problem={activeProblem} 
+            onBack={() => setCurrentView('problems')}
+            onSolve={handleSolveProblem}
+          />
         ) : currentView === 'badges' ? (
           <div className="flex-1 overflow-y-auto p-10 bg-[#f8faf9] dark:bg-[#0d1a13]">
              <header className="mb-10 flex items-center justify-between">
@@ -142,14 +199,9 @@ const App: React.FC = () => {
                   <button onClick={() => setCurrentView('dashboard')} className="flex items-center gap-2 text-slate-500 font-black uppercase text-xs tracking-widest mb-2 hover:text-primary transition-colors">
                     <span className="material-symbols-outlined text-sm">arrow_back</span> Буцах
                   </button>
-                  <h1 className="text-4xl font-black tracking-tighter">Миний Цолнууд (Badges)</h1>
-                </div>
-                <div className="bg-white dark:bg-slate-900 px-6 py-3 rounded-2xl border-2 border-slate-100 dark:border-slate-800 flex items-center gap-3">
-                   <span className="material-symbols-outlined text-primary font-black">emoji_events</span>
-                   <span className="font-black text-xl">{badges.filter(b => b.isEarned).length} / {badges.length}</span>
+                  <h1 className="text-4xl font-black tracking-tighter">Миний Цолнууд</h1>
                 </div>
              </header>
-
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {badges.map(badge => (
                   <div key={badge.id} className={`p-8 rounded-[32px] border-4 transition-all flex flex-col items-center text-center ${badge.isEarned ? 'bg-white dark:bg-slate-900 border-primary/20 shadow-xl' : 'bg-slate-50 dark:bg-slate-800/20 border-slate-100 dark:border-slate-800 grayscale opacity-60'}`}>
@@ -158,9 +210,6 @@ const App: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-black mb-2">{badge.title}</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{badge.description}</p>
-                    {badge.isEarned && (
-                      <div className="mt-6 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">Авсан</div>
-                    )}
                   </div>
                 ))}
              </div>
