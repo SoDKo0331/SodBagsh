@@ -1,0 +1,8 @@
+{
+  "name": "CodeQuest Interactive Learning",
+  "description": "A gamified programming platform featuring interactive coding lessons in Python and C, progress tracking, and AI-powered tutoring.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
