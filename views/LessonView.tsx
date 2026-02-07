@@ -54,6 +54,8 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
       setUserCode(currentTask.template);
       setTerminalOutput([]);
       setIsTaskCompleted(false);
+      setIsDebugMode(false);
+      setDebugStepIdx(0);
     }
   }, [currentStepIdx, activeLanguage, moduleId]);
 
@@ -72,24 +74,32 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   const verifyCode = async (codeToVerify: string, lang: string) => {
     if (!currentTask) return { success: false, output: "", feedback: "" };
     
+    // Бэлдэц кодтой яг ижилхэн бол шууд амжилтгүй болгоно (Бэлдэцийг заавал засах ёстой)
+    if (codeToVerify.trim() === currentTask.template.trim()) {
+        return { 
+            success: false, 
+            output: "Output missing", 
+            feedback: "Чи кодыг өөрчилж, даалгаврыг биелүүлэх ёстой. Анхны бэлдэц кодыг ажиллуулж болохгүй." 
+        };
+    }
+
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const prompt = `
-      Чи бол маш хатуу Код Шүүгч. 
+      Чи бол маш хатуу Код Шүүгч. Сурагч даалгавраа зөв биелүүлсэн эсэхийг шалгана уу.
+      
       Даалгавар: ${step.title}
-      Зорилго: ${step.body}
       Хүлээгдэж буй үр дүн: ${currentTask.expectedOutput}
-      Анхны бэлдэц (Template): ${currentTask.template}
+      Хэл: ${lang}
       
       Хэрэглэгчийн бичсэн код:
       ${codeToVerify}
 
-      ШАЛГАХ ЗААВАР:
-      1. Хэрэв код нь анхны бэлдэцтэй (Template) яг ижилхэн байвал ШУУД FAIL (success: false). Хэрэглэгч заавал кодыг өөрчилсөн байх ёстой.
-      2. Код нь ажиллах боломжтой (syntactically correct) байх ёстой.
-      3. Код нь зорилтот үр дүнг хэвлэж чадах логиктой байх ёстой.
-      4. Хэрэв даалгавар дутуу бол яагаад дутуу байгааг 'feedback' хэсэгт бич.
+      ШАЛГАХ ДҮРЭМ:
+      1. Хэрэглэгч бодлогын логикийг өөрөө бичсэн байх ёстой.
+      2. Зөвхөн үр дүнг print("...") гэж хатуу бичиж болохгүй (Hardcoding FAIL). Заавал хувьсагч эсвэл алгоритм ашигласан байх ёстой.
+      3. Хэрэв код нь өгөгдсөн 'Хүлээгдэж буй үр дүн'-г гаргаж чадаж байвал 'success: true' болго.
       
-      JSON БУЦААХ: { "success": boolean, "output": string, "feedback": string }
+      JSON-оор хариулна уу: { "success": boolean, "output": string, "feedback": string }
     `;
 
     try {
@@ -111,7 +121,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
       });
       return JSON.parse(response.text || "{}");
     } catch (e) {
-      return { success: false, output: "Error", feedback: "AI Шүүгч ажиллахад алдаа гарлаа." };
+      return { success: false, output: "Execution Error", feedback: "Шүүгч ажиллахад алдаа гарлаа." };
     }
   };
 
@@ -121,7 +131,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     setIsDebugMode(false);
     
     setTerminalOutput([{type: 'cmd', text: `${activeLanguage === 'python' ? 'python3' : activeLanguage === 'c' ? 'gcc' : 'g++'} ${currentTask.fileName}`}]);
-    setTerminalOutput(prev => [...prev, {type: 'info', text: "Шалгаж байна..."}]);
+    setTerminalOutput(prev => [...prev, {type: 'info', text: "Analyzing code for logical correctness..."}]);
 
     const result = await verifyCode(userCode, activeLanguage);
     
@@ -130,25 +140,25 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
         setTerminalOutput(prev => [
           ...prev, 
           {type: 'out', text: result.output || currentTask.expectedOutput},
-          {type: 'success', text: "Зөв! Даалгавар биеллээ."}
+          {type: 'success', text: "Гайхалтай! Бүх тестүүд амжилттай давлаа."}
         ]);
         setIsTaskCompleted(true);
       } else {
         setTerminalOutput(prev => [
           ...prev, 
-          {type: 'err', text: "Алдаа!"},
-          {type: 'out', text: result.feedback || "Код дутуу эсвэл алдаатай байна."}
+          {type: 'err', text: "Шалгалт амжилтгүй!"},
+          {type: 'out', text: result.feedback || "Код дутуу эсвэл логик алдаатай байна."}
         ]);
       }
       setIsRunning(false);
-    }, 1000);
+    }, 1200);
   };
 
   const startDebug = () => {
     if (!currentTask?.debugSteps) return;
     setIsDebugMode(true);
     setDebugStepIdx(0);
-    setTerminalOutput([{type: 'cmd', text: "gdb ./main"}, {type: 'out', text: "Debugger started. Source loaded."}]);
+    setTerminalOutput([{type: 'cmd', text: `${activeLanguage === 'c' ? 'gdb' : 'lldb'} ./main`}, {type: 'out', text: "Debugger started. Symbol table loaded from binary."}]);
   };
 
   const stepDebug = () => {
@@ -158,7 +168,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     } else {
       setIsDebugMode(false);
       setIsTaskCompleted(true);
-      setTerminalOutput(prev => [{type: 'success', text: "Debug session finished."}]);
+      setTerminalOutput(prev => [{type: 'success', text: "Debug session completed successfully."}]);
     }
   };
 
@@ -189,17 +199,17 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     setChatMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setIsAiLoading(true);
 
-    const systemInstruction = `Чи бол CodeStep Tutor. Сурагчийн одоогийн хичээл: ${lesson.title}. Код: \n${userCode}`;
+    const systemInstruction = `Чи бол CodeStep Tutor багш. Сурагч ${activeLanguage} дээр '${step.title}' хичээл үзэж байна. Хэрэглэгчийн бичсэн код: \n${userCode}`;
 
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: systemInstruction + "\nСурагчийн асуулт: " + userMsg,
+        contents: systemInstruction + "\nАсуулт: " + userMsg,
       });
-      setChatMessages(prev => [...prev, { role: 'model', text: response.text || "Уучлаарай, хариулж чадахгүй байна." }]);
+      setChatMessages(prev => [...prev, { role: 'model', text: response.text || "Би бодож байна..." }]);
     } catch (error) {
-      setChatMessages(prev => [...prev, { role: 'model', text: "Алдаа гарлаа." }]);
+      setChatMessages(prev => [...prev, { role: 'model', text: "Алдаа гарлаа. Холболтоо шалгана уу." }]);
     } finally {
       setIsAiLoading(false);
     }
@@ -314,16 +324,16 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
                <button 
                 onClick={() => setCurrentStepIdx(prev => Math.max(0, prev - 1))}
                 disabled={currentStepIdx === 0}
-                className="text-slate-400 font-black uppercase text-xs disabled:opacity-30"
+                className="text-slate-400 font-black uppercase text-xs disabled:opacity-30 flex items-center gap-1"
                >
-                 Өмнөх
+                 <span className="material-symbols-outlined text-sm">arrow_back</span> Өмнөх
                </button>
                {isTaskCompleted && (
                  <button 
                   onClick={handleNext}
-                  className="bg-primary text-slate-900 px-8 py-3 rounded-xl font-black text-sm uppercase shadow-xl animate-bounce"
+                  className="bg-primary text-slate-900 px-8 py-3 rounded-xl font-black text-sm uppercase shadow-xl animate-bounce flex items-center gap-1"
                  >
-                   Дараагийнх
+                   Дараагийнх <span className="material-symbols-outlined text-sm">arrow_forward</span>
                  </button>
                )}
             </div>
@@ -335,10 +345,16 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
             <>
               <div className="flex items-center justify-between border-b border-white/10 bg-[#2d2d2d] px-6 py-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase text-slate-400">{activeLanguage.toUpperCase()} Editor</span>
+                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{activeLanguage.toUpperCase()} Editor</span>
                 </div>
-                {isDebugMode && (
-                   <button onClick={stepDebug} className="bg-primary text-slate-900 px-3 py-1 rounded text-[10px] font-black uppercase">Step Over</button>
+                {(activeLanguage === 'c' || activeLanguage === 'cpp') && currentTask?.debugSteps && (
+                   <button 
+                    onClick={isDebugMode ? stepDebug : startDebug} 
+                    className={`${isDebugMode ? 'bg-yellow-500' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} px-3 py-1 rounded text-[10px] font-black uppercase transition-all flex items-center gap-1`}
+                  >
+                     <span className="material-symbols-outlined text-sm">{isDebugMode ? 'step_over' : 'bug_report'}</span>
+                     {isDebugMode ? 'Step Over' : 'Start Debugger'}
+                   </button>
                 )}
               </div>
               
@@ -348,67 +364,103 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
                   onChange={(e) => setUserCode(e.target.value)}
                   className="flex-1 bg-transparent p-8 outline-none border-none resize-none custom-scrollbar"
                   spellCheck={false}
+                  placeholder="// Кодоо энд бичнэ үү..."
                 />
 
                 {isDebugMode && activeDebugStep && (
-                  <div className="absolute bottom-4 left-4 right-4 bg-slate-900 border-2 border-primary/30 p-4 rounded-xl shadow-2xl">
-                    <p className="text-[10px] font-black text-primary uppercase mb-2">Variables:</p>
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="absolute bottom-4 left-4 right-4 bg-slate-900/95 border-2 border-primary/30 p-5 rounded-2xl shadow-2xl animate-in slide-in-from-bottom-4">
+                    <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                            <span className="material-symbols-outlined text-sm">memory</span> 
+                            Memory Inspector (Variables)
+                        </p>
+                        <span className="text-[9px] text-slate-500 italic font-bold">Line {activeDebugStep.lineIndex + 1}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
                        {Object.entries(activeDebugStep.variables).map(([k, v]) => (
-                         <div key={k} className="text-xs">
-                           <span className="text-blue-400">{k}:</span> <span className="text-yellow-400">{JSON.stringify(v)}</span>
+                         <div key={k} className="flex items-center justify-between bg-white/5 px-3 py-2 rounded-lg">
+                           <span className="text-xs font-black text-blue-400">{k}</span> 
+                           <span className="text-xs font-mono text-yellow-400">{JSON.stringify(v)}</span>
                          </div>
                        ))}
                     </div>
+                    <p className="mt-3 text-[11px] text-slate-300 leading-relaxed bg-white/5 p-2 rounded-lg border-l-2 border-primary/50 italic">
+                        "{activeDebugStep.comment}"
+                    </p>
                   </div>
                 )}
               </div>
 
               <div className="h-1/3 flex flex-col border-t border-white/10 bg-[#0c0c0c]">
                 <div className="flex items-center justify-between px-6 py-2 bg-[#1a1a1a]">
-                   <span className="text-[10px] font-black uppercase text-slate-500">Terminal</span>
-                   <button onClick={handleRunCode} disabled={isRunning} className="bg-primary text-slate-900 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase">
-                     {isRunning ? 'Running...' : 'Run'}
+                   <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Гаралт (Terminal)</span>
+                   <button 
+                    onClick={handleRunCode} 
+                    disabled={isRunning} 
+                    className="bg-primary text-slate-900 px-5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                   >
+                     {isRunning && (
+                       <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                     )}
+                     {isRunning ? 'Running Analysis...' : 'Run & Submit'}
                    </button>
                 </div>
                 <div className="flex-1 p-6 font-mono text-sm overflow-y-auto custom-scrollbar bg-black/40">
-                  {terminalOutput.map((line, i) => (
-                    <div key={i} className={`mb-1 ${line.type === 'err' ? 'text-red-400' : line.type === 'success' ? 'text-primary' : line.type === 'info' ? 'text-slate-500 italic' : 'text-white'}`}>
-                       <span className="opacity-50 mr-2">{line.type === 'cmd' ? '$' : '>'}</span>
-                       {line.text}
+                  {terminalOutput.length === 0 ? (
+                    <div className="text-slate-800 italic text-sm flex items-center gap-2">
+                       <span className="material-symbols-outlined text-sm">terminal</span>
+                       Код ажиллуулахыг хүлээж байна...
                     </div>
-                  ))}
+                  ) : (
+                    terminalOutput.map((line, i) => (
+                        <div key={i} className={`mb-1.5 flex gap-2 ${line.type === 'err' ? 'text-red-400' : line.type === 'success' ? 'text-primary font-black' : line.type === 'info' ? 'text-slate-500 italic' : 'text-white'}`}>
+                           <span className="opacity-40 shrink-0 select-none">{line.type === 'cmd' ? '$' : '❯'}</span>
+                           <span className="whitespace-pre-wrap">{line.text}</span>
+                        </div>
+                    ))
+                  )}
+                  {isRunning && <div className="inline-block w-2 h-4 bg-primary animate-pulse ml-6 mt-1"></div>}
                 </div>
               </div>
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-               <span className="material-symbols-outlined text-[100px] text-slate-700 mb-6">menu_book</span>
-               <h3 className="text-2xl font-black text-slate-500 mb-2 uppercase">Онолын хэсэг</h3>
-               <p className="text-slate-600 max-w-xs">Тайлбарыг уншаад бэлэн болмогц "Дараагийнх" товчийг дарна уу.</p>
+               <div className="size-24 rounded-3xl bg-slate-800/50 flex items-center justify-center mb-6 border-2 border-white/5">
+                  <span className="material-symbols-outlined text-[48px] text-slate-500">menu_book</span>
+               </div>
+               <h3 className="text-2xl font-black text-slate-400 mb-2 uppercase tracking-tight">Онолын хэсэг</h3>
+               <p className="text-slate-600 max-w-xs font-medium">Зүүн талын тайлбарыг сайн уншаад бэлэн болмогц "Дараагийнх" товчийг дарж туршилт хийгээрэй.</p>
             </div>
           )}
         </section>
 
         {isAiOpen && (
-          <div className="w-1/3 bg-white dark:bg-slate-900 border-l-4 border-primary/20 flex flex-col">
-            <div className="p-5 border-b flex items-center justify-between bg-slate-50 dark:bg-slate-800">
-              <h4 className="font-black">AI Tutor</h4>
-              <button onClick={() => setIsAiOpen(false)}><span className="material-symbols-outlined">close</span></button>
+          <div className="w-1/3 bg-white dark:bg-slate-900 border-l-4 border-primary/20 flex flex-col animate-in slide-in-from-right duration-500">
+            <div className="p-5 border-b flex items-center justify-between bg-slate-50 dark:bg-slate-800/80">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary font-black">smart_toy</span>
+                <h4 className="font-black text-sm uppercase tracking-widest">AI Tutor</h4>
+              </div>
+              <button onClick={() => setIsAiOpen(false)} className="hover:rotate-90 transition-transform"><span className="material-symbols-outlined text-slate-400">close</span></button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50/20 dark:bg-transparent">
               {chatMessages.map((msg, idx) => (
                 <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`max-w-[90%] px-4 py-2 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-primary text-slate-900 font-bold' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                  <div className={`max-w-[90%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'user' ? 'bg-primary text-slate-900 font-bold' : 'bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800'}`}>
                     {msg.text}
                   </div>
                 </div>
               ))}
+              {isAiLoading && (
+                 <div className="flex gap-1 items-center px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit animate-pulse">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Багш бодож байна...</span>
+                 </div>
+              )}
               <div ref={chatEndRef} />
             </div>
-            <form onSubmit={(e) => { e.preventDefault(); askAi(); }} className="p-4 border-t flex gap-2">
-              <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Асуух зүйл байна уу?..." className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-2 text-sm font-bold" />
-              <button type="submit" disabled={isAiLoading} className="bg-primary text-slate-900 p-2 rounded-xl"><span className="material-symbols-outlined">send</span></button>
+            <form onSubmit={(e) => { e.preventDefault(); askAi(); }} className="p-4 border-t flex gap-2 bg-white dark:bg-slate-900">
+              <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Асуух зүйл байна уу?..." className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-5 py-3 text-sm font-bold focus:ring-4 focus:ring-primary/20 transition-all" />
+              <button type="submit" disabled={isAiLoading || !chatInput.trim()} className="bg-primary text-slate-900 size-11 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 transition-all"><span className="material-symbols-outlined font-black">send</span></button>
             </form>
           </div>
         )}

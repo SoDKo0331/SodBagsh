@@ -67,28 +67,36 @@ export const LESSON_DATA: Record<string, FullLesson> = {
         id: 2,
         type: 'coding',
         title: 'Миний хайрцаг',
-        body: "Нас хадгалах хайрцаг үүсгээд түүнийгээ дэлгэцэнд хэвлэе. Одоо чи!",
+        body: "Нас хадгалах хайрцаг үүсгээд түүнийгээ дэлгэцэнд хэвлэе. Дебаггер ашиглан санах ойд утга хэрхэн өөрчлөгдөж байгааг харж болно шүү.",
         codingTasks: [
           {
             language: 'python',
             fileName: 'age.py',
-            template: "age = 13\nprint('Миний нас: ' + str(age))",
+            template: "age = 13\n# Энд хэвлэх кодыг бичнэ үү\n",
             explanation: ["age = 13 - 'age' хайрцагт 13-ыг хийлээ."],
             expectedOutput: "Миний нас: 13"
           },
           {
             language: 'c',
             fileName: 'age.c',
-            template: "#include <stdio.h>\n\nint main() {\n    int age = 13;\n    printf(\"Миний нас: %d\\n\", age);\n    return 0;\n}",
+            template: "#include <stdio.h>\n\nint main() {\n    int age = 13;\n    // printf ашиглан 'Миний нас: 13' гэж хэвлэнэ үү\n    return 0;\n}",
             explanation: ["int age - Бүхэл тоо хадгалах хайрцаг."],
             expectedOutput: "Миний нас: 13",
+            debugSteps: [
+              { lineIndex: 3, variables: { age: 13 }, comment: "age хувьсагчид 13 утга оноолоо." },
+              { lineIndex: 5, variables: { age: 13 }, comment: "Энэ мөрөнд бид printf ашиглан утгыг хэвлэнэ." }
+            ]
           },
           {
             language: 'cpp',
             fileName: 'age.cpp',
-            template: "#include <iostream>\n\nint main() {\n    int age = 13;\n    std::cout << \"Миний нас: \" << age << std::endl;\n    return 0;\n}",
+            template: "#include <iostream>\n\nint main() {\n    int age = 13;\n    // std::cout ашиглан 'Миний нас: 13' гэж хэвлэнэ үү\n    return 0;\n}",
             explanation: ["int age = 13; - Хувьсагч зарлаж утга оноолоо."],
             expectedOutput: "Миний нас: 13",
+            debugSteps: [
+              { lineIndex: 3, variables: { age: 13 }, comment: "C++ дээр int төрлийн хувьсагч санах ойд хадгалагдав." },
+              { lineIndex: 5, variables: { age: 13 }, comment: "std::cout ашиглан гаралт руу илгээхэд бэлэн." }
+            ]
           }
         ]
       }
@@ -115,107 +123,31 @@ export const LESSON_DATA: Record<string, FullLesson> = {
           {
             language: 'python',
             fileName: 'logic.py',
-            template: "score = 15\nif score > 10:\n    print('Ялалт!')",
+            template: "score = 15\n# Хэрэв score 10-аас их бол 'Ялалт!' гэж хэвлэ\n",
             explanation: ["if score > 10 - Нөхцөл шалгаж байна."],
             expectedOutput: "Ялалт!"
           },
           {
             language: 'c',
             fileName: 'logic.c',
-            template: "#include <stdio.h>\n\nint main() {\n    int score = 15;\n    if (score > 10) {\n        printf(\"Ялалт!\\n\");\n    }\n    return 0;\n}",
+            template: "#include <stdio.h>\n\nint main() {\n    int score = 15;\n    // if нөхцөл ашиглан шалгана уу\n    return 0;\n}",
             explanation: ["if (score > 10) - Нөхцөл."],
             expectedOutput: "Ялалт!",
+            debugSteps: [
+              { lineIndex: 3, variables: { score: 15 }, comment: "Оноог 15 гэж тохирууллаа." },
+              { lineIndex: 4, variables: { score: 15 }, comment: "Нөхцөл үнэн (15 > 10) тул доторх код ажиллана." }
+            ]
           },
           {
             language: 'cpp',
             fileName: 'logic.cpp',
-            template: "#include <iostream>\n\nint main() {\n    int score = 15;\n    if (score > 10) {\n        std::cout << \"Ялалт!\" << std::endl;\n    }\n    return 0;\n}",
+            template: "#include <iostream>\n\nint main() {\n    int score = 15;\n    // if ашиглан 'Ялалт!' гэж хэвлэх нөхцөл бичнэ үү\n    return 0;\n}",
             explanation: ["C++ дээр 'if' бүтэц нь C-тэй ижилхэн байдаг."],
             expectedOutput: "Ялалт!",
-          }
-        ]
-      }
-    ]
-  },
-  'm4': {
-    id: 'm4',
-    title: 'LEVEL 2: Loop - Давталт',
-    steps: [
-      {
-        id: 1,
-        type: 'concept',
-        title: 'Уйтгартай ажлыг компьютерээр хийлгэ',
-        body: "Нэг зүйлийг 100 удаа хийх хэцүү тийм ээ? Давталт (Loop) ашиглаад компьютерээр хэд ч хамаагүй хийлгэж болно.",
-        analogy: { icon: 'rebase_edit', text: "Дууг 'repeat' дээр тавихтай адил. Зогсоох хүртэл дахиад л явна." }
-      },
-      {
-        id: 2,
-        type: 'coding',
-        title: '3 удаа тоолох',
-        body: "1-ээс 3 хүртэл тоолох давталт бичиж үзье. Одоо чи!",
-        codingTasks: [
-          {
-            language: 'python',
-            fileName: 'loop.py',
-            template: "for i in range(1, 4):\n    print('Тоо: ' + str(i))",
-            explanation: ["range(1, 4) - 1-ээс 3 хүртэл."],
-            expectedOutput: "Тоо: 1\nТоо: 2\nТоо: 3"
-          },
-          {
-            language: 'c',
-            fileName: 'loop.c',
-            template: "#include <stdio.h>\n\nint main() {\n    for (int i = 1; i <= 3; i++) {\n        printf(\"Тоо: %d\\n\", i);\n    }\n    return 0;\n}",
-            explanation: ["for (эхлэл; нөхцөл; өөрчлөлт)"],
-            expectedOutput: "Тоо: 1\nТоо: 2\nТоо: 3",
-          },
-          {
-            language: 'cpp',
-            fileName: 'loop.cpp',
-            template: "#include <iostream>\n\nint main() {\n    for (int i = 1; i <= 3; i++) {\n        std::cout << \"Тоо: \" << i << std::endl;\n    }\n    return 0;\n}",
-            explanation: ["C++ дээр мөн л 'for' давталт C-тэй ижил ажиллана."],
-            expectedOutput: "Тоо: 1\nТоо: 2\nТоо: 3",
-          }
-        ]
-      }
-    ]
-  },
-  'm5': {
-    id: 'm5',
-    title: 'LEVEL 3: Функц - Шидэт тушаал',
-    steps: [
-      {
-        id: 1,
-        type: 'concept',
-        title: 'Өөрийн тушаалыг үүсгэ',
-        body: "Функц бол олон кодыг нэг нэрэн дор багцалж байгаа хэрэг юм. Дараа нь зөвхөн нэрийг нь дуудахад тэр бүх код ажиллана.",
-        analogy: { icon: 'function', text: "Роботдоо 'цай чана' гэж зааж өгөхтэй адил." }
-      },
-      {
-        id: 2,
-        type: 'coding',
-        title: 'Мэндчилгээний функц',
-        body: "Мэндчилдэг функц үүсгээд дуудаж ажиллуулж үзье.",
-        codingTasks: [
-          {
-            language: 'python',
-            fileName: 'func.py',
-            template: "def greet():\n    print('Сайн уу, Багшаа!')\n\ngreet()",
-            explanation: ["def greet() - Тодорхойлох."],
-            expectedOutput: "Сайн уу, Багшаа!"
-          },
-          {
-            language: 'c',
-            fileName: 'func.c',
-            template: "#include <stdio.h>\n\nvoid greet() {\n    printf(\"Сайн уу, Багшаа!\\n\");\n}\n\nint main() {\n    greet();\n    return 0;\n}",
-            explanation: ["void greet() - Буцаах утгагүй функц."],
-            expectedOutput: "Сайн уу, Багшаа!",
-          },
-          {
-            language: 'cpp',
-            fileName: 'func.cpp',
-            template: "#include <iostream>\n\nvoid greet() {\n    std::cout << \"Сайн уу, Багшаа!\" << std::endl;\n}\n\nint main() {\n    greet();\n    return 0;\n}",
-            explanation: ["C++ хэлний функц зарлах хэлбэр."],
-            expectedOutput: "Сайн уу, Багшаа!",
+            debugSteps: [
+              { lineIndex: 3, variables: { score: 15 }, comment: "score хувьсагч санах ойд хадгалагдлаа." },
+              { lineIndex: 4, variables: { score: 15 }, comment: "Нөхцөл шалгаж байна..." }
+            ]
           }
         ]
       }
