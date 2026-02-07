@@ -9,6 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script>
+        // process.env алдаанаас сэргийлэх
+        window.process = { env: { API_KEY: "" } };
+        
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -58,5 +61,7 @@
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen antialiased">
     <div id="root"></div>
+    <!-- Програмын орох цэгийг дуудах -->
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>
