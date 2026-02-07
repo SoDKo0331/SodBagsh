@@ -11,6 +11,11 @@ interface ChatMessage {
   text: string;
 }
 
+interface TerminalLine {
+  type: 'cmd' | 'out' | 'err' | 'success';
+  text: string;
+}
+
 const TEMPLATES = {
   python: "name = 'Super Coder'\nprint('Сайн уу, ' + name + '!')\n\nfor i in range(3):\n    print('Код бичих гоё байна!')",
   c: "#include <stdio.h>\n\nint main() {\n    char name[] = \"Super Coder\";\n    printf(\"Сайн уу, %s!\\n\", name);\n    \n    for(int i=0; i<3; i++) {\n        printf(\"Код бичих гоё байна!\\n\");\n    }\n    return 0;\n}",
@@ -20,7 +25,7 @@ const TEMPLATES = {
 const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
   const [activeLanguage, setActiveLanguage] = useState<'python' | 'c' | 'cpp'>('python');
   const [code, setCode] = useState(TEMPLATES.python);
-  const [output, setOutput] = useState<string[]>([]);
+  const [output, setOutput] = useState<TerminalLine[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [isAiOpen, setIsAiOpen] = useState(false);
   
@@ -31,10 +36,15 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const terminalEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  useEffect(() => {
+    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [output]);
 
   const handleLanguageChange = (lang: 'python' | 'c' | 'cpp') => {
     if (confirm("Хэл солих үед одоогийн бичсэн код устах болно. Зөвшөөрөх үү?")) {
@@ -47,22 +57,26 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
   const runCode = () => {
     setIsRunning(true);
     const cmdMap = {
-      python: "$ python3 main.py",
-      c: "$ gcc main.c -o main && ./main",
-      cpp: "$ g++ main.cpp -o main && ./main"
+      python: "python3 main.py",
+      c: "gcc main.c -o main && ./main",
+      cpp: "g++ main.cpp -o main && ./main"
     };
-    setOutput(prev => [...prev, cmdMap[activeLanguage]]);
     
-    // Simple simulation of execution
+    setOutput(prev => [...prev, {type: 'cmd', text: cmdMap[activeLanguage]}]);
+    
     setTimeout(() => {
       const mockResult: string[] = [
         "Сайн уу, Super Coder!",
-        "Код бичих гоө байна!",
-        "Код бичих гоө байна!",
-        "Код бичих гоө байна!"
+        "Код бичих гоё байна!",
+        "Код бичих гоё байна!",
+        "Код бичих гоё байна!"
       ];
       
-      setOutput(prev => [...prev, ...mockResult]);
+      setOutput(prev => [
+        ...prev, 
+        ...mockResult.map(r => ({type: 'out', text: r} as TerminalLine)),
+        {type: 'success', text: "Execution finished."}
+      ]);
       setIsRunning(false);
     }, 1200);
   };
@@ -115,24 +129,15 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
 
         <div className="flex items-center gap-4">
           <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-            <button 
-              onClick={() => handleLanguageChange('python')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'python' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
-            >
-              Python
-            </button>
-            <button 
-              onClick={() => handleLanguageChange('c')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'c' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
-            >
-              C
-            </button>
-            <button 
-              onClick={() => handleLanguageChange('cpp')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'cpp' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
-            >
-              C++
-            </button>
+            {['python', 'c', 'cpp'].map((lang) => (
+               <button 
+                  key={lang}
+                  onClick={() => handleLanguageChange(lang as any)}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === lang ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
+                >
+                  {lang === 'cpp' ? 'C++' : lang.toUpperCase()}
+                </button>
+            ))}
           </div>
           
           <button 
@@ -155,7 +160,6 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
       </header>
 
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Editor Area */}
         <div className={`flex flex-col bg-[#1e1e1e] border-r border-white/5 transition-all duration-500 ${isAiOpen ? 'w-1/3' : 'w-2/3'}`}>
            <div className="px-6 py-2 bg-[#2d2d2d] flex items-center justify-between border-b border-white/5">
               <div className="flex items-center gap-2">
@@ -178,30 +182,44 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
            </div>
         </div>
 
-        {/* Terminal Area */}
         <div className={`flex flex-col bg-[#0c0c0c] transition-all duration-500 ${isAiOpen ? 'w-1/3' : 'w-1/3'}`}>
           <div className="px-6 py-2 bg-[#1a1a1a] border-b border-white/5 flex items-center justify-between">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Үр дүн (Terminal)</span>
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Гаралт (Terminal)</span>
             <button onClick={() => setOutput([])} className="text-[10px] font-black text-slate-600 hover:text-slate-400 uppercase tracking-widest transition-colors">Clear</button>
           </div>
-          <div className="flex-1 p-6 font-mono text-sm text-primary overflow-y-auto custom-scrollbar bg-black/40">
+          <div className="flex-1 p-6 font-mono text-base overflow-y-auto custom-scrollbar bg-black/40">
             {output.length === 0 ? (
-              <div className="text-slate-800 italic flex items-center gap-2">
+              <div className="text-slate-800 italic flex items-center gap-2 text-sm">
                 <span className="material-symbols-outlined text-sm">terminal</span>
                 Код ажиллуулахыг хүлээж байна...
               </div>
             ) : (
-              output.map((line, i) => (
-                <div key={i} className={`flex gap-3 mb-1 ${line.startsWith('$') ? 'text-slate-500' : 'animate-in slide-in-from-left duration-200'}`}>
-                   <span className="select-none text-slate-700">{line.startsWith('$') ? '' : '>'}</span>
-                   <span className="whitespace-pre-wrap">{line}</span>
-                </div>
-              ))
+              <div className="space-y-1.5">
+                {output.map((line, i) => (
+                  <div key={i} className={`flex gap-3 animate-in slide-in-from-left duration-200 ${
+                    line.type === 'cmd' ? 'text-blue-400/70 italic' : 
+                    line.type === 'err' ? 'text-red-400' : 
+                    line.type === 'success' ? 'text-primary/50 text-xs' : 
+                    'text-primary font-medium'
+                  }`}>
+                     <span className="select-none text-slate-800 shrink-0">
+                        {line.type === 'cmd' ? '$' : line.type === 'err' ? '!' : '❯'}
+                     </span>
+                     <span className="whitespace-pre-wrap">{line.text}</span>
+                  </div>
+                ))}
+                {isRunning && (
+                   <div className="flex gap-3 text-primary animate-pulse">
+                      <span className="select-none text-slate-800">❯</span>
+                      <span className="inline-block w-2 h-4 bg-primary mt-1"></span>
+                   </div>
+                )}
+                <div ref={terminalEndRef} />
+              </div>
             )}
           </div>
         </div>
 
-        {/* AI Tutor Sidebar */}
         <div 
           className={`absolute right-0 top-0 bottom-0 z-40 bg-white dark:bg-slate-900 border-l-4 border-primary/20 shadow-[-20px_0_50px_rgba(0,0,0,0.2)] transition-all duration-500 flex flex-col ${isAiOpen ? 'w-1/3 translate-x-0' : 'w-1/3 translate-x-full'}`}
         >

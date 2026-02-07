@@ -21,7 +21,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [selectedQuizOption, setSelectedQuizOption] = useState<string | null>(null);
   const [isTaskCompleted, setIsTaskCompleted] = useState(false);
-  const [terminalOutput, setTerminalOutput] = useState<string[]>([]);
+  const [terminalOutput, setTerminalOutput] = useState<{type: 'cmd' | 'out' | 'err' | 'success', text: string}[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [activeLanguage, setActiveLanguage] = useState<'python' | 'c' | 'cpp'>(initialLanguage);
@@ -57,7 +57,6 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     setTerminalOutput([]);
     if (onLanguageChange) onLanguageChange(lang);
     
-    // Notify tutor of language change if chat is open
     if (isAiOpen) {
       setChatMessages(prev => [...prev, { role: 'model', text: `Одоо бид ${lang === 'c' ? 'C Language' : lang === 'cpp' ? 'C++' : 'Python'} дээр үргэлжлүүлэн суралцах болно. Сонирхолтой байгаа биз? 🚀` }]);
     }
@@ -68,14 +67,19 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     setIsRunning(true);
     setIsDebugMode(false);
     const cmdMap = {
-      python: `$ python ${currentTask.fileName}`,
-      c: `$ gcc ${currentTask.fileName} -o main && ./main`,
-      cpp: `$ g++ ${currentTask.fileName} -o main && ./main`
+      python: `python ${currentTask.fileName}`,
+      c: `gcc ${currentTask.fileName} -o main && ./main`,
+      cpp: `g++ ${currentTask.fileName} -o main && ./main`
     };
-    setTerminalOutput(prev => [...prev, cmdMap[activeLanguage]]);
+    
+    setTerminalOutput(prev => [...prev, {type: 'cmd', text: cmdMap[activeLanguage]}]);
     
     setTimeout(() => {
-      setTerminalOutput(prev => [...prev, currentTask.expectedOutput]);
+      setTerminalOutput(prev => [
+        ...prev, 
+        {type: 'out', text: currentTask.expectedOutput},
+        {type: 'success', text: "Process finished with exit code 0"}
+      ]);
       setIsRunning(false);
       setIsTaskCompleted(true);
     }, 1000);
@@ -85,7 +89,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     if (!currentTask?.debugSteps) return;
     setIsDebugMode(true);
     setDebugStepIdx(0);
-    setTerminalOutput(["$ gdb ./main (Debugger эхэллээ)"]);
+    setTerminalOutput([{type: 'cmd', text: "gdb ./main"}, {type: 'out', text: "GNU gdb (Debugger) started. Source loaded."}]);
   };
 
   const stepDebug = () => {
@@ -95,7 +99,11 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     } else {
       setIsDebugMode(false);
       setIsTaskCompleted(true);
-      setTerminalOutput(prev => [...prev, "Debug амжилттай дууслаа.", currentTask.expectedOutput]);
+      setTerminalOutput(prev => [
+        ...prev, 
+        {type: 'success', text: "Debug session finished."}, 
+        {type: 'out', text: currentTask.expectedOutput}
+      ]);
     }
   };
 
@@ -177,24 +185,15 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mr-4 border border-slate-200 dark:border-slate-700">
-            <button 
-              onClick={() => handleLanguageToggle('c')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'c' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
-            >
-              C
-            </button>
-            <button 
-              onClick={() => handleLanguageToggle('cpp')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'cpp' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
-            >
-              C++
-            </button>
-            <button 
-              onClick={() => handleLanguageToggle('python')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === 'python' ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
-            >
-              Python
-            </button>
+            {['c', 'cpp', 'python'].map((lang) => (
+              <button 
+                key={lang}
+                onClick={() => handleLanguageToggle(lang as any)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeLanguage === lang ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+              >
+                {lang === 'cpp' ? 'C++' : lang.toUpperCase()}
+              </button>
+            ))}
           </div>
           
           <button 
@@ -343,26 +342,29 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
                       {Object.keys(activeDebugStep?.variables || {}).length > 0 ? (
-                        <div className="grid grid-cols-[1fr_auto_1.5fr] gap-x-4 gap-y-2 px-2">
-                          <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-1">Нэр (Name)</div>
-                          <div></div>
-                          <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-1">Утга (Value)</div>
-
-                          {Object.entries(activeDebugStep?.variables || {}).map(([key, val]) => (
-                            <React.Fragment key={key}>
-                              <div className="flex items-center gap-2 py-1">
-                                <span className="size-1.5 rounded-full bg-primary/40"></span>
-                                <span className="text-primary font-black text-sm font-mono">{key}</span>
-                              </div>
-                              <div className="flex items-center text-slate-600 font-mono text-xs">=</div>
-                              <div className="flex items-center py-1">
-                                <span className={`px-3 py-1 rounded-lg bg-white/5 font-mono text-sm border border-white/5 ${typeof val === 'number' ? 'text-yellow-400' : 'text-cyan-400'}`}>
-                                  {JSON.stringify(val)}
-                                </span>
-                              </div>
-                            </React.Fragment>
-                          ))}
-                        </div>
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="border-b border-white/5">
+                              <th className="text-[9px] font-black text-slate-500 uppercase tracking-widest pb-2 w-1/2">Нэр (Name)</th>
+                              <th className="text-[9px] font-black text-slate-500 uppercase tracking-widest pb-2 w-1/2">Утга (Value)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(activeDebugStep?.variables || {}).map(([key, val]) => (
+                              <tr key={key} className="group/row hover:bg-white/5 transition-colors">
+                                <td className="py-2 flex items-center gap-2">
+                                  <span className="size-1.5 rounded-full bg-primary/40 group-hover/row:scale-125 transition-transform"></span>
+                                  <span className="text-primary font-black text-sm font-mono">{key}</span>
+                                </td>
+                                <td className="py-2">
+                                  <span className={`px-2 py-0.5 rounded-md bg-white/5 font-mono text-sm border border-white/5 ${typeof val === 'number' ? 'text-yellow-400' : 'text-cyan-400'}`}>
+                                    {JSON.stringify(val)}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       ) : (
                         <div className="flex flex-col items-center justify-center py-8 opacity-40">
                           <span className="material-symbols-outlined text-4xl mb-2">inbox</span>
@@ -391,29 +393,58 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
               </div>
 
               <div className="h-1/3 flex flex-col border-t border-white/10 bg-[#0c0c0c]">
-                <div className="flex items-center justify-between px-6 py-3 bg-[#1a1a1a]">
-                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Үр дүн (Terminal)</span>
+                <div className="flex items-center justify-between px-6 py-3 bg-[#1a1a1a] shadow-inner">
+                   <div className="flex items-center gap-2">
+                      <span className="size-2 rounded-full bg-slate-700"></span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Терминал (Console)</span>
+                   </div>
                    {!isDebugMode && (
-                    <button 
-                      onClick={handleRunCode}
-                      disabled={isRunning}
-                      className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-xs font-black text-slate-900 hover:scale-105 transition-all disabled:opacity-50"
-                    >
-                      <span className="material-symbols-outlined text-sm font-bold">{isRunning ? 'sync' : 'play_arrow'}</span>
-                      {isRunning ? 'Ажиллуулж байна...' : 'Ажиллуулах'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => setTerminalOutput([])}
+                        className="text-[10px] font-black text-slate-600 hover:text-slate-400 transition-colors uppercase"
+                      >
+                        Цэвэрлэх
+                      </button>
+                      <button 
+                        onClick={handleRunCode}
+                        disabled={isRunning}
+                        className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-xs font-black text-slate-900 hover:scale-105 transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
+                      >
+                        <span className="material-symbols-outlined text-sm font-bold">{isRunning ? 'sync' : 'play_arrow'}</span>
+                        {isRunning ? 'Ажиллуулж байна...' : 'Ажиллуулах'}
+                      </button>
+                    </div>
                    )}
                 </div>
-                <div className="flex-1 p-6 font-mono text-lg text-primary overflow-y-auto custom-scrollbar bg-black/40">
+                <div className="flex-1 p-6 font-mono text-lg overflow-y-auto custom-scrollbar bg-black/40">
                   {terminalOutput.length === 0 ? (
-                    <div className="text-slate-700 italic text-sm">Код ажиллуулах эсвэл Debug хийхийг хүлээж байна...</div>
+                    <div className="text-slate-700 italic text-sm flex items-center gap-2">
+                       <span className="material-symbols-outlined text-sm">terminal</span>
+                       Код ажиллуулахыг хүлээж байна...
+                    </div>
                   ) : (
-                    terminalOutput.map((line, i) => (
-                      <div key={i} className={`flex gap-3 ${line.startsWith('$') ? 'text-slate-500' : 'animate-in slide-in-from-left duration-300'}`}>
-                         <span className="select-none text-slate-700">{line.startsWith('$') ? '' : '>'}</span>
-                         <span>{line}</span>
-                      </div>
-                    ))
+                    <div className="space-y-2">
+                      {terminalOutput.map((line, i) => (
+                        <div key={i} className={`flex gap-3 animate-in slide-in-from-left duration-300 ${
+                          line.type === 'cmd' ? 'text-blue-400/80 italic' : 
+                          line.type === 'err' ? 'text-red-400 font-bold' : 
+                          line.type === 'success' ? 'text-primary/70 text-sm' : 
+                          'text-primary font-bold'
+                        }`}>
+                           <span className="select-none text-slate-800 shrink-0">
+                              {line.type === 'cmd' ? '$' : line.type === 'err' ? '!' : '❯'}
+                           </span>
+                           <span className="whitespace-pre-wrap">{line.text}</span>
+                        </div>
+                      ))}
+                      {isRunning && (
+                        <div className="flex gap-3 text-primary animate-pulse">
+                          <span className="select-none text-slate-800">❯</span>
+                          <span className="inline-block w-2 h-5 bg-primary mt-1"></span>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

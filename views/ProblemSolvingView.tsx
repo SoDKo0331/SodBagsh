@@ -9,10 +9,15 @@ interface ProblemSolvingViewProps {
   onSolve: (problemId: string) => void;
 }
 
+interface TerminalLine {
+  type: 'cmd' | 'out' | 'err' | 'success';
+  text: string;
+}
+
 const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack, onSolve }) => {
   const [activeLanguage, setActiveLanguage] = useState<'python' | 'c' | 'cpp'>('python');
   const [code, setCode] = useState(problem.templates.python);
-  const [terminalOutput, setTerminalOutput] = useState<string[]>([]);
+  const [terminalOutput, setTerminalOutput] = useState<TerminalLine[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [isAiOpen, setIsAiOpen] = useState(false);
   
@@ -21,26 +26,34 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
     { role: 'model', text: `Сайн уу! Би чамд '${problem.title}' бодлогыг бодоход чинь тусална. Асуух зүйл байна уу?` }
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const terminalEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setCode(problem.templates[activeLanguage]);
   }, [activeLanguage, problem]);
 
+  useEffect(() => {
+    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [terminalOutput]);
+
   const handleRun = () => {
     setIsRunning(true);
     const cmdMap = {
-      python: "$ python solution.py",
-      c: "$ gcc solution.c -o solution && ./solution",
-      cpp: "$ g++ solution.cpp -o solution && ./solution"
+      python: "python solution.py",
+      c: "gcc solution.c -o solution && ./solution",
+      cpp: "g++ solution.cpp -o solution && ./solution"
     };
-    setTerminalOutput([cmdMap[activeLanguage]]);
+    
+    setTerminalOutput([{type: 'cmd', text: cmdMap[activeLanguage]}]);
 
     setTimeout(() => {
-      // Энгийн тест шалгалт (Жишээ)
-      setTerminalOutput(prev => [...prev, problem.expectedOutput]);
+      setTerminalOutput(prev => [
+        ...prev, 
+        {type: 'out', text: problem.expectedOutput},
+        {type: 'success', text: "All tests passed successfully!"}
+      ]);
       setIsRunning(false);
       
-      // Хэрэв зөв бол
       if (confirm("Бодлогыг зөв бодлоо! Хадгалах уу?")) {
         onSolve(problem.id);
         onBack();
@@ -83,22 +96,27 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
           <h2 className="font-black text-slate-900 dark:text-white">{problem.title}</h2>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-            <button onClick={() => setActiveLanguage('python')} className={`px-4 py-1 rounded-md text-[10px] font-black uppercase ${activeLanguage === 'python' ? 'bg-primary text-slate-900' : 'text-slate-500'}`}>Python</button>
-            <button onClick={() => setActiveLanguage('c')} className={`px-4 py-1 rounded-md text-[10px] font-black uppercase ${activeLanguage === 'c' ? 'bg-primary text-slate-900' : 'text-slate-500'}`}>C</button>
-            <button onClick={() => setActiveLanguage('cpp')} className={`px-4 py-1 rounded-md text-[10px] font-black uppercase ${activeLanguage === 'cpp' ? 'bg-primary text-slate-900' : 'text-slate-500'}`}>C++</button>
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+            {['python', 'c', 'cpp'].map((lang) => (
+              <button 
+                key={lang}
+                onClick={() => setActiveLanguage(lang as any)} 
+                className={`px-4 py-1 rounded-md text-[10px] font-black uppercase transition-all ${activeLanguage === lang ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500'}`}
+              >
+                {lang === 'cpp' ? 'C++' : lang.toUpperCase()}
+              </button>
+            ))}
           </div>
-          <button onClick={() => setIsAiOpen(!isAiOpen)} className="p-2 border-2 border-primary/20 rounded-lg text-primary hover:bg-primary/5 transition-all">
+          <button onClick={() => setIsAiOpen(!isAiOpen)} className={`p-2 border-2 rounded-lg transition-all ${isAiOpen ? 'bg-primary border-primary text-slate-900' : 'border-primary/20 text-primary hover:bg-primary/5'}`}>
              <span className="material-symbols-outlined">smart_toy</span>
           </button>
-          <button onClick={handleRun} disabled={isRunning} className="bg-primary text-slate-900 px-6 py-2 rounded-lg font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all">
-            {isRunning ? 'Running...' : 'Submit'}
+          <button onClick={handleRun} disabled={isRunning} className="bg-primary text-slate-900 px-6 py-2 rounded-lg font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20">
+            {isRunning ? 'Checking...' : 'Submit'}
           </button>
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Left: Problem Statement */}
         <div className="w-1/3 bg-white dark:bg-[#0d1a13] border-r border-slate-200 dark:border-white/5 overflow-y-auto p-8 custom-scrollbar">
           <h3 className="text-2xl font-black mb-6">Бодлогын нөхцөл</h3>
           <p className="text-slate-600 dark:text-slate-300 font-medium leading-relaxed mb-8">{problem.description}</p>
@@ -125,42 +143,83 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
           </div>
         </div>
 
-        {/* Right: Code Editor & AI Sidebar */}
         <div className="flex-1 flex overflow-hidden relative">
           <div className={`flex flex-col h-full bg-[#1e1e1e] transition-all duration-500 ${isAiOpen ? 'w-1/2' : 'w-full'}`}>
+             <div className="px-6 py-2 bg-[#2d2d2d] border-b border-white/5 flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Solution Editor</span>
+             </div>
              <textarea 
                value={code}
                onChange={(e) => setCode(e.target.value)}
                className="flex-1 bg-transparent p-8 font-mono text-lg text-white resize-none outline-none custom-scrollbar"
                spellCheck={false}
              />
-             <div className="h-1/3 bg-[#0c0c0c] border-t border-white/5 p-6 font-mono text-primary overflow-y-auto custom-scrollbar">
-                {terminalOutput.map((l, i) => (
-                  <div key={i} className="mb-1">{l}</div>
-                ))}
+             <div className="h-1/3 bg-[#0c0c0c] border-t border-white/5 flex flex-col">
+                <div className="px-6 py-2 bg-[#1a1a1a] border-b border-white/5 flex items-center justify-between">
+                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Гаралт (Terminal)</span>
+                   <button onClick={() => setTerminalOutput([])} className="text-[10px] text-slate-600 hover:text-slate-400 font-black uppercase">Clear</button>
+                </div>
+                <div className="flex-1 p-6 font-mono text-sm overflow-y-auto custom-scrollbar bg-black/40">
+                   {terminalOutput.length === 0 ? (
+                      <div className="text-slate-800 italic flex items-center gap-2">
+                         <span className="material-symbols-outlined text-sm">terminal</span>
+                         Шалгалтын үр дүн энд гарна...
+                      </div>
+                   ) : (
+                      <div className="space-y-1.5">
+                        {terminalOutput.map((l, i) => (
+                          <div key={i} className={`flex gap-3 animate-in slide-in-from-left duration-200 ${
+                            l.type === 'cmd' ? 'text-blue-400/70 italic' : 
+                            l.type === 'err' ? 'text-red-400' : 
+                            l.type === 'success' ? 'text-primary font-bold' : 
+                            'text-primary font-medium'
+                          }`}>
+                             <span className="select-none text-slate-800 shrink-0">
+                                {l.type === 'cmd' ? '$' : l.type === 'err' ? '!' : '❯'}
+                             </span>
+                             <span className="whitespace-pre-wrap">{l.text}</span>
+                          </div>
+                        ))}
+                        {isRunning && (
+                           <div className="flex gap-3 text-primary animate-pulse">
+                              <span className="select-none text-slate-800">❯</span>
+                              <span className="inline-block w-2 h-4 bg-primary mt-1"></span>
+                           </div>
+                        )}
+                        <div ref={terminalEndRef} />
+                      </div>
+                   )}
+                </div>
              </div>
           </div>
 
           {isAiOpen && (
             <div className="w-1/2 bg-white dark:bg-slate-900 border-l-4 border-primary/20 flex flex-col animate-in slide-in-from-right duration-500">
-               <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                  <h4 className="font-black">AI Tutor</h4>
-                  <button onClick={() => setIsAiOpen(false)} className="material-symbols-outlined text-slate-400">close</button>
+               <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+                  <div className="flex items-center gap-3">
+                     <span className="material-symbols-outlined text-primary">smart_toy</span>
+                     <h4 className="font-black">AI Tutor</h4>
+                  </div>
+                  <button onClick={() => setIsAiOpen(false)} className="material-symbols-outlined text-slate-400 hover:text-slate-600">close</button>
                </div>
-               <div className="flex-1 overflow-y-auto p-6 space-y-4">
+               <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/20 dark:bg-transparent custom-scrollbar">
                   {chatMessages.map((m, i) => (
                     <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-                       <div className={`px-4 py-2 rounded-2xl text-sm ${m.role === 'user' ? 'bg-primary text-slate-900 font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200'}`}>
+                       <div className={`px-4 py-2 rounded-2xl text-sm leading-relaxed max-w-[90%] shadow-sm ${m.role === 'user' ? 'bg-primary text-slate-900 font-bold' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700'}`}>
                          {m.text}
                        </div>
                     </div>
                   ))}
-                  {isAiLoading && <div className="text-[10px] font-bold text-primary animate-pulse">Thinking...</div>}
+                  {isAiLoading && (
+                    <div className="flex gap-2 p-2 animate-pulse">
+                       <span className="text-[10px] font-black text-primary uppercase tracking-widest">Багш бодож байна...</span>
+                    </div>
+                  )}
                </div>
-               <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+               <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                   <form onSubmit={(e) => { e.preventDefault(); askAi(); }} className="flex gap-2">
-                    <input value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="Асуух зүйл..." className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20" />
-                    <button type="submit" className="bg-primary text-slate-900 p-2 rounded-xl"><span className="material-symbols-outlined">send</span></button>
+                    <input value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="Бодлогоо бодоход тусламж хэрэгтэй юу?..." className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-4 focus:ring-primary/20 placeholder:text-slate-400" />
+                    <button type="submit" disabled={!chatInput.trim() || isAiLoading} className="bg-primary text-slate-900 size-11 rounded-xl flex items-center justify-center hover:scale-105 transition-all shadow-lg shadow-primary/20"><span className="material-symbols-outlined font-black">send</span></button>
                   </form>
                </div>
             </div>
