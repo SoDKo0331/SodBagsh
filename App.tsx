@@ -25,6 +25,7 @@ const INITIAL_BADGES: Badge[] = [
   { id: 'b3', title: 'Логикч', description: 'Шийдвэр гаргах логикийг сурав.', icon: 'alt_route', color: 'bg-purple-500', isEarned: false },
   { id: 'b4', title: 'Эрэмбэлэгч', description: 'Bubble Sort-ыг бүрэн эзэмшив.', icon: 'format_list_numbered', color: 'bg-primary', isEarned: false },
   { id: 's1', title: 'Тууштай сурагч', description: '3 хоног дараалан суралцав.', icon: 'local_fire_department', color: 'bg-orange-500', isEarned: false },
+  { id: 'q1', title: 'Python Master', description: 'Python-ий 30 асуултанд 100% зөв хариулж мастер болов.', icon: 'psychology', color: 'bg-red-600', isEarned: false },
 ];
 
 const App: React.FC = () => {
@@ -130,6 +131,12 @@ const App: React.FC = () => {
     }
   };
 
+  const handleQuizComplete = (score: number, total: number) => {
+    if (score === total) {
+      earnBadge('q1');
+    }
+  };
+
   const handleExitLesson = (completed?: boolean) => {
     if (completed && selectedModuleId) {
       const module = modules.find(m => m.id === selectedModuleId);
@@ -193,7 +200,11 @@ const App: React.FC = () => {
             onSolve={handleSolveProblem}
           />
         ) : currentView === 'quiz' ? (
-          <QuizView onBack={() => setCurrentView('dashboard')} />
+          <QuizView 
+            user={user}
+            onBack={() => setCurrentView('dashboard')} 
+            onComplete={handleQuizComplete}
+          />
         ) : currentView === 'badges' ? (
           <div className="flex-1 overflow-y-auto p-10 bg-[#f8faf9] dark:bg-[#0d1a13]">
              <header className="mb-10 flex items-center justify-between">
