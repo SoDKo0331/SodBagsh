@@ -110,9 +110,15 @@ const App: React.FC = () => {
   const handleGoogleLogin = async () => {
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed", error);
-      alert("Gmail-ээр нэвтрэхэд алдаа гарлаа.");
+      if (error.code === 'auth/unauthorized-domain') {
+        alert("Энэ домэйн (sod-bagsh.vercel.app) Firebase-д зөвшөөрөгдөөгүй байна. Firebase Console -> Authentication -> Settings -> Authorized domains хэсэгт энэ домэйныг нэмнэ үү.");
+      } else if (error.code === 'auth/popup-blocked') {
+        alert("Нэвтрэх цонх (Popup) хаагдсан байна. Хөтчийнхөө тохиргооноос Popup-ыг зөвшөөрнө үү.");
+      } else {
+        alert("Нэвтрэхэд алдаа гарлаа: " + error.message);
+      }
     }
   };
 
@@ -179,19 +185,18 @@ const App: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-background-dark font-display p-6 overflow-hidden relative">
+      <div className="h-screen w-full flex items-center justify-center bg-background-dark font-display p-6 overflow-hidden relative text-center">
         <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none overflow-hidden">
            <div className="absolute top-[10%] left-[20%] text-primary/40"><span className="material-symbols-outlined text-9xl">terminal</span></div>
            <div className="absolute bottom-[20%] right-[10%] text-primary/40"><span className="material-symbols-outlined text-[150px]">code</span></div>
-           <div className="absolute top-[40%] right-[30%] text-primary/40 rotate-12"><span className="material-symbols-outlined text-[120px]">psychology</span></div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[48px] shadow-2xl border-4 border-primary/20 max-w-md w-full text-center relative z-10 animate-in zoom-in duration-500">
+        <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[48px] shadow-2xl border-4 border-primary/20 max-w-md w-full relative z-10 animate-in zoom-in duration-500">
           <div className="size-24 rounded-[32px] bg-primary flex items-center justify-center text-slate-900 shadow-xl shadow-primary/30 mx-auto mb-10 rotate-3">
             <span className="material-symbols-outlined text-6xl font-black">rocket_launch</span>
           </div>
           <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tighter">CodeQuest</h1>
-          <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-12">Level Up Your Coding Skills</p>
+          <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-12">Gmail-ээр нэвтэрч ахицдаа хадгалаарай</p>
           
           <div className="space-y-4">
             <button 
@@ -201,7 +206,11 @@ const App: React.FC = () => {
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa/google.svg" className="size-6" alt="Google" />
               Gmail-ээр нэвтрэх
             </button>
-            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Таны бүх ахиц дэвшлийг Gmail-д тань <br/>автоматаар хадгална.</p>
+            <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+               <p className="text-[9px] text-yellow-600 dark:text-yellow-400 font-bold uppercase leading-relaxed">
+                 Санамж: Хэрэв нэвтэрч болохгүй байвал Firebase тохиргооноос Authorized Domains хэсэгт "sod-bagsh.vercel.app" домэйныг нэмсэн эсэхээ шалгаарай.
+               </p>
+            </div>
           </div>
         </div>
       </div>
