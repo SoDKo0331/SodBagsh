@@ -13,6 +13,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, streak, userName, onNavCh
   const navItems = [
     { label: 'Хичээлүүд', id: 'dashboard', icon: 'auto_stories' },
     { label: 'Бодлогын сан', id: 'problems', icon: 'quiz' },
+    { label: 'Тестүүд', id: 'quiz', icon: 'psychology' },
     { label: 'Sandbox', id: 'sandbox', icon: 'extension' },
     { label: 'Цолнууд', id: 'badges', icon: 'workspace_premium' },
   ];

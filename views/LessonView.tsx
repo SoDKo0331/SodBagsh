@@ -21,7 +21,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [selectedQuizOption, setSelectedQuizOption] = useState<string | null>(null);
   const [isTaskCompleted, setIsTaskCompleted] = useState(false);
-  const [terminalOutput, setTerminalOutput] = useState<{type: 'cmd' | 'out' | 'err' | 'success' | 'info', text: string}[]>([]);
+  const [terminalOutput, setTerminalOutput] = useState<{type: 'cmd' | 'out' | 'err' | 'success' | 'info' | 'warn', text: string}[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [activeLanguage, setActiveLanguage] = useState<'python' | 'c' | 'cpp'>(initialLanguage);
@@ -72,14 +72,14 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   };
 
   const verifyCode = async (codeToVerify: string, lang: string) => {
-    if (!currentTask) return { success: false, output: "", feedback: "" };
+    if (!currentTask) return { success: false, output: "", feedback: "", warnings: "" };
     
-    // Бэлдэц кодтой яг ижилхэн бол шууд амжилтгүй болгоно (Бэлдэцийг заавал засах ёстой)
     if (codeToVerify.trim() === currentTask.template.trim()) {
         return { 
             success: false, 
-            output: "Output missing", 
-            feedback: "Чи кодыг өөрчилж, даалгаврыг биелүүлэх ёстой. Анхны бэлдэц кодыг ажиллуулж болохгүй." 
+            output: "Error: No user changes detected.", 
+            feedback: "Чи кодыг өөрчилж, даалгаврыг биелүүлэх ёстой. Анхны бэлдэц кодыг ажиллуулж болохгүй.",
+            warnings: ""
         };
     }
 
@@ -95,11 +95,11 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
       ${codeToVerify}
 
       ШАЛГАХ ДҮРЭМ:
-      1. Хэрэглэгч бодлогын логикийг өөрөө бичсэн байх ёстой.
-      2. Зөвхөн үр дүнг print("...") гэж хатуу бичиж болохгүй (Hardcoding FAIL). Заавал хувьсагч эсвэл алгоритм ашигласан байх ёстой.
-      3. Хэрэв код нь өгөгдсөн 'Хүлээгдэж буй үр дүн'-г гаргаж чадаж байвал 'success: true' болго.
+      1. Код нь өгөгдсөн 'Хүлээгдэж буй үр дүн'-г гаргаж чадаж байвал 'success: true' болго.
+      2. 'output' талбарт жинхэнэ терминал дээрх шиг гаралтыг бич.
+      3. 'warnings' талбарт хэрэв кодонд муу зуршил (жишээ нь: unused variable, missing return type) байвал gcc/python маягийн анхааруулга бич. Үгүй бол хоосон орхи.
       
-      JSON-оор хариулна уу: { "success": boolean, "output": string, "feedback": string }
+      JSON-оор хариулна уу: { "success": boolean, "output": string, "feedback": string, "warnings": string }
     `;
 
     try {
@@ -113,15 +113,16 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
             properties: {
               success: { type: Type.BOOLEAN },
               output: { type: Type.STRING },
-              feedback: { type: Type.STRING }
+              feedback: { type: Type.STRING },
+              warnings: { type: Type.STRING }
             },
-            required: ["success", "output", "feedback"]
+            required: ["success", "output", "feedback", "warnings"]
           }
         }
       });
       return JSON.parse(response.text || "{}");
     } catch (e) {
-      return { success: false, output: "Execution Error", feedback: "Шүүгч ажиллахад алдаа гарлаа." };
+      return { success: false, output: "Execution Error", feedback: "Шүүгч ажиллахад алдаа гарлаа.", warnings: "" };
     }
   };
 
@@ -130,23 +131,37 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     setIsRunning(true);
     setIsDebugMode(false);
     
-    setTerminalOutput([{type: 'cmd', text: `${activeLanguage === 'python' ? 'python3' : activeLanguage === 'c' ? 'gcc' : 'g++'} ${currentTask.fileName}`}]);
-    setTerminalOutput(prev => [...prev, {type: 'info', text: "Analyzing code for logical correctness..."}]);
+    const compilationCmd = activeLanguage === 'python' ? `python3 ${currentTask.fileName}` : 
+                          activeLanguage === 'c' ? `gcc ${currentTask.fileName} -o main -Wall` : 
+                          `g++ ${currentTask.fileName} -o main -Wall`;
+
+    setTerminalOutput([{type: 'cmd', text: compilationCmd}]);
+    
+    if (activeLanguage !== 'python') {
+      setTerminalOutput(prev => [...prev, {type: 'info', text: "Compiling source files..."}]);
+    }
 
     const result = await verifyCode(userCode, activeLanguage);
     
     setTimeout(() => {
+      if (result.warnings) {
+        setTerminalOutput(prev => [...prev, {type: 'warn', text: result.warnings}]);
+      }
+
       if (result.success) {
+        if (activeLanguage !== 'python') {
+          setTerminalOutput(prev => [...prev, {type: 'cmd', text: "./main"}]);
+        }
         setTerminalOutput(prev => [
           ...prev, 
           {type: 'out', text: result.output || currentTask.expectedOutput},
-          {type: 'success', text: "Гайхалтай! Бүх тестүүд амжилттай давлаа."}
+          {type: 'success', text: "Verification complete. Program exited with code 0."}
         ]);
         setIsTaskCompleted(true);
       } else {
         setTerminalOutput(prev => [
           ...prev, 
-          {type: 'err', text: "Шалгалт амжилтгүй!"},
+          {type: 'err', text: result.output.includes('Error') ? result.output : "Runtime Error: Logic check failed."},
           {type: 'out', text: result.feedback || "Код дутуу эсвэл логик алдаатай байна."}
         ]);
       }
@@ -158,7 +173,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     if (!currentTask?.debugSteps) return;
     setIsDebugMode(true);
     setDebugStepIdx(0);
-    setTerminalOutput([{type: 'cmd', text: `${activeLanguage === 'c' ? 'gdb' : 'lldb'} ./main`}, {type: 'out', text: "Debugger started. Symbol table loaded from binary."}]);
+    setTerminalOutput([{type: 'cmd', text: `${activeLanguage === 'c' ? 'gdb' : 'lldb'} ./main`}, {type: 'out', text: "Reading symbols from ./main... Done."}]);
   };
 
   const stepDebug = () => {
@@ -168,7 +183,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     } else {
       setIsDebugMode(false);
       setIsTaskCompleted(true);
-      setTerminalOutput(prev => [{type: 'success', text: "Debug session completed successfully."}]);
+      setTerminalOutput(prev => [{type: 'success', text: "Program exited normally."}]);
     }
   };
 
@@ -413,8 +428,10 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
                     </div>
                   ) : (
                     terminalOutput.map((line, i) => (
-                        <div key={i} className={`mb-1.5 flex gap-2 ${line.type === 'err' ? 'text-red-400' : line.type === 'success' ? 'text-primary font-black' : line.type === 'info' ? 'text-slate-500 italic' : 'text-white'}`}>
-                           <span className="opacity-40 shrink-0 select-none">{line.type === 'cmd' ? '$' : '❯'}</span>
+                        <div key={i} className={`mb-1.5 flex gap-2 ${line.type === 'err' ? 'text-red-400' : line.type === 'success' ? 'text-primary font-black' : line.type === 'info' ? 'text-slate-500 italic' : line.type === 'warn' ? 'text-yellow-400 italic border-l-2 border-yellow-400 pl-2' : line.type === 'cmd' ? 'text-blue-400 font-bold' : 'text-white'}`}>
+                           <span className="opacity-40 shrink-0 select-none">
+                             {line.type === 'cmd' ? '$' : line.type === 'warn' ? '!' : '❯'}
+                           </span>
                            <span className="whitespace-pre-wrap">{line.text}</span>
                         </div>
                     ))

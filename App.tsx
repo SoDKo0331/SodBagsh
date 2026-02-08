@@ -6,6 +6,7 @@ import LessonView from './views/LessonView';
 import Sandbox from './views/Sandbox';
 import ProblemBank from './views/ProblemBank';
 import ProblemSolvingView from './views/ProblemSolvingView';
+import QuizView from './views/QuizView';
 import { LessonStatus, Module, Badge } from './types';
 import { PROBLEMS } from './data/problems';
 
@@ -52,7 +53,7 @@ const App: React.FC = () => {
     return saved ? parseInt(saved) : 1;
   });
 
-  const [currentView, setCurrentView] = useState<'dashboard' | 'lesson' | 'sandbox' | 'badges' | 'problems' | 'solving-problem'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'lesson' | 'sandbox' | 'badges' | 'problems' | 'solving-problem' | 'quiz'>('dashboard');
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
   const [preferredLanguage, setPreferredLanguage] = useState<'python' | 'c' | 'cpp'>('python');
@@ -71,7 +72,6 @@ const App: React.FC = () => {
     if (loginInput.trim()) {
       localStorage.setItem('codequest_user', loginInput.trim());
       setUser(loginInput.trim());
-      // Refresh state for new user
       window.location.reload();
     }
   };
@@ -154,7 +154,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
-      {currentView !== 'lesson' && currentView !== 'solving-problem' && (
+      {currentView !== 'lesson' && currentView !== 'solving-problem' && currentView !== 'quiz' && (
         <Sidebar 
           activeItem={currentView} 
           streak={streak} 
@@ -192,6 +192,8 @@ const App: React.FC = () => {
             onBack={() => setCurrentView('problems')}
             onSolve={handleSolveProblem}
           />
+        ) : currentView === 'quiz' ? (
+          <QuizView onBack={() => setCurrentView('dashboard')} />
         ) : currentView === 'badges' ? (
           <div className="flex-1 overflow-y-auto p-10 bg-[#f8faf9] dark:bg-[#0d1a13]">
              <header className="mb-10 flex items-center justify-between">

@@ -12,7 +12,7 @@ interface ChatMessage {
 }
 
 interface TerminalLine {
-  type: 'cmd' | 'out' | 'err' | 'success';
+  type: 'cmd' | 'out' | 'err' | 'success' | 'info' | 'warn';
   text: string;
 }
 
@@ -56,14 +56,20 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
 
   const runCode = () => {
     setIsRunning(true);
-    const cmdMap = {
-      python: "python3 main.py",
-      c: "gcc main.c -o main && ./main",
-      cpp: "g++ main.cpp -o main && ./main"
-    };
+    setOutput([]); // Clear previous run
     
-    setOutput(prev => [...prev, {type: 'cmd', text: cmdMap[activeLanguage]}]);
+    const compilationCmd = activeLanguage === 'python' ? `python3 main.py` : 
+                          activeLanguage === 'c' ? `gcc main.c -o main -Wall` : 
+                          `g++ main.cpp -o main -Wall`;
     
+    setOutput(prev => [...prev, {type: 'cmd', text: compilationCmd}]);
+    
+    if (activeLanguage !== 'python') {
+      setOutput(prev => [...prev, {type: 'info', text: "Building target 'main'..."}]);
+    }
+
+    // Use Gemini for a bit more "realistic" sandbox execution if we wanted, 
+    // but here we maintain the mock logic with enhanced terminal feel.
     setTimeout(() => {
       const mockResult: string[] = [
         "Сайн уу, Super Coder!",
@@ -72,13 +78,20 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
         "Код бичих гоё байна!"
       ];
       
+      if (activeLanguage !== 'python') {
+        setOutput(prev => [...prev, 
+          {type: 'info', text: "Compilation successful. No warnings generated."},
+          {type: 'cmd', text: "./main"}
+        ]);
+      }
+
       setOutput(prev => [
         ...prev, 
         ...mockResult.map(r => ({type: 'out', text: r} as TerminalLine)),
-        {type: 'success', text: "Execution finished."}
+        {type: 'success', text: `Program terminated with exit code 0.`}
       ]);
       setIsRunning(false);
-    }, 1200);
+    }, 1500);
   };
 
   const askAi = async () => {
@@ -153,8 +166,8 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
             disabled={isRunning}
             className="bg-primary text-slate-900 px-8 py-2.5 rounded-xl font-black shadow-xl shadow-primary/30 flex items-center gap-2 hover:scale-105 active:scale-95 transition-all uppercase tracking-widest text-xs disabled:opacity-50"
           >
-            <span className="material-symbols-outlined text-lg">{isRunning ? 'sync' : 'play_arrow'}</span>
-            {isRunning ? 'Ажиллаж байна...' : 'Код ажиллуулах'}
+            <span className="material-symbols-outlined text-lg animate-spin" style={{ animationDuration: isRunning ? '2s' : '0s' }}>{isRunning ? 'sync' : 'play_arrow'}</span>
+            {isRunning ? 'Building...' : 'Код ажиллуулах'}
           </button>
         </div>
       </header>
@@ -171,7 +184,7 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
            </div>
            <div className="flex flex-1 overflow-hidden relative">
               <div className="flex flex-col bg-[#1e1e1e] text-right py-8 px-4 text-white/20 select-none border-r border-white/5 min-w-[50px] font-mono text-lg">
-                 {Array.from({length: 20}).map((_, i) => <span key={i}>{i+1}</span>)}
+                 {Array.from({length: 25}).map((_, i) => <span key={i}>{i+1}</span>)}
               </div>
               <textarea 
                 value={code}
@@ -197,13 +210,15 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
               <div className="space-y-1.5">
                 {output.map((line, i) => (
                   <div key={i} className={`flex gap-3 animate-in slide-in-from-left duration-200 ${
-                    line.type === 'cmd' ? 'text-blue-400/70 italic' : 
-                    line.type === 'err' ? 'text-red-400' : 
-                    line.type === 'success' ? 'text-primary/50 text-xs' : 
+                    line.type === 'cmd' ? 'text-blue-400 font-bold' : 
+                    line.type === 'err' ? 'text-red-400 font-black' : 
+                    line.type === 'success' ? 'text-primary/70 text-xs italic' : 
+                    line.type === 'info' ? 'text-slate-500 italic text-sm' :
+                    line.type === 'warn' ? 'text-yellow-400 italic border-l-2 border-yellow-400 pl-2' :
                     'text-primary font-medium'
                   }`}>
                      <span className="select-none text-slate-800 shrink-0">
-                        {line.type === 'cmd' ? '$' : line.type === 'err' ? '!' : '❯'}
+                        {line.type === 'cmd' ? '$' : line.type === 'err' ? '!' : line.type === 'warn' ? '!' : '❯'}
                      </span>
                      <span className="whitespace-pre-wrap">{line.text}</span>
                   </div>
@@ -294,7 +309,7 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
             </div>
          </div>
          <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
-            CodeQuest Sandbox v2.0
+            CodeQuest Sandbox v2.1
          </div>
       </footer>
     </div>
