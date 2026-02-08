@@ -5,11 +5,12 @@ interface SidebarProps {
   activeItem: string;
   streak: number;
   userName: string;
+  isSyncing?: boolean;
   onNavChange: (view: string) => void;
   onLogout: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeItem, streak, userName, onNavChange, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeItem, streak, userName, isSyncing, onNavChange, onLogout }) => {
   const navItems = [
     { label: 'Хичээлүүд', id: 'dashboard', icon: 'auto_stories' },
     { label: 'Бодлогын сан', id: 'problems', icon: 'quiz' },
@@ -27,7 +28,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, streak, userName, onNavCh
           </div>
           <div>
             <h1 className="font-display font-black text-2xl leading-none tracking-tight">CodeQuest</h1>
-            <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em] mt-1">Player Mode</p>
+            <div className="flex items-center gap-1.5 mt-1">
+               <span className={`size-2 rounded-full ${isSyncing ? 'bg-primary animate-pulse' : 'bg-primary'}`}></span>
+               <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">Cloud Synced</p>
+            </div>
           </div>
         </div>
 

@@ -12,7 +12,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script>
-        // process.env алдаанаас сэргийлэх
         window.process = { env: { API_KEY: "" } };
         
         tailwind.config = {
@@ -46,25 +45,24 @@
             background: #dbe6e0;
             border-radius: 10px;
         }
-        .code-syntax-keyword { color: #ff79c6; }
-        .code-syntax-string { color: #f1fa8c; }
-        .code-syntax-function { color: #50fa7b; }
-        .code-syntax-comment { color: #6272a4; }
     </style>
 <script type="importmap">
 {
   "imports": {
     "react/": "https://esm.sh/react@^19.2.4/",
     "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "@google/genai": "https://esm.sh/@google/genai@^1.40.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
+    "firebase/": "https://esm.sh/firebase@^12.9.0/"
   }
 }
 </script>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen antialiased">
     <div id="root"></div>
-    <!-- Програмын орох цэгийг дуудах -->
     <script type="module" src="./index.tsx"></script>
 </body>
 </html>
