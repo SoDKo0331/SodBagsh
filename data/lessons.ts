@@ -9,15 +9,16 @@ export const LESSON_DATA: Record<string, FullLesson> = {
       {
         id: 1,
         type: 'concept',
-        title: 'Код гэж юу вэ?',
-        body: "Код бол компьютерт өгч буй тушаал юм. Хамгийн эхний тушаал бол дэлгэц дээр үг хэвлэх! Бид дэлгэцэнд 'Сайн уу' гэж хэлэхийг зааж өгнө.",
-        analogy: { icon: 'campaign', text: "Энэ бол компьютерт 'Энийг чангаар хэл!' гэж хэлж байгаатай адилхан." }
+        title: 'Компьютертэй ярилцаж суръя',
+        body: "Код бичнэ гэдэг нь компьютерт юу хийхийг нь ойлгомжтойгоор зааж өгөх үйл явц юм. Компьютер маш хурдан боловч 'яг юу хийхээ' биднээр хэлүүлэхгүй бол юу ч хийж чадахгүй. Хамгийн анхны тушаал бол дэлгэц дээр үг хэвлэх!",
+        analogy: { icon: 'campaign', text: "Энэ бол компьютерт 'Энийг чангаар хэл!' гэж хэлж байгаатай адилхан. Бид 'print' гэж хэлээд хаалтан дотор үгээ бичдэг." },
+        visualAid: 'logic'
       },
       {
         id: 2,
         type: 'coding',
         title: 'Сайн уу, Дэлхий!',
-        body: "Одоо чи өөрөө туршаад үз. Python, C болон C++ хэл дээр яаж бичдэгийг харьцуулж хараарай.",
+        body: "Python хэл дээр print() тушаалыг ашиглан хүссэн үгээ хэвлэж болно. Хашилт (' ') ашиглахаа бүү мартаарай! Хашилт нь компьютерт 'Энэ бол зүгээр л бичвэр шүү' гэж хэлж байгаа хэрэг юм.",
         codingTasks: [
           {
             language: 'python',
@@ -30,21 +31,14 @@ export const LESSON_DATA: Record<string, FullLesson> = {
             language: 'c',
             fileName: 'hello.c',
             template: "#include <stdio.h>\n\nint main() {\n    printf(\"Сайн уу, Дэлхий!\\n\");\n    return 0;\n}",
-            explanation: [
-              "#include - Сангуудыг дуудаж байна.",
-              "int main() - Програм эндээс эхэлдэг.",
-              "printf - Дэлгэцэнд хэвлэх тушаал."
-            ],
+            explanation: ["printf - C хэл дээр хэвлэх үндсэн тушаал."],
             expectedOutput: "Сайн уу, Дэлхий!",
           },
           {
             language: 'cpp',
             fileName: 'hello.cpp',
             template: "#include <iostream>\n\nint main() {\n    std::cout << \"Сайн уу, Дэлхий!\" << std::endl;\n    return 0;\n}",
-            explanation: [
-              "#include <iostream> - Оролт гаралт (std::cout) ашиглах сан.",
-              "std::cout << - Дэлгэц рүү 'урсгах' буюу хэвлэх тушаал."
-            ],
+            explanation: ["std::cout - C++ хэл дээрх гаралтын урсгал."],
             expectedOutput: "Сайн уу, Дэлхий!",
           }
         ]
@@ -53,50 +47,49 @@ export const LESSON_DATA: Record<string, FullLesson> = {
   },
   'm2': {
     id: 'm2',
-    title: 'LEVEL 1: Хувьсагч - Шидэт хайрцаг',
+    title: 'LEVEL 1: Хувьсагч - Мэдээллийн Хайрцаг',
     steps: [
       {
         id: 1,
         type: 'concept',
-        title: 'Мэдээлэл хадгалах',
-        body: "Хувьсагч бол дотроо юм хийдэг шошготой хайрцаг юм. C болон C++ хэл дээр хайрцагт юу хийхээ (бүхэл тоо, үсэг г.м) заавал хэлж өгөх ёстой байдаг.",
+        title: 'Санах ой гэж юу вэ?',
+        body: "Хувьсагч бол дотроо мэдээлэл хадгалдаг шошготой хайрцаг юм. Компьютер бүх зүйлийг санах ойдоо хадгалдаг. Бид тэр санах ойн хэсэгт нэр өгөөд (жишээ нь: 'nas'), дотор нь утга хийчихвэл дараа нь тэр нэрээрээ дуудаж ашиглаж болдог.",
         visualAid: 'box',
-        analogy: { icon: 'inventory_2', text: "Хайрцаг дээр 'нас' гэж бичээд дотор нь 13 гэсэн тоо хийчихвэл, дараа нь 'нас' хаана байна? гэхэд компьютер 13-ыг гаргаж ирнэ." }
+        analogy: { icon: 'inventory_2', text: "Хайрцаг дээр 'nas' гэж бичээд дотор нь 13 гэсэн тоо хийчихвэл, дараа нь компьютер 'nas' хаана байна? гэхэд доторх 13-ыг нь гаргаж ирнэ." }
       },
       {
         id: 2,
+        type: 'concept',
+        title: 'Өгөгдлийн төрлүүд',
+        body: "Компьютер хайрцагт юу байгааг мэдэх хэрэгтэй. Бүхэл тоог 'int' (integer), бичвэрийг 'str' (string), бутархай тоог 'float' гэж нэрлэдэг. Python-д энийг автоматаар таньдаг бол C хэлэнд заавал хэлж өгөх ёстой.",
+        visualAid: 'hardware'
+      },
+      {
+        id: 3,
         type: 'coding',
-        title: 'Миний хайрцаг',
-        body: "Нас хадгалах хайрцаг үүсгээд түүнийгээ дэлгэцэнд хэвлэе. Дебаггер ашиглан санах ойд утга хэрхэн өөрчлөгдөж байгааг харж болно шүү.",
+        title: 'Хайрцаглаж суръя',
+        body: "Одоо 'age' нэртэй хувьсагч үүсгээд дотор нь өөрийнхөө насыг хийгээд хэвлэж үзээрэй. Python-д: age = 13",
         codingTasks: [
           {
             language: 'python',
             fileName: 'age.py',
-            template: "age = 13\n# Энд хэвлэх кодыг бичнэ үү\n",
-            explanation: ["age = 13 - 'age' хайрцагт 13-ыг хийлээ."],
+            template: "age = 13\n# Энд 'Миний нас: 13' гэж гарахаар хэвлэ\n",
+            explanation: ["age = 13 - Хувьсагч үүсгэж утга оноолоо."],
             expectedOutput: "Миний нас: 13"
           },
           {
             language: 'c',
             fileName: 'age.c',
-            template: "#include <stdio.h>\n\nint main() {\n    int age = 13;\n    // printf ашиглан 'Миний нас: 13' гэж хэвлэнэ үү\n    return 0;\n}",
-            explanation: ["int age - Бүхэл тоо хадгалах хайрцаг."],
+            template: "#include <stdio.h>\n\nint main() {\n    int age = 13;\n    // printf(\"Миний нас: %d\\n\", age);\n    return 0;\n}",
+            explanation: ["int age - Бүхэл тоон хувьсагч зарлаж байна."],
             expectedOutput: "Миний нас: 13",
-            debugSteps: [
-              { lineIndex: 3, variables: { age: 13 }, comment: "age хувьсагчид 13 утга оноолоо." },
-              { lineIndex: 5, variables: { age: 13 }, comment: "Энэ мөрөнд бид printf ашиглан утгыг хэвлэнэ." }
-            ]
           },
           {
             language: 'cpp',
             fileName: 'age.cpp',
-            template: "#include <iostream>\n\nint main() {\n    int age = 13;\n    // std::cout ашиглан 'Миний нас: 13' гэж хэвлэнэ үү\n    return 0;\n}",
-            explanation: ["int age = 13; - Хувьсагч зарлаж утга оноолоо."],
+            template: "#include <iostream>\n\nint main() {\n    int age = 13;\n    // std::cout << \"Миний нас: \" << age << std::endl;\n    return 0;\n}",
+            explanation: ["std::cout - Олон утгыг нэгтгэн хэвлэж болно."],
             expectedOutput: "Миний нас: 13",
-            debugSteps: [
-              { lineIndex: 3, variables: { age: 13 }, comment: "C++ дээр int төрлийн хувьсагч санах ойд хадгалагдав." },
-              { lineIndex: 5, variables: { age: 13 }, comment: "std::cout ашиглан гаралт руу илгээхэд бэлэн." }
-            ]
           }
         ]
       }
@@ -104,50 +97,56 @@ export const LESSON_DATA: Record<string, FullLesson> = {
   },
   'm3': {
     id: 'm3',
-    title: 'LEVEL 1: IF/ELSE - Шийдвэр гаргах',
+    title: 'LEVEL 1: IF/ELSE - Логик Шийдвэр',
     steps: [
       {
         id: 1,
         type: 'concept',
-        title: 'Хэрвээ...',
-        body: "Компьютер шийдвэр гаргаж чадна! 'Хэрвээ бороо орвол шүхэр ав, үгүй бол нарны шил ав' гэж бид хэлдэг.",
+        title: 'Зам сонгох',
+        body: "Компьютер зөвхөн тоо боддоггүй, бас шийдвэр гаргаж чаддаг! Хэрэв нэг нөхцөл биелвэл (True) нэг үйлдлийг, биелэхгүй бол (False) өөр үйлдлийг хийнэ.",
         visualAid: 'logic',
-        analogy: { icon: 'alt_route', text: "Видео тоглоом дээр хангалттай оноо авсан бол дараагийн шат руу явуулдагтай адил." }
+        analogy: { icon: 'alt_route', text: "Тоглоом дээр 'Хэрэв түлхүүр байгаа бол хаалгыг нээ, үгүй бол 'Түлхүүр хэрэгтэй' гэж хэл' гэдэгтэй адилхан." }
       },
       {
         id: 2,
         type: 'coding',
-        title: 'Оноо шалгагч',
-        body: "Оноо 10-аас их бол 'Ялалт' гэж хэвлэх код бичиж үзье.",
+        title: 'Дүн шалгагч',
+        body: "Оноо 60-аас их бол 'Тэнцлээ', үгүй бол 'Уналаа' гэж хэлэх код бичье. 'if' болон 'else' ашиглана.",
         codingTasks: [
           {
             language: 'python',
             fileName: 'logic.py',
-            template: "score = 15\n# Хэрэв score 10-аас их бол 'Ялалт!' гэж хэвлэ\n",
-            explanation: ["if score > 10 - Нөхцөл шалгаж байна."],
-            expectedOutput: "Ялалт!"
-          },
+            template: "score = 75\nif score >= 60:\n    # Тэнцлээ гэж хэвлэ\nelse:\n    # Уналаа гэж хэвлэ\n",
+            explanation: ["if - 'Хэрэв' гэсэн утгатай.", "else - 'Үгүй бол' гэсэн утгатай."],
+            expectedOutput: "Тэнцлээ"
+          }
+        ]
+      }
+    ]
+  },
+  'm4': {
+    id: 'm4',
+    title: 'LEVEL 2: Давталт - Уйтгартай ажлыг хурдсгах',
+    steps: [
+      {
+        id: 1,
+        type: 'concept',
+        title: 'For ба While',
+        body: "Хэрэв чи 'Би залхуу биш' гэж 100 удаа бичих хэрэгтэй болсон бол гараараа бичих үү? Үгүй ээ! Компьютерт ердөө 'Энийг 100 удаа давт' гэж хэлэхэд л хангалттай. Үүнийг 'Loop' буюу Давталт гэдэг.",
+        analogy: { icon: 'rebase_edit', text: "Гүйлтийн зам дээр 10 тойрог гүйхтэй адил. Тойрог болгон дээр тоолуур 1-ээр нэмэгдэнэ." }
+      },
+      {
+        id: 2,
+        type: 'coding',
+        title: '1-ээс 5 хүртэл тоолох',
+        body: "range() функцийг ашиглан 5 удаа давтаж, тоог хэвлэе.",
+        codingTasks: [
           {
-            language: 'c',
-            fileName: 'logic.c',
-            template: "#include <stdio.h>\n\nint main() {\n    int score = 15;\n    // if нөхцөл ашиглан шалгана уу\n    return 0;\n}",
-            explanation: ["if (score > 10) - Нөхцөл."],
-            expectedOutput: "Ялалт!",
-            debugSteps: [
-              { lineIndex: 3, variables: { score: 15 }, comment: "Оноог 15 гэж тохирууллаа." },
-              { lineIndex: 4, variables: { score: 15 }, comment: "Нөхцөл үнэн (15 > 10) тул доторх код ажиллана." }
-            ]
-          },
-          {
-            language: 'cpp',
-            fileName: 'logic.cpp',
-            template: "#include <iostream>\n\nint main() {\n    int score = 15;\n    // if ашиглан 'Ялалт!' гэж хэвлэх нөхцөл бичнэ үү\n    return 0;\n}",
-            explanation: ["C++ дээр 'if' бүтэц нь C-тэй ижилхэн байдаг."],
-            expectedOutput: "Ялалт!",
-            debugSteps: [
-              { lineIndex: 3, variables: { score: 15 }, comment: "score хувьсагч санах ойд хадгалагдлаа." },
-              { lineIndex: 4, variables: { score: 15 }, comment: "Нөхцөл шалгаж байна..." }
-            ]
+            language: 'python',
+            fileName: 'loop.py',
+            template: "for i in range(5):\n    print(i + 1)",
+            explanation: ["range(5) - 0-ээс 4 хүртэлх тоо үүсгэнэ."],
+            expectedOutput: "1\n2\n3\n4\n5"
           }
         ]
       }
