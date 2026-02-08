@@ -33,7 +33,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: `Сайн уу! Би чиний 'CodeStep Tutor' багш байна. 🤖 Би чамд ${initialLanguage === 'c' ? 'C Language' : initialLanguage === 'cpp' ? 'C++' : 'Python'} сурахад тусална. Юуг ойлгохгүй байна, надаас шууд асуугаарай!` }
+    { role: 'model', text: `Сайн уу! Би чиний 'CodeStep Tutor' багш байна. 🤖 Би чамд ${initialLanguage === 'c' ? 'C Language' : initialLanguage === 'cpp' ? 'C++' : 'Python'} сурахад тусална.` }
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -41,7 +41,6 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   const step: StepContent | undefined = lesson?.steps[currentStepIdx];
   const isLastStep = lesson ? currentStepIdx === lesson.steps.length - 1 : false;
   const currentTask: CodingTask | undefined = step?.codingTasks?.find(t => t.language === activeLanguage);
-  const activeDebugStep: DebugStep | undefined = currentTask?.debugSteps?.[debugStepIdx];
 
   useEffect(() => {
     if (currentTask) {
@@ -61,21 +60,29 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
 
   if (!lesson || !step) return <div className="p-10 text-white">Алдаа: Хичээл олдсонгүй.</div>;
 
-  const handleLanguageToggle = (lang: 'python' | 'c' | 'cpp') => {
-    setActiveLanguage(lang);
-    setIsDebugMode(false);
-    if (onLanguageChange) onLanguageChange(lang);
-  };
-
   const verifyCode = async (codeToVerify: string, lang: string) => {
     if (!currentTask) return { success: false, output: "", feedback: "", warnings: "" };
+
+    // ХУРДАСГУУР: Маш энгийн даалгаврыг AI-гүйгээр шууд шалгах (Level 1-2)
+    const normalizedCode = codeToVerify.replace(/\s/g, '');
+    const expectedOut = currentTask.expectedOutput.replace(/\s/g, '');
+    
+    // Хэрэв зөвхөн print хийж байгаа бол локаль шалгалт хийнэ
+    if (normalizedCode.includes(expectedOut) && (normalizedCode.includes('print') || normalizedCode.includes('printf') || normalizedCode.includes('cout'))) {
+       return { success: true, output: currentTask.expectedOutput, feedback: "Зөв байна!", warnings: "" };
+    }
+
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const prompt = `Чи бол Код Шүүгч. JSON: { "success": boolean, "output": string, "feedback": string, "warnings": string }. Код: ${codeToVerify}`;
+    const prompt = `Чи бол Код Шүүгч. Хариуг зөвхөн JSON-оор өг: { "success": boolean, "output": string, "feedback": string }. Код: ${codeToVerify}\nХүлээгдэж буй үр дүн: ${currentTask.expectedOutput}`;
+    
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: prompt,
-        config: { responseMimeType: "application/json" }
+        config: { 
+          responseMimeType: "application/json",
+          thinkingConfig: { thinkingBudget: 0 } // Илүү хурдан хариу өгөхийн тулд
+        }
       });
       return JSON.parse(response.text || "{}");
     } catch (e) {
@@ -87,17 +94,17 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     if (!currentTask || isRunning) return;
     setIsRunning(true);
     setIsDebugMode(false);
-    setTerminalOutput([{type: 'cmd', text: `Running ${currentTask.fileName}...`}]);
+    setTerminalOutput([{type: 'cmd', text: `Checking code...`}]);
+    
     const result = await verifyCode(userCode, activeLanguage);
-    setTimeout(() => {
-      if (result.success) {
-        setTerminalOutput(prev => [...prev, {type: 'out', text: result.output}, {type: 'success', text: "Зөв байна!"}]);
-        setIsTaskCompleted(true);
-      } else {
-        setTerminalOutput(prev => [...prev, {type: 'err', text: result.feedback}]);
-      }
-      setIsRunning(false);
-    }, 1000);
+    
+    if (result.success) {
+      setTerminalOutput(prev => [...prev, {type: 'out', text: result.output}, {type: 'success', text: "Зөв байна!"}]);
+      setIsTaskCompleted(true);
+    } else {
+      setTerminalOutput(prev => [...prev, {type: 'err', text: result.feedback}]);
+    }
+    setIsRunning(false);
   };
 
   const startDebug = () => {
@@ -118,7 +125,6 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
 
   const handleQuizSelect = (optionId: string) => {
     setSelectedQuizOption(optionId);
-    // Хариулт сонгосон л бол дараагийнх руу шилжих боломжтой болгоно
     setIsTaskCompleted(true);
   };
 
@@ -145,6 +151,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Код: ${userCode}\nАсуулт: ${userMsg}`,
+        config: { thinkingConfig: { thinkingBudget: 0 } }
       });
       setChatMessages(prev => [...prev, { role: 'model', text: response.text || "" }]);
     } catch (error) {
@@ -157,7 +164,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background-light dark:bg-background-dark relative font-display text-slate-900 dark:text-slate-100">
       {showCelebration && (
-        <div className="absolute inset-0 z-[100] bg-primary flex flex-col items-center justify-center p-10 animate-in fade-in zoom-in duration-500">
+        <div className="absolute inset-0 z-[100] bg-primary flex flex-col items-center justify-center p-10 animate-in fade-in zoom-in duration-300">
           <span className="material-symbols-outlined text-[120px] text-white animate-bounce mb-6">workspace_premium</span>
           <h2 className="text-5xl font-black text-white text-center mb-4 uppercase">Амжилттай!</h2>
           <button onClick={() => onExit(true)} className="bg-white text-primary px-10 py-4 rounded-2xl font-black text-xl shadow-2xl hover:scale-105 transition-transform uppercase tracking-widest">
@@ -188,7 +195,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
       </header>
 
       <main className="flex flex-1 overflow-hidden relative">
-        <section className={`flex flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#111814]/30 transition-all duration-500 relative ${isAiOpen ? 'w-1/3' : 'w-1/2'}`}>
+        <section className={`flex flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#111814]/30 transition-all duration-300 relative ${isAiOpen ? 'w-1/3' : 'w-1/2'}`}>
           <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-10 pb-32">
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-4">
@@ -196,12 +203,6 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
                 <h2 className="text-3xl font-black tracking-tight">{step.title}</h2>
               </div>
               <p className="text-lg leading-relaxed text-slate-600 dark:text-slate-300 mb-8 font-medium">{step.body}</p>
-              {step.analogy && (
-                <div className="bg-primary/5 border-l-4 border-primary p-6 rounded-r-2xl mb-8 flex gap-4 shadow-sm">
-                   <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary shrink-0"><span className="material-symbols-outlined font-bold">{step.analogy.icon}</span></div>
-                   <div><p className="text-slate-600 dark:text-slate-300 font-medium italic">"{step.analogy.text}"</p></div>
-                </div>
-              )}
             </div>
 
             {step.type === 'quiz' && (
@@ -215,14 +216,10 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
                     </button>
                   ))}
                 </div>
-                {selectedQuizOption && !step.quiz?.options.find(o => o.id === selectedQuizOption)?.isCorrect && (
-                   <p className="mt-4 text-red-500 font-bold text-sm uppercase">Буруу хариулт байна. Дахин оролдож эсвэл шууд дараагийнх руу шилжиж болно.</p>
-                )}
               </div>
             )}
           </div>
 
-          {/* Fixed Footer Navigation */}
           <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-white/10 flex items-center justify-between z-20">
              <button onClick={() => setCurrentStepIdx(prev => Math.max(0, prev - 1))} disabled={currentStepIdx === 0} className="px-6 py-3 text-slate-500 font-black uppercase text-xs disabled:opacity-30 flex items-center gap-1 hover:text-primary transition-colors">
                <span className="material-symbols-outlined text-sm">arrow_back</span> Өмнөх
@@ -236,30 +233,14 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
           </div>
         </section>
 
-        <section className={`flex flex-col bg-[#1e1e1e] transition-all duration-500 overflow-hidden relative ${isAiOpen ? 'w-1/3' : 'w-1/2'}`}>
+        <section className={`flex flex-col bg-[#1e1e1e] transition-all duration-300 overflow-hidden relative ${isAiOpen ? 'w-1/3' : 'w-1/2'}`}>
           {step.type === 'coding' ? (
             <>
               <div className="flex items-center justify-between border-b border-white/10 bg-[#2d2d2d] px-6 py-2">
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{activeLanguage.toUpperCase()} Editor</span>
-                {(activeLanguage === 'c' || activeLanguage === 'cpp') && currentTask?.debugSteps && (
-                   <button onClick={isDebugMode ? stepDebug : startDebug} className={`${isDebugMode ? 'bg-yellow-500' : 'bg-slate-700 text-slate-300'} px-3 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1`}>
-                     <span className="material-symbols-outlined text-sm">{isDebugMode ? 'step_over' : 'bug_report'}</span>
-                     {isDebugMode ? 'Step Over' : 'Start Debugger'}
-                   </button>
-                )}
               </div>
               <div className="flex-1 font-mono text-lg text-white relative flex flex-col">
                 <textarea value={userCode} onChange={(e) => setUserCode(e.target.value)} className="flex-1 bg-transparent p-8 outline-none border-none resize-none custom-scrollbar" spellCheck={false} placeholder="// Кодоо энд бичнэ үү..." />
-                {isDebugMode && activeDebugStep && (
-                  <div className="absolute bottom-4 left-4 right-4 bg-slate-900/95 border-2 border-primary/30 p-5 rounded-2xl shadow-2xl">
-                    <p className="text-[10px] font-black text-primary uppercase mb-2">Debugger Info</p>
-                    <div className="grid grid-cols-2 gap-2">
-                       {Object.entries(activeDebugStep.variables).map(([k, v]) => (
-                         <div key={k} className="text-xs font-mono"><span className="text-blue-400">{k}:</span> <span className="text-yellow-400">{JSON.stringify(v)}</span></div>
-                       ))}
-                    </div>
-                  </div>
-                )}
               </div>
               <div className="h-1/3 flex flex-col border-t border-white/10 bg-[#0c0c0c]">
                 <div className="flex items-center justify-between px-6 py-2 bg-[#1a1a1a]">
@@ -290,7 +271,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
         </section>
 
         {isAiOpen && (
-          <div className="w-1/3 bg-white dark:bg-slate-900 border-l-4 border-primary/20 flex flex-col animate-in slide-in-from-right duration-500">
+          <div className="w-1/3 bg-white dark:bg-slate-900 border-l-4 border-primary/20 flex flex-col animate-in slide-in-from-right duration-300">
             <div className="p-5 border-b flex items-center justify-between bg-slate-50 dark:bg-slate-800/80">
               <h4 className="font-black text-sm uppercase">AI Багш</h4>
               <button onClick={() => setIsAiOpen(false)}><span className="material-symbols-outlined text-slate-400">close</span></button>
@@ -306,7 +287,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
               <div ref={chatEndRef} />
             </div>
             <form onSubmit={(e) => { e.preventDefault(); askAi(); }} className="p-4 border-t flex gap-2 bg-white dark:bg-slate-900">
-              <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Асуух зүйл байна уу?..." className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-5 py-3 text-sm font-bold" />
+              <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Асуух..." className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-5 py-3 text-sm font-bold" />
               <button type="submit" disabled={isAiLoading || !chatInput.trim()} className="bg-primary text-slate-900 size-11 rounded-2xl flex items-center justify-center shadow-lg"><span className="material-symbols-outlined font-black">send</span></button>
             </form>
           </div>
