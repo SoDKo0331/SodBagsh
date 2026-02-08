@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, onSnapshot } from "firebase/firestore";
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, User } from "firebase/auth";
 import Sidebar from './components/Sidebar';
 import Dashboard from './views/Dashboard';
 import LessonView from './views/LessonView';
@@ -27,7 +27,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 
 const INITIAL_MODULES: Module[] = [
   { id: 'm1', number: 1, title: 'LEVEL 1: Эхлэл', description: 'Код гэж юу вэ? Хамгийн анхны тушаалаа компьютерт өгье.', status: LessonStatus.IN_PROGRESS, progressText: '0/2 Алхам', icon: 'campaign', badgeId: 'b1' },
@@ -51,6 +50,9 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const [modules, setModules] = useState<Module[]>(INITIAL_MODULES);
   const [badges, setBadges] = useState<Badge[]>(INITIAL_BADGES);
@@ -94,7 +96,6 @@ const App: React.FC = () => {
     try {
       await setDoc(doc(db, "users", uid), {
         email: user?.email,
-        displayName: user?.displayName,
         modules: currentModules,
         badges: currentBadges,
         solvedProblems: currentSolved,
@@ -107,18 +108,27 @@ const App: React.FC = () => {
     setIsSyncing(false);
   };
 
-  const handleGoogleLogin = async () => {
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      alert("И-мэйл болон нууц үгээ оруулна уу.");
+      return;
+    }
+
     try {
-      await signInWithPopup(auth, provider);
-    } catch (error: any) {
-      console.error("Login failed", error);
-      if (error.code === 'auth/unauthorized-domain') {
-        alert("Энэ домэйн (sod-bagsh.vercel.app) Firebase-д зөвшөөрөгдөөгүй байна. Firebase Console -> Authentication -> Settings -> Authorized domains хэсэгт энэ домэйныг нэмнэ үү.");
-      } else if (error.code === 'auth/popup-blocked') {
-        alert("Нэвтрэх цонх (Popup) хаагдсан байна. Хөтчийнхөө тохиргооноос Popup-ыг зөвшөөрнө үү.");
+      if (authMode === 'login') {
+        await signInWithEmailAndPassword(auth, email, password);
       } else {
-        alert("Нэвтрэхэд алдаа гарлаа: " + error.message);
+        await createUserWithEmailAndPassword(auth, email, password);
       }
+    } catch (error: any) {
+      console.error("Auth error", error);
+      let msg = "Алдаа гарлаа.";
+      if (error.code === 'auth/user-not-found') msg = "Хэрэглэгч олдсонгүй.";
+      else if (error.code === 'auth/wrong-password') msg = "Нууц үг буруу байна.";
+      else if (error.code === 'auth/email-already-in-use') msg = "Энэ и-мэйл хаяг бүртгэлтэй байна.";
+      else if (error.code === 'auth/weak-password') msg = "Нууц үг дор хаяж 6 тэмдэгт байх ёстой.";
+      alert(msg);
     }
   };
 
@@ -192,25 +202,53 @@ const App: React.FC = () => {
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[48px] shadow-2xl border-4 border-primary/20 max-w-md w-full relative z-10 animate-in zoom-in duration-500">
-          <div className="size-24 rounded-[32px] bg-primary flex items-center justify-center text-slate-900 shadow-xl shadow-primary/30 mx-auto mb-10 rotate-3">
-            <span className="material-symbols-outlined text-6xl font-black">rocket_launch</span>
+          <div className="size-20 rounded-[28px] bg-primary flex items-center justify-center text-slate-900 shadow-xl shadow-primary/30 mx-auto mb-8 rotate-3">
+            <span className="material-symbols-outlined text-5xl font-black">rocket_launch</span>
           </div>
           <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tighter">CodeQuest</h1>
-          <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-12">Gmail-ээр нэвтэрч ахицдаа хадгалаарай</p>
+          <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-8">
+            {authMode === 'login' ? 'Тавтай морилно уу' : 'Шинэ аялал эхлүүлцгээе'}
+          </p>
           
-          <div className="space-y-4">
-            <button 
-              onClick={handleGoogleLogin}
-              className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white py-4 px-6 rounded-2xl font-black text-lg border-2 border-slate-100 dark:border-slate-700 shadow-xl flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-95 transition-all"
-            >
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa/google.svg" className="size-6" alt="Google" />
-              Gmail-ээр нэвтрэх
-            </button>
-            <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
-               <p className="text-[9px] text-yellow-600 dark:text-yellow-400 font-bold uppercase leading-relaxed">
-                 Санамж: Хэрэв нэвтэрч болохгүй байвал Firebase тохиргооноос Authorized Domains хэсэгт "sod-bagsh.vercel.app" домэйныг нэмсэн эсэхээ шалгаарай.
-               </p>
+          <form onSubmit={handleAuth} className="space-y-4">
+            <div className="text-left">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4 mb-1 block">И-Мэйл Хаяг</label>
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl px-6 py-4 font-bold focus:border-primary outline-none transition-all"
+                placeholder="email@example.com"
+              />
             </div>
+            <div className="text-left">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4 mb-1 block">Нууц Үг</label>
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl px-6 py-4 font-bold focus:border-primary outline-none transition-all"
+                placeholder="••••••••"
+              />
+            </div>
+            <button 
+              type="submit"
+              className="w-full bg-primary text-slate-900 py-4 px-6 rounded-2xl font-black text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 uppercase tracking-widest"
+            >
+              {authMode === 'login' ? 'Нэвтрэх' : 'Бүртгүүлэх'}
+            </button>
+          </form>
+
+          <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
+             <p className="text-slate-500 font-bold text-xs">
+                {authMode === 'login' ? 'Бүртгэлгүй юу?' : 'Бүртгэлтэй юу?'} 
+                <button 
+                  onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
+                  className="text-primary ml-2 font-black uppercase tracking-widest hover:underline"
+                >
+                  {authMode === 'login' ? 'Бүртгүүлэх' : 'Нэвтрэх'}
+                </button>
+             </p>
           </div>
         </div>
       </div>
