@@ -17,6 +17,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, streak, userName, isSynci
     { label: 'Тестүүд', id: 'quiz', icon: 'psychology' },
     { label: 'Sandbox', id: 'sandbox', icon: 'extension' },
     { label: 'Цолнууд', id: 'badges', icon: 'workspace_premium' },
+    { label: 'Game Arena', id: 'game', icon: 'swords' },
   ];
 
   return (

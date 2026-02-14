@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { LESSON_DATA } from '../data/lessons';
-import { StepContent, CodingTask, DebugStep } from '../types';
+import { StepContent, CodingTask } from '../types';
 
 interface LessonViewProps {
   onExit: (completed?: boolean) => void;
@@ -21,34 +21,40 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [selectedQuizOption, setSelectedQuizOption] = useState<string | null>(null);
   const [isTaskCompleted, setIsTaskCompleted] = useState(false);
-  const [terminalOutput, setTerminalOutput] = useState<{type: 'cmd' | 'out' | 'err' | 'success' | 'info' | 'warn', text: string}[]>([]);
+  const [terminalOutput, setTerminalOutput] = useState<{type: 'cmd' | 'out' | 'err' | 'success' | 'info' | 'warn' | 'hint', text: string}[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [activeLanguage, setActiveLanguage] = useState<'python' | 'c' | 'cpp'>(initialLanguage);
   
+  // For MiniGame
+  const [gameItems, setGameItems] = useState<{id: string, text: string}[]>([]);
+  const [gameFeedback, setGameFeedback] = useState<string | null>(null);
+
   const [userCode, setUserCode] = useState('');
-  const [isDebugMode, setIsDebugMode] = useState(false);
-  const [debugStepIdx, setDebugStepIdx] = useState(0);
-  
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: `Сайн уу! Би чиний 'CodeStep Tutor' багш байна. 🤖 Би чамд ${initialLanguage === 'c' ? 'C Language' : initialLanguage === 'cpp' ? 'C++' : 'Python'} сурахад тусална.` }
+    { role: 'model', text: `Сайн уу! 🤖 Чиний багш бэлэн байна. Кодоо бичээд шалгуулаарай.` }
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
 
   const step: StepContent | undefined = lesson?.steps[currentStepIdx];
   const isLastStep = lesson ? currentStepIdx === lesson.steps.length - 1 : false;
   const currentTask: CodingTask | undefined = step?.codingTasks?.find(t => t.language === activeLanguage);
 
   useEffect(() => {
-    if (currentTask) {
+    if (step?.type === 'minigame' && step.minigame) {
+      setGameItems([...step.minigame.items].sort(() => Math.random() - 0.5));
+      setGameFeedback(null);
+      setIsTaskCompleted(false);
+    } else if (currentTask) {
       setUserCode(currentTask.template);
       setTerminalOutput([]);
       setIsTaskCompleted(false);
-      setIsDebugMode(false);
-      setDebugStepIdx(0);
     } else if (step?.type === 'concept') {
       setIsTaskCompleted(true);
     }
@@ -58,22 +64,33 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
+  const handleScroll = () => {
+    if (editorRef.current && lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = editorRef.current.scrollTop;
+    }
+  };
+
+  const lineCount = userCode.split('\n').length;
+  const lineNumbers = Array.from({ length: Math.max(lineCount, 15) }, (_, i) => i + 1);
+
   if (!lesson || !step) return <div className="p-10 text-white">Алдаа: Хичээл олдсонгүй.</div>;
 
   const verifyCode = async (codeToVerify: string, lang: string) => {
-    if (!currentTask) return { success: false, output: "", feedback: "", warnings: "" };
+    if (!currentTask) return { success: false, output: "", feedback: "", hint: "" };
 
-    // ХУРДАСГУУР: Маш энгийн даалгаврыг AI-гүйгээр шууд шалгах (Level 1-2)
-    const normalizedCode = codeToVerify.replace(/\s/g, '');
-    const expectedOut = currentTask.expectedOutput.replace(/\s/g, '');
-    
-    // Хэрэв зөвхөн print хийж байгаа бол локаль шалгалт хийнэ
-    if (normalizedCode.includes(expectedOut) && (normalizedCode.includes('print') || normalizedCode.includes('printf') || normalizedCode.includes('cout'))) {
-       return { success: true, output: currentTask.expectedOutput, feedback: "Зөв байна!", warnings: "" };
+    // Simple placeholder replacement check for faster feedback
+    let processedCode = codeToVerify;
+    if (codeToVerify.includes('___')) {
+      return { success: false, output: "Code contains empty placeholders", feedback: "___ хэсгийг нөхөж бичнэ үү.", hint: "Код доторх дутуу хэсгүүдийг утгаар солин бичээрэй." };
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const prompt = `Чи бол Код Шүүгч. Хариуг зөвхөн JSON-оор өг: { "success": boolean, "output": string, "feedback": string }. Код: ${codeToVerify}\nХүлээгдэж буй үр дүн: ${currentTask.expectedOutput}`;
+    const prompt = `Act as a strict code mentor. Analyze this ${lang} code.
+    Goal: Output should be exactly "${currentTask.expectedOutput}".
+    User Code: ${codeToVerify}
+    
+    Response strictly in JSON format: 
+    { "success": boolean, "output": "actual program output", "feedback": "short motivational message", "hint": "if failed, give 1 specific hint what to change" }`;
     
     try {
       const response = await ai.models.generateContent({
@@ -81,51 +98,57 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
         contents: prompt,
         config: { 
           responseMimeType: "application/json",
-          thinkingConfig: { thinkingBudget: 0 } // Илүү хурдан хариу өгөхийн тулд
+          thinkingConfig: { thinkingBudget: 0 }
         }
       });
       return JSON.parse(response.text || "{}");
     } catch (e) {
-      return { success: false, output: "Error", feedback: "Алдаа гарлаа.", warnings: "" };
+      return { success: false, output: "Error", feedback: "Алдаа гарлаа.", hint: "Интернэт холболтоо шалгана уу." };
     }
   };
 
   const handleRunCode = async () => {
     if (!currentTask || isRunning) return;
     setIsRunning(true);
-    setIsDebugMode(false);
-    setTerminalOutput([{type: 'cmd', text: `Checking code...`}]);
+    setTerminalOutput([{type: 'info', text: `> Running validation...`}]);
     
     const result = await verifyCode(userCode, activeLanguage);
     
     if (result.success) {
-      setTerminalOutput(prev => [...prev, {type: 'out', text: result.output}, {type: 'success', text: "Зөв байна!"}]);
+      setTerminalOutput(prev => [
+        ...prev, 
+        {type: 'out', text: result.output}, 
+        {type: 'success', text: `✓ БОДЛОГО ЗӨВ: ${result.feedback}`}
+      ]);
       setIsTaskCompleted(true);
     } else {
-      setTerminalOutput(prev => [...prev, {type: 'err', text: result.feedback}]);
+      setTerminalOutput(prev => [
+        ...prev, 
+        {type: 'err', text: `✗ АЛДАА: ${result.output || 'Logic error'}`},
+        {type: 'hint', text: `БАГШИЙН ЗӨВЛӨГӨӨ: ${result.hint}`}
+      ]);
     }
     setIsRunning(false);
   };
 
-  const startDebug = () => {
-    if (!currentTask?.debugSteps) return;
-    setIsDebugMode(true);
-    setDebugStepIdx(0);
-  };
-
-  const stepDebug = () => {
-    if (!currentTask?.debugSteps) return;
-    if (debugStepIdx < currentTask.debugSteps.length - 1) {
-      setDebugStepIdx(prev => prev + 1);
-    } else {
-      setIsDebugMode(false);
+  const checkGameOrder = () => {
+    if (!step.minigame) return;
+    const currentOrder = gameItems.map(i => i.id);
+    const isCorrect = JSON.stringify(currentOrder) === JSON.stringify(step.minigame.correctOrder);
+    
+    if (isCorrect) {
+      setGameFeedback("Зөв байна! Гайхалтай.");
       setIsTaskCompleted(true);
+    } else {
+      setGameFeedback("Буруу дараалал байна. Дахиад оролдоод үзээрэй.");
     }
   };
 
-  const handleQuizSelect = (optionId: string) => {
-    setSelectedQuizOption(optionId);
-    setIsTaskCompleted(true);
+  const moveGameItem = (fromIdx: number, toIdx: number) => {
+    const newItems = [...gameItems];
+    const [movedItem] = newItems.splice(fromIdx, 1);
+    newItems.splice(toIdx, 0, movedItem);
+    setGameItems(newItems);
   };
 
   const handleNext = () => {
@@ -136,7 +159,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
       setIsTaskCompleted(false);
       setSelectedQuizOption(null);
       setTerminalOutput([]);
-      setIsDebugMode(false);
+      setGameFeedback(null);
     }
   };
 
@@ -164,95 +187,156 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background-light dark:bg-background-dark relative font-display text-slate-900 dark:text-slate-100">
       {showCelebration && (
-        <div className="absolute inset-0 z-[100] bg-primary flex flex-col items-center justify-center p-10 animate-in fade-in zoom-in duration-300">
-          <span className="material-symbols-outlined text-[120px] text-white animate-bounce mb-6">workspace_premium</span>
-          <h2 className="text-5xl font-black text-white text-center mb-4 uppercase">Амжилттай!</h2>
-          <button onClick={() => onExit(true)} className="bg-white text-primary px-10 py-4 rounded-2xl font-black text-xl shadow-2xl hover:scale-105 transition-transform uppercase tracking-widest">
-            Дуусгах
+        <div className="absolute inset-0 z-[100] bg-primary flex flex-col items-center justify-center p-10 animate-in fade-in zoom-in duration-300 text-center">
+          <div className="size-32 rounded-full bg-white flex items-center justify-center mb-8 shadow-2xl animate-bounce">
+             <span className="material-symbols-outlined text-6xl text-primary font-black">celebration</span>
+          </div>
+          <h2 className="text-6xl font-black text-white mb-4 uppercase tracking-tighter">МОДУЛЬ ДУУСЛАА!</h2>
+          <p className="text-white/80 font-bold mb-10 text-xl">Чи С хэлний нэгэн чухал давааг давлаа. Баяр хүргэе!</p>
+          <button onClick={() => onExit(true)} className="bg-slate-900 text-white px-12 py-5 rounded-[24px] font-black text-xl shadow-2xl hover:scale-110 active:scale-95 transition-all uppercase tracking-widest">
+            Дараагийн Модуль
           </button>
         </div>
       )}
 
       <header className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#111814] px-6 py-4 z-30 shrink-0">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 text-primary border-2 border-primary/20">
-            <span className="material-symbols-outlined text-3xl font-bold">school</span>
-          </div>
+          <button onClick={() => onExit()} className="size-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+             <span className="material-symbols-outlined text-slate-400">arrow_back</span>
+          </button>
           <div>
             <h1 className="text-lg font-black tracking-tight leading-none mb-1">{lesson.title}</h1>
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{currentStepIdx + 1}-р алхам / {lesson.steps.length}</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{currentStepIdx + 1} / {lesson.steps.length} АЛХАМ</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setIsAiOpen(!isAiOpen)} className={`flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-black border-2 ${isAiOpen ? 'bg-primary border-primary text-slate-900' : 'bg-white border-primary/20 text-primary'}`}>
+          <button onClick={() => setIsAiOpen(!isAiOpen)} className={`flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-black transition-all ${isAiOpen ? 'bg-primary text-slate-900' : 'bg-slate-900 text-white'}`}>
             <span className="material-symbols-outlined text-xl">smart_toy</span>
-            <span>AI Багш</span>
-          </button>
-          <button onClick={() => onExit()} className="p-2 text-slate-400 hover:text-slate-600">
-             <span className="material-symbols-outlined">close</span>
+            <span className="hidden md:inline">AI Багш</span>
           </button>
         </div>
       </header>
 
       <main className="flex flex-1 overflow-hidden relative">
-        <section className={`flex flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#111814]/30 transition-all duration-300 relative ${isAiOpen ? 'w-1/3' : 'w-1/2'}`}>
+        <section className={`flex flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1410] transition-all duration-300 relative ${isAiOpen ? 'w-[35%]' : 'w-[45%]'}`}>
           <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-10 pb-32">
             <div className="mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="h-1 w-8 bg-primary rounded-full"></span>
-                <h2 className="text-3xl font-black tracking-tight">{step.title}</h2>
+              <h2 className="text-3xl font-black tracking-tight mb-6">{step.title}</h2>
+              <div className="prose dark:prose-invert max-w-none">
+                 <p className="text-lg leading-relaxed text-slate-600 dark:text-slate-300 font-medium">{step.body}</p>
               </div>
-              <p className="text-lg leading-relaxed text-slate-600 dark:text-slate-300 mb-8 font-medium">{step.body}</p>
             </div>
 
+            {step.type === 'minigame' && step.minigame && (
+              <div className="mt-8 space-y-4">
+                 <div className="p-4 bg-primary/10 rounded-2xl border-2 border-primary/20 mb-6">
+                    <p className="text-sm font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                       <span className="material-symbols-outlined text-sm">extension</span> Mini-Game: Кодын эрэмбэ
+                    </p>
+                 </div>
+                 <div className="space-y-2">
+                   {gameItems.map((item, idx) => (
+                     <div key={item.id} className="flex items-center gap-3">
+                        <div className="flex flex-col gap-1">
+                           <button onClick={() => idx > 0 && moveGameItem(idx, idx - 1)} className="material-symbols-outlined text-slate-400 hover:text-primary transition-colors text-sm">keyboard_arrow_up</button>
+                           <button onClick={() => idx < gameItems.length - 1 && moveGameItem(idx, idx + 1)} className="material-symbols-outlined text-slate-400 hover:text-primary transition-colors text-sm">keyboard_arrow_down</button>
+                        </div>
+                        <div className="flex-1 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl font-mono text-sm shadow-sm">
+                           {item.text}
+                        </div>
+                     </div>
+                   ))}
+                 </div>
+                 <button onClick={checkGameOrder} className="w-full mt-6 bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-slate-800 transition-all">Шалгах</button>
+                 {gameFeedback && (
+                   <p className={`mt-4 text-center font-bold text-sm ${gameFeedback.includes('Зөв') ? 'text-primary' : 'text-red-400'}`}>{gameFeedback}</p>
+                 )}
+              </div>
+            )}
+
             {step.type === 'quiz' && (
-               <div className="mb-10 rounded-3xl border-4 border-slate-100 dark:border-white/5 p-8 bg-slate-50/50 dark:bg-white/5">
-                <p className="text-xl font-black mb-6">Сонгоно уу:</p>
-                <div className="space-y-3">
+               <div className="space-y-3 mt-8">
                   {step.quiz?.options.map((opt) => (
-                    <button key={opt.id} onClick={() => handleQuizSelect(opt.id)} className={`flex w-full items-center justify-between rounded-2xl border-2 p-5 text-left transition-all ${selectedQuizOption === opt.id ? opt.isCorrect ? 'border-primary bg-primary/10' : 'border-red-400 bg-red-50' : 'border-white dark:border-white/5 bg-white dark:bg-slate-900 shadow-sm hover:border-primary/50'}`}>
+                    <button 
+                      key={opt.id} 
+                      onClick={() => { setSelectedQuizOption(opt.id); setIsTaskCompleted(opt.isCorrect); }} 
+                      className={`flex w-full items-center justify-between rounded-2xl border-4 p-5 text-left transition-all ${
+                        selectedQuizOption === opt.id 
+                          ? opt.isCorrect ? 'border-primary bg-primary/10 text-primary' : 'border-red-400 bg-red-50 text-red-500' 
+                          : 'border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5 hover:border-primary/50'
+                      }`}
+                    >
                       <span className="font-bold text-lg">{opt.text}</span>
-                      {selectedQuizOption === opt.id && <span className="material-symbols-outlined">{opt.isCorrect ? 'check_circle' : 'cancel'}</span>}
                     </button>
                   ))}
-                </div>
-              </div>
+               </div>
             )}
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-white/10 flex items-center justify-between z-20">
-             <button onClick={() => setCurrentStepIdx(prev => Math.max(0, prev - 1))} disabled={currentStepIdx === 0} className="px-6 py-3 text-slate-500 font-black uppercase text-xs disabled:opacity-30 flex items-center gap-1 hover:text-primary transition-colors">
+          <div className="absolute bottom-0 left-0 right-0 p-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-white/10 flex items-center justify-between z-20">
+             <button onClick={() => setCurrentStepIdx(prev => Math.max(0, prev - 1))} disabled={currentStepIdx === 0} className="px-6 py-3 text-slate-400 font-black uppercase text-xs disabled:opacity-0 transition-all flex items-center gap-1">
                <span className="material-symbols-outlined text-sm">arrow_back</span> Өмнөх
              </button>
              {isTaskCompleted && (
-               <button onClick={handleNext} className="bg-primary text-slate-900 px-10 py-4 rounded-2xl font-black text-sm uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
-                 <span>Дараах</span>
+               <button onClick={handleNext} className="bg-primary text-slate-900 px-10 py-4 rounded-[20px] font-black text-sm uppercase shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                 <span>{isLastStep ? 'Дуусгах' : 'Дараах'}</span>
                  <span className="material-symbols-outlined text-sm font-bold">arrow_forward</span>
                </button>
              )}
           </div>
         </section>
 
-        <section className={`flex flex-col bg-[#1e1e1e] transition-all duration-300 overflow-hidden relative ${isAiOpen ? 'w-1/3' : 'w-1/2'}`}>
+        <section className={`flex flex-col bg-[#0d0d0d] transition-all duration-300 overflow-hidden relative flex-1`}>
           {step.type === 'coding' ? (
             <>
-              <div className="flex items-center justify-between border-b border-white/10 bg-[#2d2d2d] px-6 py-2">
-                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{activeLanguage.toUpperCase()} Editor</span>
+              <div className="flex items-center justify-between border-b border-white/5 bg-[#151515] px-6 py-2 shrink-0">
+                <div className="flex items-center gap-2">
+                   <span className="size-2 rounded-full bg-yellow-500"></span>
+                   <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">IDE - Editor</span>
+                </div>
+                <div className="text-[10px] font-black text-slate-500">main.{activeLanguage === 'python' ? 'py' : activeLanguage}</div>
               </div>
-              <div className="flex-1 font-mono text-lg text-white relative flex flex-col">
-                <textarea value={userCode} onChange={(e) => setUserCode(e.target.value)} className="flex-1 bg-transparent p-8 outline-none border-none resize-none custom-scrollbar" spellCheck={false} placeholder="// Кодоо энд бичнэ үү..." />
+              
+              <div className="flex-1 flex overflow-hidden font-mono text-lg bg-[#0d0d0d]">
+                <div 
+                  ref={lineNumbersRef}
+                  className="w-12 bg-[#111] text-[#333] py-8 text-right pr-3 select-none overflow-hidden shrink-0 border-r border-white/5"
+                >
+                  {lineNumbers.map(n => <div key={n} className="h-[28px]">{n}</div>)}
+                </div>
+                <textarea 
+                  ref={editorRef}
+                  value={userCode} 
+                  onChange={(e) => setUserCode(e.target.value)} 
+                  onScroll={handleScroll}
+                  className="flex-1 bg-transparent p-8 py-8 outline-none border-none resize-none custom-scrollbar text-[#e0e0e0] leading-[28px] overflow-y-auto" 
+                  spellCheck={false} 
+                  autoFocus
+                />
               </div>
-              <div className="h-1/3 flex flex-col border-t border-white/10 bg-[#0c0c0c]">
-                <div className="flex items-center justify-between px-6 py-2 bg-[#1a1a1a]">
-                   <span className="text-[10px] font-black uppercase text-slate-500">Терминал</span>
-                   <button onClick={handleRunCode} disabled={isRunning} className="bg-primary text-slate-900 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all">
-                     {isRunning ? 'Checking...' : 'Ажиллуулах'}
+
+              <div className="h-[35%] flex flex-col border-t border-white/5 bg-[#080808]">
+                <div className="flex items-center justify-between px-6 py-2 bg-[#111] border-b border-white/5">
+                   <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-slate-500">terminal</span>
+                      <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Output</span>
+                   </div>
+                   <button 
+                    onClick={handleRunCode} 
+                    disabled={isRunning} 
+                    className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isRunning ? 'bg-slate-800 text-slate-500' : 'bg-primary text-slate-900 shadow-lg'}`}
+                   >
+                     {isRunning ? 'Checking...' : 'Шалгах'}
                    </button>
                 </div>
                 <div className="flex-1 p-6 font-mono text-sm overflow-y-auto custom-scrollbar bg-black/40">
                   {terminalOutput.map((line, i) => (
-                      <div key={i} className={`mb-1 flex gap-2 ${line.type === 'err' ? 'text-red-400' : line.type === 'success' ? 'text-primary font-black' : 'text-white'}`}>
-                         <span className="opacity-40 select-none">❯</span>
+                      <div key={i} className={`mb-1.5 flex gap-3 ${
+                        line.type === 'err' ? 'text-red-400' : 
+                        line.type === 'success' ? 'text-primary' : 
+                        'text-white'
+                      }`}>
+                         <span className="opacity-20 select-none">❯</span>
                          <span className="whitespace-pre-wrap">{line.text}</span>
                       </div>
                   ))}
@@ -260,26 +344,26 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-slate-50/5 dark:bg-white/5">
-               <div className="size-32 rounded-3xl bg-slate-800/50 flex items-center justify-center mb-8 border-2 border-white/5 shadow-inner">
-                  <span className="material-symbols-outlined text-[64px] text-primary/40">menu_book</span>
+            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+               <div className="size-48 rounded-[48px] bg-white/5 flex items-center justify-center mb-10 border-2 border-white/5 shadow-inner">
+                  <span className="material-symbols-outlined text-[100px] text-primary opacity-20 animate-pulse">code_off</span>
                </div>
-               <h3 className="text-2xl font-black text-slate-400 mb-4 uppercase">Онолын хэсэг</h3>
-               <p className="text-slate-600 dark:text-slate-500 max-w-xs font-medium leading-relaxed">Зүүн талын тайлбарыг уншаад бэлэн болмогц "Дараах" товчийг дарна уу.</p>
+               <h3 className="text-3xl font-black text-slate-500 mb-4 uppercase tracking-widest italic">Visual Study Mode</h3>
+               <p className="text-slate-600 max-w-sm font-medium leading-relaxed">Зүүн талын онолыг уншиж дуусаад, сорилыг бөглөн дараагийн алхам руу шилжээрэй.</p>
             </div>
           )}
         </section>
 
         {isAiOpen && (
-          <div className="w-1/3 bg-white dark:bg-slate-900 border-l-4 border-primary/20 flex flex-col animate-in slide-in-from-right duration-300">
+          <div className="w-[30%] bg-white dark:bg-slate-900 border-l-4 border-primary/20 flex flex-col animate-in slide-in-from-right duration-300 shadow-2xl">
             <div className="p-5 border-b flex items-center justify-between bg-slate-50 dark:bg-slate-800/80">
-              <h4 className="font-black text-sm uppercase">AI Багш</h4>
-              <button onClick={() => setIsAiOpen(false)}><span className="material-symbols-outlined text-slate-400">close</span></button>
+              <h4 className="font-black text-xs uppercase tracking-widest">AI Tutor Helper</h4>
+              <button onClick={() => setIsAiOpen(false)} className="material-symbols-outlined text-slate-400">close</button>
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
               {chatMessages.map((msg, idx) => (
                 <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`max-w-[90%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-primary text-slate-900 font-bold' : 'bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 shadow-sm'}`}>
+                  <div className={`max-w-[90%] px-4 py-3 rounded-[20px] text-sm leading-relaxed ${msg.role === 'user' ? 'bg-primary text-slate-900 font-bold' : 'bg-slate-100 dark:bg-slate-800 border'}`}>
                     {msg.text}
                   </div>
                 </div>
@@ -287,8 +371,8 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
               <div ref={chatEndRef} />
             </div>
             <form onSubmit={(e) => { e.preventDefault(); askAi(); }} className="p-4 border-t flex gap-2 bg-white dark:bg-slate-900">
-              <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Асуух..." className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-5 py-3 text-sm font-bold" />
-              <button type="submit" disabled={isAiLoading || !chatInput.trim()} className="bg-primary text-slate-900 size-11 rounded-2xl flex items-center justify-center shadow-lg"><span className="material-symbols-outlined font-black">send</span></button>
+              <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Асуултаа бичээрэй..." className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-5 py-3 text-sm font-bold" />
+              <button type="submit" className="bg-primary text-slate-900 size-11 rounded-xl flex items-center justify-center shadow-lg"><span className="material-symbols-outlined">send</span></button>
             </form>
           </div>
         )}

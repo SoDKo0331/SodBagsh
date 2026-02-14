@@ -10,6 +10,7 @@ import Sandbox from './views/Sandbox';
 import ProblemBank from './views/ProblemBank';
 import ProblemSolvingView from './views/ProblemSolvingView';
 import QuizView from './views/QuizView';
+import GameView from './views/GameView';
 import { LessonStatus, Module, Badge } from './types';
 import { PROBLEMS } from './data/problems';
 
@@ -33,7 +34,7 @@ const INITIAL_MODULES: Module[] = [
   { id: 'm2', number: 2, title: 'LEVEL 1: Хувьсагч', description: 'Мэдээллийг хэрхэн хайрцаглаж хадгалах вэ?', status: LessonStatus.LOCKED, icon: 'inventory_2', badgeId: 'b2' },
   { id: 'm3', number: 3, title: 'LEVEL 1: IF/ELSE', description: 'Компьютер хэрхэн шийдвэр гаргадаг вэ? Logic сурцгаая.', status: LessonStatus.LOCKED, icon: 'alt_route', badgeId: 'b3' },
   { id: 'm4', number: 4, title: 'LEVEL 2: Давталт', description: 'Уйтгартай ажлыг 100 удаа хийх хэрэггүй боллоо.', status: LessonStatus.LOCKED, icon: 'rebase_edit' },
-  { id: 'm5', number: 5, title: 'LEVEL 3: Функц', description: 'Өөрийн гэсэн шидэт тушаалуудыг үүсгэж сурна.', status: LessonStatus.LOCKED, icon: 'function' },
+  { id: 'm5', number: 5, title: 'LEVEL 3: Массив', description: 'Олон өгөгдлийг нэг дор хадгалж сурна.', status: LessonStatus.LOCKED, icon: 'database' },
   { id: 'm6', number: 6, title: 'LEVEL 4: Sorting', description: 'Bubble Sort болон бусад эрэмбэлэх аргууд.', status: LessonStatus.LOCKED, lockedType: 'ultimate', icon: 'format_list_numbered', badgeId: 'b4' }
 ];
 
@@ -53,17 +54,17 @@ const App: React.FC = () => {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
 
   const [modules, setModules] = useState<Module[]>(INITIAL_MODULES);
   const [badges, setBadges] = useState<Badge[]>(INITIAL_BADGES);
   const [solvedProblems, setSolvedProblems] = useState<string[]>([]);
   const [streak, setStreak] = useState(1);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'lesson' | 'sandbox' | 'badges' | 'problems' | 'solving-problem' | 'quiz'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'lesson' | 'sandbox' | 'badges' | 'problems' | 'solving-problem' | 'quiz' | 'game'>('dashboard');
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
   const [preferredLanguage, setPreferredLanguage] = useState<'python' | 'c' | 'cpp'>('python');
 
-  // Listen to Auth Changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -72,7 +73,6 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // Load from Firebase when user is logged in
   useEffect(() => {
     if (user) {
       const userDocRef = doc(db, "users", user.uid);
@@ -110,8 +110,9 @@ const App: React.FC = () => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAuthError('');
     if (!email || !password) {
-      alert("И-мэйл болон нууц үгээ оруулна уу.");
+      setAuthError("И-мэйл болон нууц үгээ оруулна уу.");
       return;
     }
 
@@ -124,11 +125,12 @@ const App: React.FC = () => {
     } catch (error: any) {
       console.error("Auth error", error);
       let msg = "Алдаа гарлаа.";
-      if (error.code === 'auth/user-not-found') msg = "Хэрэглэгч олдсонгүй.";
-      else if (error.code === 'auth/wrong-password') msg = "Нууц үг буруу байна.";
-      else if (error.code === 'auth/email-already-in-use') msg = "Энэ и-мэйл хаяг бүртгэлтэй байна.";
-      else if (error.code === 'auth/weak-password') msg = "Нууц үг дор хаяж 6 тэмдэгт байх ёстой.";
-      alert(msg);
+      if (error.code === 'auth/invalid-credential') {
+        msg = "И-мэйл эсвэл нууц үг буруу байна.";
+      } else if (error.code === 'auth/email-already-in-use') {
+        msg = "Энэ и-мэйл хаяг аль хэдийн бүртгэлтэй байна. Нэвтрэх хэсгийг ашиглана уу.";
+      }
+      setAuthError(msg);
     }
   };
 
@@ -153,7 +155,6 @@ const App: React.FC = () => {
 
   const handleExitLesson = (completed?: boolean) => {
     if (completed && selectedModuleId && user) {
-      const module = modules.find(m => m.id === selectedModuleId);
       const newModules = modules.map(m => {
         if (m.id === selectedModuleId) return { ...m, status: LessonStatus.COMPLETED };
         const finishedIdx = modules.findIndex(mod => mod.id === selectedModuleId);
@@ -163,14 +164,8 @@ const App: React.FC = () => {
         }
         return m;
       });
-
-      const updatedBadges = module?.badgeId 
-        ? badges.map(b => b.id === module.badgeId ? { ...b, isEarned: true } : b)
-        : badges;
-
       setModules(newModules);
-      setBadges(updatedBadges);
-      saveToFirebase(user.uid, newModules, updatedBadges, solvedProblems, streak);
+      saveToFirebase(user.uid, newModules, badges, solvedProblems, streak);
     }
     setCurrentView('dashboard');
     setSelectedModuleId(null);
@@ -183,72 +178,45 @@ const App: React.FC = () => {
   };
 
   if (isAuthLoading) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-background-dark">
-        <div className="flex flex-col items-center">
-          <div className="size-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-primary font-black uppercase tracking-widest text-xs">Loading Quest...</p>
-        </div>
-      </div>
-    );
+    return <div className="h-screen w-full flex items-center justify-center bg-background-dark text-primary">Loading...</div>;
   }
 
   if (!user) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background-dark font-display p-6 overflow-hidden relative text-center">
-        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none overflow-hidden">
-           <div className="absolute top-[10%] left-[20%] text-primary/40"><span className="material-symbols-outlined text-9xl">terminal</span></div>
-           <div className="absolute bottom-[20%] right-[10%] text-primary/40"><span className="material-symbols-outlined text-[150px]">code</span></div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[48px] shadow-2xl border-4 border-primary/20 max-w-md w-full relative z-10 animate-in zoom-in duration-500">
-          <div className="size-20 rounded-[28px] bg-primary flex items-center justify-center text-slate-900 shadow-xl shadow-primary/30 mx-auto mb-8 rotate-3">
-            <span className="material-symbols-outlined text-5xl font-black">rocket_launch</span>
-          </div>
+        <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[48px] shadow-2xl border-4 border-primary/20 max-w-md w-full relative z-10">
           <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tighter">CodeQuest</h1>
           <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-8">
             {authMode === 'login' ? 'Тавтай морилно уу' : 'Шинэ аялал эхлүүлцгээе'}
           </p>
           
           <form onSubmit={handleAuth} className="space-y-4">
-            <div className="text-left">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4 mb-1 block">И-Мэйл Хаяг</label>
-              <input 
-                type="email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl px-6 py-4 font-bold focus:border-primary outline-none transition-all"
-                placeholder="email@example.com"
-              />
-            </div>
-            <div className="text-left">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4 mb-1 block">Нууц Үг</label>
-              <input 
-                type="password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl px-6 py-4 font-bold focus:border-primary outline-none transition-all"
-                placeholder="••••••••"
-              />
-            </div>
-            <button 
-              type="submit"
-              className="w-full bg-primary text-slate-900 py-4 px-6 rounded-2xl font-black text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 uppercase tracking-widest"
-            >
+            {authError && <div className="bg-red-500/10 text-red-500 p-4 rounded-2xl text-xs font-bold">{authError}</div>}
+            <input 
+              type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-800 border-2 rounded-2xl px-6 py-4 font-bold outline-none"
+              placeholder="Email"
+              required
+            />
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-800 border-2 rounded-2xl px-6 py-4 font-bold outline-none"
+              placeholder="Password"
+              required
+            />
+            <button type="submit" className="w-full bg-primary text-slate-900 py-4 rounded-2xl font-black text-lg uppercase tracking-widest">
               {authMode === 'login' ? 'Нэвтрэх' : 'Бүртгүүлэх'}
             </button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
-             <p className="text-slate-500 font-bold text-xs">
-                {authMode === 'login' ? 'Бүртгэлгүй юу?' : 'Бүртгэлтэй юу?'} 
-                <button 
-                  onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-                  className="text-primary ml-2 font-black uppercase tracking-widest hover:underline"
-                >
-                  {authMode === 'login' ? 'Бүртгүүлэх' : 'Нэвтрэх'}
-                </button>
-             </p>
+          <div className="mt-8">
+             <button onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="text-primary font-black uppercase tracking-widest text-xs">
+                {authMode === 'login' ? 'Бүртгүүлэх' : 'Нэвтрэх'}
+             </button>
           </div>
         </div>
       </div>
@@ -304,28 +272,8 @@ const App: React.FC = () => {
             onBack={() => setCurrentView('dashboard')} 
             onComplete={handleQuizComplete}
           />
-        ) : currentView === 'badges' ? (
-          <div className="flex-1 overflow-y-auto p-10 bg-[#f8faf9] dark:bg-[#0d1a13]">
-             <header className="mb-10 flex items-center justify-between">
-                <div>
-                  <button onClick={() => setCurrentView('dashboard')} className="flex items-center gap-2 text-slate-500 font-black uppercase text-xs tracking-widest mb-2 hover:text-primary transition-colors">
-                    <span className="material-symbols-outlined text-sm">arrow_back</span> Буцах
-                  </button>
-                  <h1 className="text-4xl font-black tracking-tighter">Миний Цолнууд</h1>
-                </div>
-             </header>
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {badges.map(badge => (
-                  <div key={badge.id} className={`p-8 rounded-[32px] border-4 transition-all flex flex-col items-center text-center ${badge.isEarned ? 'bg-white dark:bg-slate-900 border-primary/20 shadow-xl' : 'bg-slate-50 dark:bg-slate-800/20 border-slate-100 dark:border-slate-800 grayscale opacity-60'}`}>
-                    <div className={`size-24 rounded-full flex items-center justify-center mb-6 shadow-2xl ${badge.isEarned ? badge.color + ' text-white' : 'bg-slate-200 text-slate-400'}`}>
-                      <span className="material-symbols-outlined text-5xl font-bold">{badge.icon}</span>
-                    </div>
-                    <h3 className="text-xl font-black mb-2">{badge.title}</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{badge.description}</p>
-                  </div>
-                ))}
-             </div>
-          </div>
+        ) : currentView === 'game' ? (
+          <GameView onBack={() => setCurrentView('dashboard')} />
         ) : (
           <Sandbox onBack={() => setCurrentView('dashboard')} />
         )}

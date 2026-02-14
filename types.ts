@@ -20,7 +20,7 @@ export interface Problem {
     c: string;
     cpp: string;
   };
-  expectedOutput: string; // Ирээдүйд илүү нарийн тест кейсүүд нэмж болно
+  expectedOutput: string;
 }
 
 export interface Badge {
@@ -50,32 +50,28 @@ export interface QuizOption {
   isCorrect: boolean;
 }
 
-export interface DebugStep {
-  lineIndex: number;
-  variables: Record<string, any>;
-  comment: string;
-}
-
 export interface CodingTask {
   language: 'python' | 'c' | 'cpp';
   template: string;
   explanation: string[];
   expectedOutput: string;
   fileName: string;
-  debugSteps?: DebugStep[]; 
+}
+
+export interface MiniGameData {
+  type: 'sorter' | 'matcher';
+  question: string;
+  items: { id: string; text: string; order?: number }[];
+  correctOrder?: string[]; // IDs in correct order
 }
 
 export interface StepContent {
   id: number;
-  type: 'concept' | 'quiz' | 'coding';
+  type: 'concept' | 'quiz' | 'coding' | 'minigame';
   title: string;
   subtitle?: string;
   body: string;
-  analogy?: {
-    icon: string;
-    text: string;
-  };
-  visualAid?: 'box' | 'hardware' | 'logic';
+  minigame?: MiniGameData;
   quiz?: {
     question: string;
     options: QuizOption[];

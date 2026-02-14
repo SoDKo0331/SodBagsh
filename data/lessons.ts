@@ -10,36 +10,20 @@ export const LESSON_DATA: Record<string, FullLesson> = {
         id: 1,
         type: 'concept',
         title: 'Компьютертэй ярилцаж суръя',
-        body: "Код бичнэ гэдэг нь компьютерт юу хийхийг нь ойлгомжтойгоор зааж өгөх үйл явц юм. Компьютер маш хурдан боловч 'яг юу хийхээ' биднээр хэлүүлэхгүй бол юу ч хийж чадахгүй. Хамгийн анхны тушаал бол дэлгэц дээр үг хэвлэх!",
-        analogy: { icon: 'campaign', text: "Энэ бол компьютерт 'Энийг чангаар хэл!' гэж хэлж байгаатай адилхан. Бид 'print' гэж хэлээд хаалтан дотор үгээ бичдэг." },
-        visualAid: 'logic'
+        body: "Код бичнэ гэдэг нь компьютерт юу хийхийг нь ойлгомжтойгоор зааж өгөх үйл явц юм. Хамгийн анхны тушаал бол дэлгэц дээр үг хэвлэх!",
       },
       {
         id: 2,
         type: 'coding',
-        title: 'Сайн уу, Дэлхий!',
-        body: "Python хэл дээр print() тушаалыг ашиглан хүссэн үгээ хэвлэж болно. Хашилт (' ') ашиглахаа бүү мартаарай! Хашилт нь компьютерт 'Энэ бол зүгээр л бичвэр шүү' гэж хэлж байгаа хэрэг юм.",
+        title: 'Нөхөж бичих: Сайн уу!',
+        body: "Доорх кодын дутуу хэсгийг нөхөж бичээд дэлгэцэнд 'Hello' гэж хэвлээрэй.",
         codingTasks: [
-          {
-            language: 'python',
-            fileName: 'hello.py',
-            template: "print('Сайн уу, Дэлхий!')",
-            explanation: ["print() - Энэ бол дэлгэцэнд хэвлэх тушаал."],
-            expectedOutput: "Сайн уу, Дэлхий!"
-          },
           {
             language: 'c',
             fileName: 'hello.c',
-            template: "#include <stdio.h>\n\nint main() {\n    printf(\"Сайн уу, Дэлхий!\\n\");\n    return 0;\n}",
-            explanation: ["printf - C хэл дээр хэвлэх үндсэн тушаал."],
-            expectedOutput: "Сайн уу, Дэлхий!",
-          },
-          {
-            language: 'cpp',
-            fileName: 'hello.cpp',
-            template: "#include <iostream>\n\nint main() {\n    std::cout << \"Сайн уу, Дэлхий!\" << std::endl;\n    return 0;\n}",
-            explanation: ["std::cout - C++ хэл дээрх гаралтын урсгал."],
-            expectedOutput: "Сайн уу, Дэлхий!",
+            template: "#include <stdio.h>\n\nint main() {\n    ___(\"Hello\");\n    return 0;\n}",
+            explanation: ["printf - С хэлний хэвлэх функц"],
+            expectedOutput: "Hello"
           }
         ]
       }
@@ -52,44 +36,37 @@ export const LESSON_DATA: Record<string, FullLesson> = {
       {
         id: 1,
         type: 'concept',
-        title: 'Санах ой гэж юу вэ?',
-        body: "Хувьсагч бол дотроо мэдээлэл хадгалдаг шошготой хайрцаг юм. Компьютер бүх зүйлийг санах ойдоо хадгалдаг. Бид тэр санах ойн хэсэгт нэр өгөөд (жишээ нь: 'nas'), дотор нь утга хийчихвэл дараа нь тэр нэрээрээ дуудаж ашиглаж болдог.",
-        visualAid: 'box',
-        analogy: { icon: 'inventory_2', text: "Хайрцаг дээр 'nas' гэж бичээд дотор нь 13 гэсэн тоо хийчихвэл, дараа нь компьютер 'nas' хаана байна? гэхэд доторх 13-ыг нь гаргаж ирнэ." }
+        title: 'Санах ойн нууц',
+        body: "Хувьсагч бол тоо эсвэл үгийг түр хадгалах хайрцаг юм. Хайрцаг бүр өөрийн гэсэн нэр, төрөлтэй байдаг.",
       },
       {
         id: 2,
-        type: 'concept',
-        title: 'Өгөгдлийн төрлүүд',
-        body: "Компьютер хайрцагт юу байгааг мэдэх хэрэгтэй. Бүхэл тоог 'int' (integer), бичвэрийг 'str' (string), бутархай тоог 'float' гэж нэрлэдэг. Python-д энийг автоматаар таньдаг бол C хэлэнд заавал хэлж өгөх ёстой.",
-        visualAid: 'hardware'
+        type: 'minigame',
+        title: 'Кодын Дараалал',
+        body: "Эдгээр мөрүүдийг зөв дараалалд оруулж хувьсагч зарлан, утга оноож, хэвлэх үйлдлийг гүйцэтгэ.",
+        minigame: {
+          type: 'sorter',
+          question: "Зөв дарааллыг ол:",
+          items: [
+            { id: '1', text: 'int x;' },
+            { id: '2', text: 'x = 10;' },
+            { id: '3', text: 'printf("%d", x);' }
+          ],
+          correctOrder: ['1', '2', '3']
+        }
       },
       {
         id: 3,
         type: 'coding',
-        title: 'Хайрцаглаж суръя',
-        body: "Одоо 'age' нэртэй хувьсагч үүсгээд дотор нь өөрийнхөө насыг хийгээд хэвлэж үзээрэй. Python-д: age = 13",
+        title: 'Дутууг нөх: Нас тооцоолох',
+        body: "Нас (age) гэдэг бүхэл тоон хувьсагч зарлаад 15 гэсэн утга оноож хэвлэ.",
         codingTasks: [
           {
-            language: 'python',
-            fileName: 'age.py',
-            template: "age = 13\n# Энд 'Миний нас: 13' гэж гарахаар хэвлэ\n",
-            explanation: ["age = 13 - Хувьсагч үүсгэж утга оноолоо."],
-            expectedOutput: "Миний нас: 13"
-          },
-          {
             language: 'c',
-            fileName: 'age.c',
-            template: "#include <stdio.h>\n\nint main() {\n    int age = 13;\n    // printf(\"Миний нас: %d\\n\", age);\n    return 0;\n}",
-            explanation: ["int age - Бүхэл тоон хувьсагч зарлаж байна."],
-            expectedOutput: "Миний нас: 13",
-          },
-          {
-            language: 'cpp',
-            fileName: 'age.cpp',
-            template: "#include <iostream>\n\nint main() {\n    int age = 13;\n    // std::cout << \"Миний нас: \" << age << std::endl;\n    return 0;\n}",
-            explanation: ["std::cout - Олон утгыг нэгтгэн хэвлэж болно."],
-            expectedOutput: "Миний нас: 13",
+            fileName: 'vars.c',
+            template: "#include <stdio.h>\n\nint main() {\n    ___ age = 15;\n    printf(\"%d\", ___);\n    return 0;\n}",
+            explanation: ["int - бүхэл тоо", "age - хувьсагчийн нэр"],
+            expectedOutput: "15"
           }
         ]
       }
@@ -97,28 +74,26 @@ export const LESSON_DATA: Record<string, FullLesson> = {
   },
   'm3': {
     id: 'm3',
-    title: 'LEVEL 1: IF/ELSE - Логик Шийдвэр',
+    title: 'LEVEL 1: IF/ELSE - Сонголт',
     steps: [
       {
         id: 1,
         type: 'concept',
-        title: 'Зам сонгох',
-        body: "Компьютер зөвхөн тоо боддоггүй, бас шийдвэр гаргаж чаддаг! Хэрэв нэг нөхцөл биелвэл (True) нэг үйлдлийг, биелэхгүй бол (False) өөр үйлдлийг хийнэ.",
-        visualAid: 'logic',
-        analogy: { icon: 'alt_route', text: "Тоглоом дээр 'Хэрэв түлхүүр байгаа бол хаалгыг нээ, үгүй бол 'Түлхүүр хэрэгтэй' гэж хэл' гэдэгтэй адилхан." }
+        title: 'Шийдвэр гаргах',
+        body: "Компьютер нөхцөл шалгаж шийдвэр гаргадаг. Хэрэв (if) оноо 60-аас их бол тэнцэнэ, үгүй бол (else) унана.",
       },
       {
         id: 2,
         type: 'coding',
-        title: 'Дүн шалгагч',
-        body: "Оноо 60-аас их бол 'Тэнцлээ', үгүй бол 'Уналаа' гэж хэлэх код бичье. 'if' болон 'else' ашиглана.",
+        title: 'Нөхөж бич: Тэнцсэн үү?',
+        body: "Оноо 60-аас их бол 'PASS' гэж хэвлэх нөхцөлийг бич.",
         codingTasks: [
           {
-            language: 'python',
-            fileName: 'logic.py',
-            template: "score = 75\nif score >= 60:\n    # Тэнцлээ гэж хэвлэ\nelse:\n    # Уналаа гэж хэвлэ\n",
-            explanation: ["if - 'Хэрэв' гэсэн утгатай.", "else - 'Үгүй бол' гэсэн утгатай."],
-            expectedOutput: "Тэнцлээ"
+            language: 'c',
+            fileName: 'if.c',
+            template: "#include <stdio.h>\n\nint main() {\n    int score = 70;\n    ___ (score > 60) {\n        printf(\"PASS\");\n    }\n    return 0;\n}",
+            explanation: ["if - хэрэв гэсэн нөхцөл"],
+            expectedOutput: "PASS"
           }
         ]
       }
@@ -126,27 +101,69 @@ export const LESSON_DATA: Record<string, FullLesson> = {
   },
   'm4': {
     id: 'm4',
-    title: 'LEVEL 2: Давталт - Уйтгартай ажлыг хурдсгах',
+    title: 'LEVEL 2: Давталт - For Loop',
     steps: [
       {
         id: 1,
         type: 'concept',
-        title: 'For ба While',
-        body: "Хэрэв чи 'Би залхуу биш' гэж 100 удаа бичих хэрэгтэй болсон бол гараараа бичих үү? Үгүй ээ! Компьютерт ердөө 'Энийг 100 удаа давт' гэж хэлэхэд л хангалттай. Үүнийг 'Loop' буюу Давталт гэдэг.",
-        analogy: { icon: 'rebase_edit', text: "Гүйлтийн зам дээр 10 тойрог гүйхтэй адил. Тойрог болгон дээр тоолуур 1-ээр нэмэгдэнэ." }
+        title: 'Уйтгартай ажлыг давтах',
+        body: "For давталт нь нэг үйлдлийг олон удаа давтахад ашиглагддаг. i++ гэдэг нь i-ийн утгыг нэгээр нэмэгдүүлнэ гэсэн үг.",
+      },
+      {
+        id: 2,
+        type: 'minigame',
+        title: 'Логик Таавар',
+        body: "Давталт 3 удаа ажиллахын тулд нөхцөл ямар байх ёстой вэ?",
+        minigame: {
+          type: 'sorter',
+          question: "3 удаа 'Hi' хэвлэх дараалал:",
+          items: [
+            { id: 'a', text: 'for(int i=0; i<3; i++) {' },
+            { id: 'b', text: '  printf("Hi");' },
+            { id: 'c', text: '}' }
+          ],
+          correctOrder: ['a', 'b', 'c']
+        }
+      },
+      {
+        id: 3,
+        type: 'coding',
+        title: 'Нөхөж бич: 5 удаа тоолох',
+        body: "0-ээс 4 хүртэл тоолох давталтын дутууг нөх.",
+        codingTasks: [
+          {
+            language: 'c',
+            fileName: 'loop.c',
+            template: "#include <stdio.h>\n\nint main() {\n    for(int i=0; ___ < 5; i___) {\n        printf(\"%d \", i);\n    }\n    return 0;\n}",
+            explanation: ["i < 5 - зогсох нөхцөл", "i++ - нэмэгдүүлэлт"],
+            expectedOutput: "0 1 2 3 4 "
+          }
+        ]
+      }
+    ]
+  },
+  'm5': {
+    id: 'm5',
+    title: 'LEVEL 3: Массив - Олон хайрцаг',
+    steps: [
+      {
+        id: 1,
+        type: 'concept',
+        title: 'Массив гэж юу вэ?',
+        body: "Массив бол олон тоог нэг дор хадгалах урт хайрцаг юм. Индекс нь 0-ээс эхэлдэг гэдгийг санаарай!",
       },
       {
         id: 2,
         type: 'coding',
-        title: '1-ээс 5 хүртэл тоолох',
-        body: "range() функцийг ашиглан 5 удаа давтаж, тоог хэвлэе.",
+        title: 'Массивын утга оноох',
+        body: "Массивын эхний элемент буюу 0-р индекст 100 гэсэн утга оноож хэвлэ.",
         codingTasks: [
           {
-            language: 'python',
-            fileName: 'loop.py',
-            template: "for i in range(5):\n    print(i + 1)",
-            explanation: ["range(5) - 0-ээс 4 хүртэлх тоо үүсгэнэ."],
-            expectedOutput: "1\n2\n3\n4\n5"
+            language: 'c',
+            fileName: 'array.c',
+            template: "#include <stdio.h>\n\nint main() {\n    int nums[3] = {1, 2, 3};\n    nums[___] = 100;\n    printf(\"%d\", nums[0]);\n    return 0;\n}",
+            explanation: ["0 - эхний индекс"],
+            expectedOutput: "100"
           }
         ]
       }
