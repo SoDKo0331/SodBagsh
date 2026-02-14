@@ -273,7 +273,7 @@ const App: React.FC = () => {
             onComplete={handleQuizComplete}
           />
         ) : currentView === 'game' ? (
-          <GameView onBack={() => setCurrentView('dashboard')} />
+          <GameView user={user} onBack={() => setCurrentView('dashboard')} />
         ) : (
           <Sandbox onBack={() => setCurrentView('dashboard')} />
         )}
