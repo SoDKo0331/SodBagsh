@@ -1,6 +1,10 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { GoogleGenAI } from "@google/genai";
+import Prism from 'prismjs';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-c';
+import 'prismjs/components/prism-cpp';
 import { LESSON_DATA } from '../data/lessons';
 import { StepContent, CodingTask } from '../types';
 
@@ -41,6 +45,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   const chatEndRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
+  const highlightRef = useRef<HTMLPreElement>(null);
 
   const step: StepContent | undefined = lesson?.steps[currentStepIdx];
   const isLastStep = lesson ? currentStepIdx === lesson.steps.length - 1 : false;
@@ -65,10 +70,19 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   }, [chatMessages]);
 
   const handleScroll = () => {
-    if (editorRef.current && lineNumbersRef.current) {
+    if (editorRef.current && lineNumbersRef.current && highlightRef.current) {
       lineNumbersRef.current.scrollTop = editorRef.current.scrollTop;
+      highlightRef.current.scrollTop = editorRef.current.scrollTop;
+      highlightRef.current.scrollLeft = editorRef.current.scrollLeft;
     }
   };
+
+  const highlightedHtml = useMemo(() => {
+    const lang = activeLanguage === 'python' ? 'python' : activeLanguage === 'c' ? 'c' : 'cpp';
+    const grammar = Prism.languages[lang];
+    if (!grammar) return userCode;
+    return Prism.highlight(userCode, grammar, lang);
+  }, [userCode, activeLanguage]);
 
   const lineCount = userCode.split('\n').length;
   const lineNumbers = Array.from({ length: Math.max(lineCount, 15) }, (_, i) => i + 1);
@@ -78,12 +92,11 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   const verifyCode = async (codeToVerify: string, lang: string) => {
     if (!currentTask) return { success: false, output: "", feedback: "", hint: "" };
 
-    // Simple placeholder replacement check for faster feedback
-    let processedCode = codeToVerify;
     if (codeToVerify.includes('___')) {
       return { success: false, output: "Code contains empty placeholders", feedback: "___ хэсгийг нөхөж бичнэ үү.", hint: "Код доторх дутуу хэсгүүдийг утгаар солин бичээрэй." };
     }
 
+    // Fix: Upgrade model to gemini-3-pro-preview for advanced coding reasoning
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const prompt = `Act as a strict code mentor. Analyze this ${lang} code.
     Goal: Output should be exactly "${currentTask.expectedOutput}".
@@ -94,7 +107,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview',
         contents: prompt,
         config: { 
           responseMimeType: "application/json",
@@ -172,7 +185,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview',
         contents: `Код: ${userCode}\nАсуулт: ${userMsg}`,
         config: { thinkingConfig: { thinkingBudget: 0 } }
       });
@@ -297,22 +310,34 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
                 <div className="text-[10px] font-black text-slate-500">main.{activeLanguage === 'python' ? 'py' : activeLanguage}</div>
               </div>
               
-              <div className="flex-1 flex overflow-hidden font-mono text-lg bg-[#0d0d0d]">
+              <div className="flex-1 flex overflow-hidden font-mono text-lg bg-[#0d0d0d] relative prism-editor-container">
                 <div 
                   ref={lineNumbersRef}
-                  className="w-12 bg-[#111] text-[#333] py-8 text-right pr-3 select-none overflow-hidden shrink-0 border-r border-white/5"
+                  className="w-12 bg-[#111] text-[#333] py-8 text-right pr-3 select-none overflow-hidden shrink-0 border-r border-white/5 z-10"
                 >
                   {lineNumbers.map(n => <div key={n} className="h-[28px]">{n}</div>)}
                 </div>
-                <textarea 
-                  ref={editorRef}
-                  value={userCode} 
-                  onChange={(e) => setUserCode(e.target.value)} 
-                  onScroll={handleScroll}
-                  className="flex-1 bg-transparent p-8 py-8 outline-none border-none resize-none custom-scrollbar text-[#e0e0e0] leading-[28px] overflow-y-auto" 
-                  spellCheck={false} 
-                  autoFocus
-                />
+                <div className="flex-1 relative overflow-hidden">
+                  <pre 
+                    ref={highlightRef}
+                    aria-hidden="true"
+                    className="absolute inset-0 pointer-events-none custom-scrollbar overflow-auto"
+                  >
+                    <code 
+                      className={`language-${activeLanguage === 'python' ? 'python' : activeLanguage === 'c' ? 'c' : 'cpp'}`}
+                      dangerouslySetInnerHTML={{ __html: highlightedHtml + '\n' }} 
+                    />
+                  </pre>
+                  <textarea 
+                    ref={editorRef}
+                    value={userCode} 
+                    onChange={(e) => setUserCode(e.target.value)} 
+                    onScroll={handleScroll}
+                    className="absolute inset-0 bg-transparent text-transparent caret-white outline-none border-none resize-none custom-scrollbar leading-[28px] overflow-auto z-20" 
+                    spellCheck={false} 
+                    autoFocus
+                  />
+                </div>
               </div>
 
               <div className="h-[35%] flex flex-col border-t border-white/5 bg-[#080808]">

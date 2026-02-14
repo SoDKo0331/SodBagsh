@@ -1,6 +1,10 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { GoogleGenAI } from "@google/genai";
+import Prism from 'prismjs';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-c';
+import 'prismjs/components/prism-cpp';
 
 interface SandboxProps {
   onBack: () => void;
@@ -19,7 +23,7 @@ interface TerminalLine {
 const TEMPLATES = {
   python: "name = 'Super Coder'\nprint('Сайн уу, ' + name + '!')\n\nfor i in range(3):\n    print('Код бичих гоё байна!')",
   c: "#include <stdio.h>\n\nint main() {\n    char name[] = \"Super Coder\";\n    printf(\"Сайн уу, %s!\\n\", name);\n    \n    for(int i=0; i<3; i++) {\n        printf(\"Код бичих гоё байна!\\n\");\n    }\n    return 0;\n}",
-  cpp: "#include <iostream>\n#include <string>\n\nint main() {\n    std::string name = \"Super Coder\";\n    std::cout << \"Сайн уу, \" << name << \"!\" << std::endl;\n    \n    for(int i=0; i<3; i++) {\n        std::cout << \"Код бичих гоё байна!\" << std::endl;\n    }\n    return 0;\n}"
+  cpp: "#include <iostream>\n#include <string>\n\nint main() {\n    std::string name = \"Super Coder\";\n    std::cout << \"Сайн уу, \" << name << \"!\" << std::endl;\n    \n    for(let i=0; i<3; i++) {\n        std::cout << \"Код бичих гоё байна!\" << std::endl;\n    }\n    return 0;\n}"
 };
 
 const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
@@ -34,6 +38,9 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
     { role: 'model', text: "Sandbox-т тавтай морил. Чи энд юу ч хамаагүй туршиж үзэж болно. 🚀" }
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const highlightRef = useRef<HTMLPreElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +60,20 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
     }
   };
 
+  const handleScroll = () => {
+    if (editorRef.current && highlightRef.current) {
+      highlightRef.current.scrollTop = editorRef.current.scrollTop;
+      highlightRef.current.scrollLeft = editorRef.current.scrollLeft;
+    }
+  };
+
+  const highlightedHtml = useMemo(() => {
+    const lang = activeLanguage === 'python' ? 'python' : activeLanguage === 'c' ? 'c' : 'cpp';
+    const grammar = Prism.languages[lang];
+    if (!grammar) return code;
+    return Prism.highlight(code, grammar, lang);
+  }, [code, activeLanguage]);
+
   const runCode = () => {
     setIsRunning(true);
     setOutput([]);
@@ -60,7 +81,6 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
     const compilationCmd = activeLanguage === 'python' ? `python3 main.py` : `./main`;
     setOutput(prev => [...prev, {type: 'cmd', text: compilationCmd}]);
 
-    // ХУРДАСГУУР: Саатуулах хугацааг 600ms болгож багасгав (өмнө нь 1500ms байсан)
     setTimeout(() => {
       const mockResult: string[] = [
         "Сайн уу, Super Coder!",
@@ -86,9 +106,10 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
     setIsAiLoading(true);
 
     try {
+      // Fix: Always use named parameter for apiKey and use gemini-3-pro-preview for coding questions
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview',
         contents: `Sandbox горим. Хэл: ${activeLanguage}\nКод: \n${code}\nАсуулт: ${userMsg}`,
         config: { thinkingConfig: { thinkingBudget: 0 } }
       });
@@ -126,8 +147,27 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        <div className={`flex flex-col bg-[#1e1e1e] border-r border-white/5 transition-all duration-300 ${isAiOpen ? 'w-1/3' : 'w-2/3'}`}>
-           <textarea value={code} onChange={(e) => setCode(e.target.value)} className="flex-1 bg-transparent p-8 font-mono text-lg text-white border-none focus:ring-0 resize-none outline-none custom-scrollbar" spellCheck={false} />
+        <div className={`flex flex-col bg-[#1e1e1e] border-r border-white/5 transition-all duration-300 relative prism-editor-container ${isAiOpen ? 'w-1/3' : 'w-2/3'}`}>
+           <div className="flex-1 relative overflow-hidden">
+             <pre 
+               ref={highlightRef}
+               aria-hidden="true"
+               className="absolute inset-0 pointer-events-none custom-scrollbar overflow-auto"
+             >
+               <code 
+                className={`language-${activeLanguage === 'python' ? 'python' : activeLanguage === 'c' ? 'c' : 'cpp'}`}
+                dangerouslySetInnerHTML={{ __html: highlightedHtml + '\n' }} 
+               />
+             </pre>
+             <textarea 
+               ref={editorRef}
+               value={code} 
+               onChange={(e) => setCode(e.target.value)} 
+               onScroll={handleScroll}
+               className="absolute inset-0 bg-transparent text-transparent caret-white outline-none border-none resize-none custom-scrollbar leading-[28px] overflow-auto z-10" 
+               spellCheck={false} 
+             />
+           </div>
         </div>
 
         <div className={`flex flex-col bg-[#0c0c0c] transition-all duration-300 ${isAiOpen ? 'w-1/3' : 'w-1/3'}`}>

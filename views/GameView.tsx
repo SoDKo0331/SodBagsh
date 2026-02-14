@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { getFirestore, doc, setDoc, onSnapshot, updateDoc, deleteDoc, getDoc } from "firebase/firestore";
-import { User } from "firebase/auth";
+// Fix: Use namespaced imports to resolve export member errors and correctly reference the User type
+import * as firestore from "firebase/firestore";
+import * as firebaseAuth from "firebase/auth";
 
 interface GameViewProps {
-  user: User;
+  user: firebaseAuth.User;
   onBack: () => void;
 }
 
@@ -33,7 +34,7 @@ const CLASSES = {
 };
 
 const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
-  const db = getFirestore();
+  const db = firestore.getFirestore();
   const [view, setView] = useState<'lobby' | 'online_menu' | 'battle' | 'result'>('lobby');
   const [mode, setMode] = useState<GameMode>('adventure');
   const [roomId, setRoomId] = useState('');
@@ -45,7 +46,7 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
   // Online Multiplayer Logic
   useEffect(() => {
     if (roomId) {
-      const unsub = onSnapshot(doc(db, "matches", roomId), (snap) => {
+      const unsub = firestore.onSnapshot(firestore.doc(db, "matches", roomId), (snap) => {
         if (snap.exists()) {
           const data = snap.data();
           setGameState(data);
@@ -67,19 +68,19 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
       qIdx: Math.floor(Math.random() * QUESTIONS.length),
       lastAction: 'Room created'
     };
-    await setDoc(doc(db, "matches", id), newMatch);
+    await firestore.setDoc(firestore.doc(db, "matches", id), newMatch);
     setRoomId(id);
     setView('battle');
   };
 
   const joinRoom = async () => {
     const id = roomInput.trim().toUpperCase();
-    const roomRef = doc(db, "matches", id);
-    const snap = await getDoc(roomRef);
+    const roomRef = firestore.doc(db, "matches", id);
+    const snap = await firestore.getDoc(roomRef);
     if (snap.exists()) {
       const data = snap.data();
       if (data.status === 'waiting') {
-        await updateDoc(roomRef, {
+        await firestore.updateDoc(roomRef, {
           p2: { uid: user.uid, name: user.email?.split('@')[0], hp: CLASSES[p1Class].hp, maxHp: CLASSES[p1Class].hp, class: p1Class },
           status: 'playing'
         });
@@ -122,7 +123,7 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
       nextState.status = 'finished';
     }
 
-    await updateDoc(doc(db, "matches", roomId), nextState);
+    await firestore.updateDoc(firestore.doc(db, "matches", roomId), nextState);
     setTimeout(() => setFeedback(null), 1500);
   };
 

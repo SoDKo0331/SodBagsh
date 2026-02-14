@@ -1,8 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, onSnapshot } from "firebase/firestore";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, User } from "firebase/auth";
+// Fix: Use namespaced imports for Firebase to resolve resolution issues in some environments
+import * as firebaseApp from "firebase/app";
+import * as firestore from "firebase/firestore";
+import * as firebaseAuth from "firebase/auth";
+
 import Sidebar from './components/Sidebar';
 import Dashboard from './views/Dashboard';
 import LessonView from './views/LessonView';
@@ -11,6 +13,7 @@ import ProblemBank from './views/ProblemBank';
 import ProblemSolvingView from './views/ProblemSolvingView';
 import QuizView from './views/QuizView';
 import GameView from './views/GameView';
+import BadgesView from './views/BadgesView';
 import { LessonStatus, Module, Badge } from './types';
 import { PROBLEMS } from './data/problems';
 
@@ -25,9 +28,10 @@ const firebaseConfig = {
   measurementId: "G-RZ5KNH6556"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+// Fix: Initialize Firebase using the namespaced objects to bypass export member errors
+const app = firebaseApp.initializeApp(firebaseConfig);
+const db = firestore.getFirestore(app);
+const auth = firebaseAuth.getAuth(app);
 
 const INITIAL_MODULES: Module[] = [
   { id: 'm1', number: 1, title: 'LEVEL 1: Эхлэл', description: 'Код гэж юу вэ? Хамгийн анхны тушаалаа компьютерт өгье.', status: LessonStatus.IN_PROGRESS, progressText: '0/2 Алхам', icon: 'campaign', badgeId: 'b1' },
@@ -48,7 +52,7 @@ const INITIAL_BADGES: Badge[] = [
 ];
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<firebaseAuth.User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -66,7 +70,7 @@ const App: React.FC = () => {
   const [preferredLanguage, setPreferredLanguage] = useState<'python' | 'c' | 'cpp'>('python');
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = firebaseAuth.onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsAuthLoading(false);
     });
@@ -75,8 +79,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      const userDocRef = doc(db, "users", user.uid);
-      const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+      const userDocRef = firestore.doc(db, "users", user.uid);
+      const unsubscribe = firestore.onSnapshot(userDocRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.modules) setModules(data.modules);
@@ -94,7 +98,7 @@ const App: React.FC = () => {
   const saveToFirebase = async (uid: string, currentModules: Module[], currentBadges: Badge[], currentSolved: string[], currentStreak: number) => {
     setIsSyncing(true);
     try {
-      await setDoc(doc(db, "users", uid), {
+      await firestore.setDoc(firestore.doc(db, "users", uid), {
         email: user?.email,
         modules: currentModules,
         badges: currentBadges,
@@ -118,9 +122,9 @@ const App: React.FC = () => {
 
     try {
       if (authMode === 'login') {
-        await signInWithEmailAndPassword(auth, email, password);
+        await firebaseAuth.signInWithEmailAndPassword(auth, email, password);
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        await firebaseAuth.createUserWithEmailAndPassword(auth, email, password);
       }
     } catch (error: any) {
       console.error("Auth error", error);
@@ -135,7 +139,7 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await firebaseAuth.signOut(auth);
     setCurrentView('dashboard');
   };
 
@@ -274,6 +278,8 @@ const App: React.FC = () => {
           />
         ) : currentView === 'game' ? (
           <GameView user={user} onBack={() => setCurrentView('dashboard')} />
+        ) : currentView === 'badges' ? (
+          <BadgesView badges={badges} onBack={() => setCurrentView('dashboard')} />
         ) : (
           <Sandbox onBack={() => setCurrentView('dashboard')} />
         )}

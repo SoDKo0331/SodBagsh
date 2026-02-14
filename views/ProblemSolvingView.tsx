@@ -50,6 +50,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
   const lineNumbers = Array.from({ length: Math.max(lineCount, 20) }, (_, i) => i + 1);
 
   const verifyCodeWithAI = async (userCode: string, lang: string) => {
+    // Fix: Upgrade to gemini-3-pro-preview for complex coding reasoning
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const prompt = `Act as a Code Judge. Analyze this ${lang} code for the problem: "${problem.title}".
     Problem Description: ${problem.description}
@@ -61,7 +62,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview',
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -117,7 +118,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview',
         contents: `Бодлого: ${problem.title}\nКод: ${code}\nАсуулт: ${userMsg}`,
         config: { thinkingConfig: { thinkingBudget: 0 } }
       });
