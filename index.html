@@ -9,7 +9,8 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
     
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+    <!-- Manrope: Excellent support for Cyrillic and modern geometric feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <!-- Prism.js Tomorrow Night Theme -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
@@ -26,7 +27,8 @@
                         "background-dark": "#102219",
                     },
                     fontFamily: {
-                        "display": ["Lexend", "sans-serif"]
+                        "display": ["Manrope", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
                     },
                     borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
                 },
@@ -35,7 +37,8 @@
     </script>
     <style>
         body {
-            font-family: 'Lexend', sans-serif;
+            font-family: 'Manrope', sans-serif;
+            letter-spacing: -0.01em; /* Optimized for Cyrillic legibility */
         }
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
@@ -50,9 +53,9 @@
         /* Custom Prism overrides for the editor overlay */
         .prism-editor-container pre, 
         .prism-editor-container textarea {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
-            font-size: 18px !important;
-            line-height: 28px !important;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+            font-size: 16px !important;
+            line-height: 1.6 !important;
             padding: 32px !important;
             margin: 0 !important;
             white-space: pre !important;

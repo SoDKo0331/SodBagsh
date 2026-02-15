@@ -1,17 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { PYTHON_QUIZ, QuizQuestion } from '../data/quizzes';
+import { QuizQuestion } from '../data/quizzes';
 
 interface QuizViewProps {
   user: string;
+  quizData: QuizQuestion[];
   onBack: () => void;
   onComplete: (score: number, total: number) => void;
 }
 
-const QuizView: React.FC<QuizViewProps> = ({ user, onBack, onComplete }) => {
-  const quizStoreKey = `codequest_${user}_quiz_v1`;
+const QuizView: React.FC<QuizViewProps> = ({ user, quizData, onBack, onComplete }) => {
+  const quizStoreKey = `codequest_${user}_quiz_v3_${quizData.length}`;
 
-  // Initialize state from local storage if available
   const [currentIdx, setCurrentIdx] = useState(() => {
     const saved = localStorage.getItem(quizStoreKey);
     return saved ? JSON.parse(saved).currentIdx : 0;
@@ -30,7 +30,6 @@ const QuizView: React.FC<QuizViewProps> = ({ user, onBack, onComplete }) => {
   });
   const [showResult, setShowResult] = useState(false);
 
-  // Save state to local storage whenever it changes
   useEffect(() => {
     if (!showResult) {
       localStorage.setItem(quizStoreKey, JSON.stringify({
@@ -42,8 +41,10 @@ const QuizView: React.FC<QuizViewProps> = ({ user, onBack, onComplete }) => {
     }
   }, [currentIdx, selectedId, isAnswered, score, showResult, quizStoreKey]);
 
-  const question = PYTHON_QUIZ[currentIdx];
-  const isCorrect = selectedId === question.correctOptionId;
+  const question = quizData[currentIdx];
+  const progressPercent = ((currentIdx + (isAnswered ? 1 : 0)) / quizData.length) * 100;
+
+  if (!question && !showResult) return <div className="p-10 text-white">Тест олдсонгүй.</div>;
 
   const handleSelect = (id: string) => {
     if (isAnswered) return;
@@ -55,14 +56,13 @@ const QuizView: React.FC<QuizViewProps> = ({ user, onBack, onComplete }) => {
   };
 
   const nextQuestion = () => {
-    if (currentIdx < PYTHON_QUIZ.length - 1) {
+    if (currentIdx < quizData.length - 1) {
       setCurrentIdx(prev => prev + 1);
       setSelectedId(null);
       setIsAnswered(false);
     } else {
       setShowResult(true);
-      onComplete(score, PYTHON_QUIZ.length);
-      // Optional: Clear storage on finish so they can restart later
+      onComplete(score, quizData.length);
       localStorage.removeItem(quizStoreKey);
     }
   };
@@ -77,45 +77,23 @@ const QuizView: React.FC<QuizViewProps> = ({ user, onBack, onComplete }) => {
   };
 
   if (showResult) {
+    const win = score / quizData.length >= 0.7;
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-10 bg-[#f8faf9] dark:bg-[#0d1a13]">
-        <div className="bg-white dark:bg-slate-900 p-12 rounded-[40px] shadow-2xl border-4 border-primary/20 max-w-lg w-full text-center">
-           <div className={`size-24 rounded-full flex items-center justify-center text-slate-900 mx-auto mb-8 shadow-xl shadow-primary/30 ${score === PYTHON_QUIZ.length ? 'bg-primary' : 'bg-yellow-400'}`}>
-              <span className="material-symbols-outlined text-5xl font-black">
-                {score === PYTHON_QUIZ.length ? 'military_tech' : 'emoji_events'}
+      <div className="flex-1 flex flex-col items-center justify-center p-10 bg-[#f8faf9] dark:bg-[#0d1a13] font-display">
+        <div className="bg-white dark:bg-slate-900 p-12 rounded-[48px] shadow-2xl border-4 border-primary/20 max-w-lg w-full text-center animate-in zoom-in duration-500">
+           <div className={`size-32 rounded-[40px] flex items-center justify-center text-slate-900 mx-auto mb-8 shadow-2xl rotate-3 ${win ? 'bg-primary shadow-primary/30' : 'bg-red-500 shadow-red-500/30'}`}>
+              <span className="material-symbols-outlined text-6xl font-black">
+                {win ? 'emoji_events' : 'sentiment_very_dissatisfied'}
               </span>
            </div>
-           <h2 className="text-4xl font-black mb-2">Шалгалт дууслаа!</h2>
-           <p className="text-slate-500 font-bold uppercase tracking-widest text-sm mb-8">Чиний амжилт</p>
+           <h2 className="text-4xl font-black mb-2 uppercase tracking-tighter">Дүн: {score} / {quizData.length}</h2>
+           <p className="text-slate-500 font-bold uppercase tracking-widest text-sm mb-12">
+             {win ? 'Гайхалтай! Чи С хэлийг сайн мэдэж байна.' : 'Бага зэрэг хичээх хэрэгтэй байна.'}
+           </p>
            
-           <div className="text-6xl font-black text-primary mb-4 tracking-tighter">
-              {score} / {PYTHON_QUIZ.length}
-           </div>
-           
-           <div className="mb-10">
-              {score === PYTHON_QUIZ.length ? (
-                <div className="p-4 bg-primary/10 rounded-2xl border-2 border-primary/30 mb-4">
-                  <p className="text-primary font-black text-sm uppercase tracking-widest">🏆 Шинэ цол авлаа: Python Master</p>
-                </div>
-              ) : null}
-              <p className="text-lg font-medium text-slate-600 dark:text-slate-400">
-                {score > 25 ? "Гайхалтай! Чи Python-ийг маш сайн ойлгожээ. 🚀" : score > 15 ? "Сайн байна! Бага зэрэг давтах хэрэгтэй. 💪" : "Заавал хичээлүүдээ дахин үзээрэй. Чи чадна! 🔥"}
-              </p>
-           </div>
-
-           <div className="space-y-3">
-              <button 
-                onClick={onBack}
-                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest"
-              >
-                Дуусгах
-              </button>
-              <button 
-                onClick={handleRestart}
-                className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white py-4 rounded-2xl font-black text-lg border-2 border-slate-100 dark:border-slate-700 hover:bg-slate-50 transition-all uppercase tracking-widest"
-              >
-                Дахин эхлэх
-              </button>
+           <div className="grid grid-cols-2 gap-4">
+              <button onClick={handleRestart} className="bg-primary text-slate-900 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg">Дахин эхлэх</button>
+              <button onClick={onBack} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-4 rounded-2xl font-black text-sm uppercase tracking-widest">Гарах</button>
            </div>
         </div>
       </div>
@@ -123,106 +101,86 @@ const QuizView: React.FC<QuizViewProps> = ({ user, onBack, onComplete }) => {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-10 bg-[#f8faf9] dark:bg-[#0d1a13] font-display">
-      <header className="mb-10 flex items-center justify-between max-w-4xl mx-auto">
-        <div>
-          <button onClick={onBack} className="flex items-center gap-2 text-slate-500 font-black uppercase text-xs tracking-widest mb-2 hover:text-primary transition-colors">
-            <span className="material-symbols-outlined text-sm">arrow_back</span> Хадгалаад гарах
+    <div className="flex-1 flex flex-col overflow-hidden bg-[#f8faf9] dark:bg-[#0d1a13] font-display">
+      <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-8 shrink-0">
+        <div className="flex items-center gap-6">
+          <button onClick={onBack} className="size-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-slate-400">
+            <span className="material-symbols-outlined">arrow_back</span>
           </button>
-          <h1 className="text-3xl font-black tracking-tight">Мэдлэгээ шалгах 🧠</h1>
+          <h2 className="text-xl font-black tracking-tighter">Мэдлэг шалгах тест</h2>
         </div>
         <div className="flex items-center gap-4">
-           <div className="text-right hidden sm:block">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Одоогийн оноо</p>
-              <p className="text-xl font-black text-primary leading-none">{score}</p>
+           <div className="text-right">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Оноо</p>
+              <p className="text-xl font-black text-primary">{score} / {quizData.length}</p>
            </div>
-           <div className="bg-slate-900 text-white px-6 py-2 rounded-2xl font-black text-sm uppercase tracking-widest border border-white/10 shrink-0">
-              {currentIdx + 1} / {PYTHON_QUIZ.length}
+           <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <span className="material-symbols-outlined">psychology</span>
            </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto">
-        <div className="w-full h-3 bg-slate-200 dark:bg-slate-800 rounded-full mb-10 overflow-hidden shadow-inner">
-          <div 
-            className="h-full bg-primary transition-all duration-500 ease-out shadow-[0_0_15px_rgba(19,236,128,0.5)]"
-            style={{ width: `${((currentIdx + 1) / PYTHON_QUIZ.length) * 100}%` }}
-          ></div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 p-10 rounded-[32px] border-4 border-slate-100 dark:border-slate-800 shadow-xl mb-8 relative overflow-hidden">
-           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-              <span className="material-symbols-outlined text-[100px]">psychology</span>
-           </div>
-           <h3 className="text-2xl font-black mb-8 leading-relaxed relative z-10">
-             {question.question}
-           </h3>
-
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-              {question.options.map((opt) => (
-                <button
-                  key={opt.id}
-                  onClick={() => handleSelect(opt.id)}
-                  disabled={isAnswered}
-                  className={`p-6 rounded-2xl text-left font-bold text-lg border-4 transition-all flex items-center justify-between group ${
-                    isAnswered 
-                      ? opt.id === question.correctOptionId 
-                        ? 'bg-primary/20 border-primary text-primary shadow-lg shadow-primary/10' 
-                        : selectedId === opt.id 
-                          ? 'bg-red-500/10 border-red-500 text-red-500' 
-                          : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800 opacity-50 scale-[0.98]'
-                      : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-800 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:scale-[1.02]'
-                  }`}
-                >
-                  <span>{opt.text}</span>
-                  <div className="shrink-0 ml-4">
-                    {isAnswered && opt.id === question.correctOptionId && (
-                      <span className="material-symbols-outlined font-black text-primary animate-in zoom-in">check_circle</span>
-                    )}
-                    {isAnswered && selectedId === opt.id && opt.id !== question.correctOptionId && (
-                      <span className="material-symbols-outlined font-black text-red-500 animate-in zoom-in">cancel</span>
-                    )}
-                    {!isAnswered && (
-                      <span className="size-6 rounded-full border-2 border-slate-200 dark:border-slate-600 group-hover:border-primary transition-colors"></span>
-                    )}
-                  </div>
-                </button>
-              ))}
-           </div>
-        </div>
-
-        {isAnswered && (
-          <div className={`p-8 rounded-[32px] border-4 animate-in slide-in-from-bottom duration-500 shadow-2xl ${isCorrect ? 'bg-primary/5 border-primary/20' : 'bg-red-500/5 border-red-500/20'}`}>
-            <div className="flex items-start gap-5">
-               <div className={`size-14 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${isCorrect ? 'bg-primary text-slate-900' : 'bg-red-500 text-white'}`}>
-                  <span className="material-symbols-outlined font-black text-3xl">{isCorrect ? 'verified' : 'lightbulb'}</span>
-               </div>
-               <div className="flex-1">
-                  <h4 className={`text-xl font-black mb-2 uppercase tracking-tight ${isCorrect ? 'text-primary' : 'text-red-500'}`}>
-                    {isCorrect ? 'Гайхалтай, зөв байна!' : 'Дараагийн удаа заавал зөв хариулаарай'}
-                  </h4>
-                  <p className="text-slate-600 dark:text-slate-300 font-medium leading-relaxed text-lg">
-                    {question.explanation}
-                  </p>
-               </div>
-            </div>
-            <div className="mt-8 flex justify-end">
-               <button 
-                onClick={nextQuestion}
-                className="bg-slate-900 dark:bg-primary text-white dark:text-slate-900 px-10 py-4 rounded-2xl font-black uppercase text-sm tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10 flex items-center gap-2"
-               >
-                 <span>{currentIdx < PYTHON_QUIZ.length - 1 ? 'Дараагийн асуулт' : 'Үр дүнг харах'}</span>
-                 <span className="material-symbols-outlined font-bold">arrow_forward</span>
-               </button>
-            </div>
-          </div>
-        )}
+      <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800">
+        <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
       </div>
-      
-      <div className="max-w-4xl mx-auto mt-10 p-6 bg-slate-100/50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 flex items-center gap-3">
-         <span className="material-symbols-outlined text-slate-400">info</span>
-         <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Таны явц автоматаар хадгалагдаж байна. Та хүссэн үедээ гараад эргэн орж үргэлжлүүлэх боломжтой.</p>
-      </div>
+
+      <main className="flex-1 overflow-y-auto p-10 flex flex-col items-center custom-scrollbar">
+        <div className="max-w-3xl w-full">
+           <div className="mb-12">
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-4 block">Асуулт {currentIdx + 1}</span>
+              <h1 className="text-3xl md:text-4xl font-black leading-tight tracking-tight">{question.question}</h1>
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {question.options.map((opt) => {
+                const isSelected = selectedId === opt.id;
+                const isThisCorrect = opt.id === question.correctOptionId;
+                
+                let btnClass = "bg-white dark:bg-slate-900 border-4 border-slate-100 dark:border-slate-800 hover:border-primary/40";
+                if (isAnswered) {
+                  if (isThisCorrect) btnClass = "bg-primary/10 border-primary text-primary shadow-lg shadow-primary/10 scale-[1.02]";
+                  else if (isSelected) btnClass = "bg-red-500/10 border-red-500 text-red-500 opacity-60";
+                  else btnClass = "opacity-40 grayscale";
+                }
+
+                return (
+                  <button 
+                    key={opt.id} 
+                    onClick={() => handleSelect(opt.id)}
+                    className={`p-8 rounded-[32px] text-left transition-all relative overflow-hidden group ${btnClass}`}
+                  >
+                    <div className="flex items-center gap-4 relative z-10">
+                       <span className={`size-10 rounded-xl flex items-center justify-center font-black ${isSelected ? 'bg-primary text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                          {opt.id.toUpperCase()}
+                       </span>
+                       <span className="text-lg font-bold">{opt.text}</span>
+                    </div>
+                  </button>
+                );
+              })}
+           </div>
+
+           {isAnswered && (
+             <div className="mt-12 animate-in slide-in-from-bottom-6 duration-500">
+                <div className={`p-8 rounded-[32px] border-l-8 ${selectedId === question.correctOptionId ? 'bg-primary/10 border-primary' : 'bg-red-500/10 border-red-500'}`}>
+                   <div className="flex items-center gap-3 mb-4">
+                      <span className="material-symbols-outlined font-black">
+                        {selectedId === question.correctOptionId ? 'check_circle' : 'cancel'}
+                      </span>
+                      <h4 className="font-black uppercase tracking-widest text-xs">
+                        {selectedId === question.correctOptionId ? 'Зөв байна!' : 'Буруу хариуллаа'}
+                      </h4>
+                   </div>
+                   <p className="text-lg font-medium mb-8 leading-relaxed opacity-80">{question.explanation}</p>
+                   <button onClick={nextQuestion} className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3">
+                      <span>{currentIdx < quizData.length - 1 ? 'Дараагийн асуулт' : 'Дуусгах'}</span>
+                      <span className="material-symbols-outlined">arrow_forward</span>
+                   </button>
+                </div>
+             </div>
+           )}
+        </div>
+      </main>
     </div>
   );
 };

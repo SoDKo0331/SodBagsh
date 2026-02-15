@@ -16,6 +16,7 @@ import GameView from './views/GameView';
 import BadgesView from './views/BadgesView';
 import { LessonStatus, Module, Badge } from './types';
 import { PROBLEMS } from './data/problems';
+import { PYTHON_QUIZ, C_QUIZ } from './data/quizzes';
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
@@ -228,6 +229,8 @@ const App: React.FC = () => {
   }
 
   const activeProblem = selectedProblemId ? PROBLEMS.find(p => p.id === selectedProblemId) : null;
+  // Сонгосон хэлнээс хамаарч тестыг шийдэх
+  const activeQuiz = preferredLanguage === 'python' ? PYTHON_QUIZ : C_QUIZ;
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
@@ -273,6 +276,7 @@ const App: React.FC = () => {
         ) : currentView === 'quiz' ? (
           <QuizView 
             user={user.uid}
+            quizData={activeQuiz}
             onBack={() => setCurrentView('dashboard')} 
             onComplete={handleQuizComplete}
           />

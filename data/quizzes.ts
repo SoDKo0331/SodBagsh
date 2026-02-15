@@ -9,7 +9,7 @@ export interface QuizQuestion {
 
 export const PYTHON_QUIZ: QuizQuestion[] = [
   {
-    id: 'q1',
+    id: 'p1',
     question: "Python хэл дээр дэлгэцэнд мэдээлэл хэвлэх тушаал аль нь вэ?",
     options: [
       { id: 'a', text: "output()" },
@@ -18,354 +18,121 @@ export const PYTHON_QUIZ: QuizQuestion[] = [
       { id: 'd', text: "echo()" }
     ],
     correctOptionId: 'c',
-    explanation: "print() бол Python-ийн хамгийн үндсэн тушаал юм. Энэ нь хаалтан доторх мэдээллийг дэлгэц рүү 'илгээдэг'. Жишээ нь: print('Сайн уу') гэвэл дэлгэцэнд Сайн уу гэж гарна."
+    explanation: "print() бол Python-ийн хамгийн үндсэн тушаал юм."
   },
   {
-    id: 'q2',
-    question: "x = 5 гэж бичвэл 'x' нь юу болох вэ?",
-    options: [
-      { id: 'a', text: "Тогтмол тоо" },
-      { id: 'b', text: "Хувьсагч" },
-      { id: 'c', text: "Функц" },
-      { id: 'd', text: "Тэмдэгт мөр" }
-    ],
-    correctOptionId: 'b',
-    explanation: "Кодчилолд хувьсагч гэдэг нь мэдээлэл хадгалдаг 'хайрцаг' юм. x = 5 гэдэг нь x нэртэй хайрцагт 5 гэсэн тоог хийж байна гэсэн үг."
-  },
-  {
-    id: 'q3',
-    question: "Python-д нэр 'Anna' гэсэн мэдээллийг ямар төрлийн өгөгдөл гэж нэрлэдэг вэ?",
-    options: [
-      { id: 'a', text: "int (Бүхэл тоо)" },
-      { id: 'b', text: "float (Бутархай тоо)" },
-      { id: 'c', text: "str (Тэмдэгт мөр)" },
-      { id: 'd', text: "bool (Логик утга)" }
-    ],
-    correctOptionId: 'c',
-    explanation: "Хашилтанд (' ') бичигдсэн бүх бичвэрийг String буюу Тэмдэгт мөр (str) гэж нэрлэдэг. Энэ нь компьютер үүнийг тоо биш, зүгээр л бичиг гэж ойлгоно гэсэн үг."
-  },
-  {
-    id: 'q4',
-    question: "10 / 2 үйлдлийн үр дүн ямар төрөлтэй гарах вэ?",
-    options: [
-      { id: 'a', text: "int" },
-      { id: 'b', text: "float" },
-      { id: 'c', text: "str" },
-      { id: 'd', text: "bool" }
-    ],
-    correctOptionId: 'b',
-    explanation: "Python-д нэг ташуу зураас (/) ашиглан хуваахад үр дүн нь үргэлж float буюу бутархай тоо (жишээ нь: 5.0) гардаг."
-  },
-  {
-    id: 'q5',
-    question: "if нөхцөлийн дараа заавал бичих ёстой тэмдэг аль нь вэ?",
-    options: [
-      { id: 'a', text: "Цэг (.)" },
-      { id: 'b', text: "Таслал (,)" },
-      { id: 'c', text: "Цэгтэй таслал (;)" },
-      { id: 'd', text: "Давхар цэг (:)" }
-    ],
-    correctOptionId: 'd',
-    explanation: "Python-д if, for, while зэрэг бүтцийн нөхцөлийн ард заавал давхар цэг (:) тавьдаг. Энэ нь 'дараагийн мөрнөөс ажиллах блок эхэлж байна' гэсэн дохио юм."
-  },
-  {
-    id: 'q6',
-    question: "Python-д 'ба тэгээд' гэсэн утгатай логик оператор аль нь вэ?",
-    options: [
-      { id: 'a', text: "or" },
-      { id: 'b', text: "and" },
-      { id: 'c', text: "not" },
-      { id: 'd', text: "&&" }
-    ],
-    correctOptionId: 'b',
-    explanation: "and оператор нь хоёр нөхцөл хоёулаа үнэн байх үед 'True' утга буцаана. Жишээ нь: Нас > 10 and Нас < 20."
-  },
-  {
-    id: 'q7',
-    question: "Массив (List)-ын эхний элементийн индекс (дугаар) хэдээс эхэлдэг вэ?",
-    options: [
-      { id: 'a', text: "1" },
-      { id: 'b', text: "0" },
-      { id: 'c', text: "-1" },
-      { id: 'd', text: "Дурын тоо" }
-    ],
-    correctOptionId: 'b',
-    explanation: "Програмчлалд тоолохдоо ихэвчлэн 0-ээс эхэлдэг. Хэрэв [10, 20, 30] гэсэн жагсаалт байвал 10-ын дугаар нь 0 юм."
-  },
-  {
-    id: 'q8',
-    question: "x = input() тушаал юу хийдэг вэ?",
-    options: [
-      { id: 'a', text: "Дэлгэцэнд хэвлэнэ" },
-      { id: 'b', text: "Програмыг зогсооно" },
-      { id: 'c', text: "Гараас утга авч хадгална" },
-      { id: 'd', text: "Тоог үржүүлнэ" }
-    ],
-    correctOptionId: 'c',
-    explanation: "input() нь хэрэглэгчээс ямар нэгэн мэдээлэл бичихийг хүлээж, бичсэн утгыг нь хувьсагчид хадгалдаг."
-  },
-  {
-    id: 'q9',
-    question: "5 ** 2 үйлдлийн хариу хэд вэ?",
-    options: [
-      { id: 'a', text: "10" },
-      { id: 'b', text: "7" },
-      { id: 'c', text: "25" },
-      { id: 'd', text: "3" }
-    ],
-    correctOptionId: 'c',
-    explanation: "** тэмдэг нь 'зэрэг дэвшүүлэх' үйлдэл юм. 5-ын 2 зэрэг буюу 5-ыг 5-аар үржүүлж 25 гарна."
-  },
-  {
-    id: 'q10',
-    question: "Python хэлний файлыг ямар өргөтгөлтэй хадгалдаг вэ?",
-    options: [
-      { id: 'a', text: ".exe" },
-      { id: 'b', text: ".txt" },
-      { id: 'c', text: ".py" },
-      { id: 'd', text: ".code" }
-    ],
-    correctOptionId: 'c',
-    explanation: ".py бол Python програмын стандарт өргөтгөл юм. Компьютер үүнийг хараад 'Энэ бол Python код байна' гэж таньдаг."
-  },
-  {
-    id: 'q11',
-    question: "for i in range(5): гэвэл 'i' хэд хүртэл тоолох вэ?",
-    options: [
-      { id: 'a', text: "0, 1, 2, 3, 4, 5" },
-      { id: 'b', text: "1, 2, 3, 4, 5" },
-      { id: 'c', text: "0, 1, 2, 3, 4" },
-      { id: 'd', text: "5, 5, 5" }
-    ],
-    correctOptionId: 'c',
-    explanation: "range(5) нь 0-ээс эхлээд 5 хүртэлх (гэхдээ 5-ыг оролцуулахгүй) тоонуудыг үүсгэнэ. Өөрөөр хэлбэл 0, 1, 2, 3, 4."
-  },
-  {
-    id: 'q12',
-    question: "Хувьсагчийн нэр ямар тэмдэгтээр эхэлж болохгүй вэ?",
-    options: [
-      { id: 'a', text: "Үсэг" },
-      { id: 'b', text: "Доогуур зураас (_)" },
-      { id: 'c', text: "Тоо" },
-      { id: 'd', text: "Том үсэг" }
-    ],
-    correctOptionId: 'c',
-    explanation: "Python-д хувьсагчийн нэр тоогоор эхэлж болохгүй. Жишээ нь: 1name = 'A' гэвэл алдаа өгнө. Харин name1 = 'A' гэвэл болно."
-  },
-  {
-    id: 'q13',
-    question: "int('10') + 5 үйлдлийн хариу хэд вэ?",
-    options: [
-      { id: 'a', text: "15" },
-      { id: 'b', text: "'105'" },
-      { id: 'c', text: "Алдаа өгнө" },
-      { id: 'd', text: "10.5" }
-    ],
-    correctOptionId: 'a',
-    explanation: "int() функц нь хашилтанд байгаа '10' гэсэн бичвэрийг жинхэнэ 10 гэсэн тоо болгож хувиргана. Тиймээс 10 + 5 = 15."
-  },
-  {
-    id: 'q14',
-    question: "Жагсаалтын төгсгөлд шинэ элемент нэмэх тушаал аль нь вэ?",
-    options: [
-      { id: 'a', text: "add()" },
-      { id: 'b', text: "insert()" },
-      { id: 'c', text: "append()" },
-      { id: 'd', text: "plus()" }
-    ],
-    correctOptionId: 'c',
-    explanation: "append() нь жагсаалтын хамгийн сүүлд шинэ гишүүн нэмдэг. Жишээ нь: list.append('шинэ')."
-  },
-  {
-    id: 'q15',
-    question: "len([1, 2, 3]) функц ямар хариу өгөх вэ?",
-    options: [
-      { id: 'a', text: "1" },
-      { id: 'b', text: "2" },
-      { id: 'c', text: "3" },
-      { id: 'd', text: "0" }
-    ],
-    correctOptionId: 'c',
-    explanation: "len() буюу 'length' функц нь жагсаалт дотор хэдэн ширхэг зүйл байгааг тоолж хэлж өгдөг."
-  },
-  {
-    id: 'q16',
-    question: "Нөхцөл буруу байвал ажилладаг хэсэг аль нь вэ?",
-    options: [
-      { id: 'a', text: "if" },
-      { id: 'b', text: "else" },
-      { id: 'c', text: "then" },
-      { id: 'd', text: "when" }
-    ],
-    correctOptionId: 'b',
-    explanation: "if (хэрвээ) нөхцөл биелэхгүй буюу буруу байвал else (үгүй бол) хэсэгт бичигдсэн код ажилладаг."
-  },
-  {
-    id: 'q17',
-    question: "10 % 3 үйлдлийн хариу хэд вэ?",
-    options: [
-      { id: 'a', text: "3" },
-      { id: 'b', text: "3.33" },
-      { id: 'c', text: "1" },
-      { id: 'd', text: "0" }
-    ],
-    correctOptionId: 'c',
-    explanation: "% тэмдэг нь 'үлдэгдэл олох' үйлдэл юм. 10-ыг 3-т хуваахад 3 удаа ороод, үлдэгдэл нь 1 гарна."
-  },
-  {
-    id: 'q18',
-    question: "Python-д тайлбар бичихдээ ямар тэмдэг ашигладаг вэ?",
+    id: 'p2',
+    question: "Python-д тайлбар (comment) бичихдээ ямар тэмдэг ашигладаг вэ?",
     options: [
       { id: 'a', text: "//" },
-      { id: 'b', text: "/*" },
+      { id: 'b', text: "/* */" },
       { id: 'c', text: "#" },
       { id: 'd', text: "--" }
     ],
     correctOptionId: 'c',
-    explanation: "# тэмдгийн ард бичсэн зүйлийг компьютер уншдаггүй. Энэ нь зөвхөн хүмүүст зориулсан тайлбар (Comment) юм."
-  },
-  {
-    id: 'q19',
-    question: "x = 10, y = 20 бол print(x == y) юу гэж гарах вэ?",
-    options: [
-      { id: 'a', text: "True" },
-      { id: 'b', text: "False" },
-      { id: 'c', text: "10" },
-      { id: 'd', text: "Алдаа" }
-    ],
-    correctOptionId: 'b',
-    explanation: "== тэмдэг нь 'хоорондоо тэнцүү юу?' гэж асууж байна гэсэн үг. 10 ба 20 тэнцүү биш тул False (Худал) гэж хариулна."
-  },
-  {
-    id: 'q20',
-    question: "float(5) гэвэл ямар утга болох вэ?",
-    options: [
-      { id: 'a', text: "5" },
-      { id: 'b', text: "'5'" },
-      { id: 'c', text: "5.0" },
-      { id: 'd', text: "0.5" }
-    ],
-    correctOptionId: 'c',
-    explanation: "float() функц нь бүхэл тоог бутархай тоо болгож хувиргадаг. Тиймээс 5 нь 5.0 болно."
-  },
-  {
-    id: 'q21',
-    question: "Хувьсагчийн утгыг 1-ээр нэмэгдүүлэх товч хэлбэр аль нь вэ?",
-    options: [
-      { id: 'a', text: "x =+ 1" },
-      { id: 'b', text: "x += 1" },
-      { id: 'c', text: "x ++" },
-      { id: 'd', text: "x = 1" }
-    ],
-    correctOptionId: 'b',
-    explanation: "x += 1 гэдэг нь x = x + 1 гэсэн бичиглэлийн товчлол юм."
-  },
-  {
-    id: 'q22',
-    question: "while давталт хэзээ зогсдог вэ?",
-    options: [
-      { id: 'a', text: "Нөхцөл биелэх үед" },
-      { id: 'b', text: "Нөхцөл биелэхээ болих үед" },
-      { id: 'c', text: "10 удаа ажиллаад" },
-      { id: 'd', text: "Хэзээ ч зогсохгүй" }
-    ],
-    correctOptionId: 'b',
-    explanation: "while давталт нь нөхцөл 'True' байх хугацаанд ажиллаад, 'False' болох үед шууд зогсдог."
-  },
-  {
-    id: 'q23',
-    question: "'apple' in ['apple', 'banana'] үйлдлийн хариу?",
-    options: [
-      { id: 'a', text: "True" },
-      { id: 'b', text: "False" },
-      { id: 'c', text: "apple" },
-      { id: 'd', text: "1" }
-    ],
-    correctOptionId: 'a',
-    explanation: "in оператор нь тухайн зүйл жагсаалт дотор байгаа эсэхийг шалгана. 'apple' байгаа тул True гарна."
-  },
-  {
-    id: 'q24',
-    question: "bool(1) юуг илэрхийлэх вэ?",
-    options: [
-      { id: 'a', text: "True" },
-      { id: 'b', text: "False" },
-      { id: 'c', text: "Алдаа" },
-      { id: 'd', text: "0" }
-    ],
-    correctOptionId: 'a',
-    explanation: "Логик утгад 1-ийг үнэн (True), 0-ийг худал (False) гэж үздэг."
-  },
-  {
-    id: 'q25',
-    question: "str(100) + '2' үйлдлийн хариу?",
-    options: [
-      { id: 'a', text: "102" },
-      { id: 'b', text: "'1002'" },
-      { id: 'c', text: "Алдаа" },
-      { id: 'd', text: "100" }
-    ],
-    correctOptionId: 'b',
-    explanation: "str(100) нь 100-г бичвэр болгоно. Хоёр бичвэрийг + тэмдгээр нэгтгэвэл '100' болон '2' нийлээд '1002' болно."
-  },
-  {
-    id: 'q26',
-    question: "range(1, 4) гэвэл ямар тоонууд гарах вэ?",
-    options: [
-      { id: 'a', text: "1, 2, 3, 4" },
-      { id: 'b', text: "1, 2, 3" },
-      { id: 'c', text: "2, 3, 4" },
-      { id: 'd', text: "1, 4" }
-    ],
-    correctOptionId: 'b',
-    explanation: "range(эхлэх, дуусах) функц нь эхлэх тоог оролцуулаад, дуусах тоог оролцуулахгүй тоолдог."
-  },
-  {
-    id: 'q27',
-    question: "if 5 > 3 or 2 > 10: гэсэн нөхцөл биелэх үү?",
-    options: [
-      { id: 'a', text: "Тийм" },
-      { id: 'b', text: "Үгүй" },
-      { id: 'c', text: "Алдаа" },
-      { id: 'd', text: "Зөвхөн хагаст" }
-    ],
-    correctOptionId: 'a',
-    explanation: "or (эсвэл) оператор нь аль нэг талын нөхцөл үнэн байхад л бүхэлдээ үнэн болдог. 5 > 3 нь үнэн тул биелнэ."
-  },
-  {
-    id: 'q28',
-    question: "Python-ийг хэн зохиосон бэ?",
-    options: [
-      { id: 'a', text: "Гвидо ван Россум" },
-      { id: 'b', text: "Билл Гейтс" },
-      { id: 'c', text: "Стив Жобс" },
-      { id: 'd', text: "Марк Цукерберг" }
-    ],
-    correctOptionId: 'a',
-    explanation: "Гвидо ван Россум (Guido van Rossum) нь 1989 онд Python хэлийг зохиож эхэлсэн."
-  },
-  {
-    id: 'q29',
-    question: "break тушаал юу хийдэг вэ?",
-    options: [
-      { id: 'a', text: "Дараагийн алхам руу үсэрнэ" },
-      { id: 'b', text: "Давталтыг шууд зогсооно" },
-      { id: 'c', text: "Програмыг устгана" },
-      { id: 'd', text: "Алхам алгасна" }
-    ],
-    correctOptionId: 'b',
-    explanation: "break нь ажиллаж байгаа давталтыг хүчээр шууд зогсооход ашиглагддаг."
-  },
-  {
-    id: 'q30',
-    question: "print(type(10.5)) юу гэж хэвлэх вэ?",
-    options: [
-      { id: 'a', text: "<class 'int'>" },
-      { id: 'b', text: "<class 'str'>" },
-      { id: 'c', text: "<class 'float'>" },
-      { id: 'd', text: "<class 'bool'>" }
-    ],
-    correctOptionId: 'c',
-    explanation: "type() функц нь тухайн утгын ямар төрөл болохыг хэлж өгдөг. 10.5 бол бутархай тоо (float) юм."
+    explanation: "# тэмдэг нь Python-д нэг мөрийн тайлбар бичихэд ашиглагддаг."
   }
+];
+
+export const C_QUIZ: QuizQuestion[] = [
+  { id: 'c1', question: "С хэлний програмын хамгийн анх ажиллаж эхэлдэг функц?", options: [{ id: 'a', text: "start()" }, { id: 'b', text: "begin()" }, { id: 'c', text: "main()" }, { id: 'd', text: "init()" }], correctOptionId: 'c', explanation: "main() функц бол С програмын орох цэг юм." },
+  { id: 'c2', question: "printf() функцийг ашиглахын тулд аль санг include хийх вэ?", options: [{ id: 'a', text: "math.h" }, { id: 'b', text: "stdlib.h" }, { id: 'c', text: "stdio.h" }, { id: 'd', text: "conio.h" }], correctOptionId: 'c', explanation: "Standard Input Output (stdio.h) сан нь printf-ийг агуулдаг." },
+  { id: 'c3', question: "Бүхэл тоо зарлахад ямар түлхүүр үг ашиглах вэ?", options: [{ id: 'a', text: "float" }, { id: 'b', text: "double" }, { id: 'c', text: "int" }, { id: 'd', text: "char" }], correctOptionId: 'c', explanation: "int нь бүхэл тоо (Integer)-д зориулагдсан." },
+  { id: 'c4', question: "Тушаал болгоны ард ямар тэмдэг тавих ёстой вэ?", options: [{ id: 'a', text: "." }, { id: 'b', text: ":" }, { id: 'c', text: ";" }, { id: 'd', text: "," }], correctOptionId: 'c', explanation: "С хэлний тушаал цэгтэй таслалаар дуусдаг." },
+  { id: 'c5', question: "float төрөл хэдэн байт зай эзэлдэг вэ (ерөнхийдөө)?", options: [{ id: 'a', text: "1" }, { id: 'b', text: "2" }, { id: 'c', text: "4" }, { id: 'd', text: "8" }], correctOptionId: 'c', explanation: "float нь ихэвчлэн 4 байт санах ой эзэлдэг." },
+  { id: 'c6', question: "scanf(\"%d\", &x); үйлдлийн '&' ямар үүрэгтэй вэ?", options: [{ id: 'a', text: "Нэмэх" }, { id: 'b', text: "Хаяг заах" }, { id: 'c', text: "Үржих" }, { id: 'd', text: "Индекс" }], correctOptionId: 'b', explanation: "Утгыг санах ойн хаягт хадгалахын тулд & ашиглана." },
+  { id: 'c7', question: "Тэмдэгт зарлахад аль төрлийг ашиглах вэ?", options: [{ id: 'a', text: "string" }, { id: 'b', text: "text" }, { id: 'c', text: "char" }, { id: 'd', text: "letter" }], correctOptionId: 'c', explanation: "char (character) нь ганц тэмдэгтэд зориулагдсан." },
+  { id: 'c8', question: "10 / 3 үйлдлийн үр дүн бүхэл тоон хуваалтаар хэд гарах вэ?", options: [{ id: 'a', text: "3.33" }, { id: 'b', text: "4" }, { id: 'c', text: "3" }, { id: 'd', text: "0" }], correctOptionId: 'c', explanation: "Бүхэл тоон хуваалтад бутархай хэсэг хаягдана." },
+  { id: 'c9', question: "Тэнцүү биш гэдгийг яаж шалгах вэ?", options: [{ id: 'a', text: "<>" }, { id: 'b', text: "!= " }, { id: 'c', text: "==" }, { id: 'd', text: "not=" }], correctOptionId: 'b', explanation: "!= оператор нь тэнцүү биш эсэхийг шалгана." },
+  { id: 'c10', question: "Массивын эхний элементийн индекс хэд вэ?", options: [{ id: 'a', text: "1" }, { id: 'b', text: "-1" }, { id: 'c', text: "0" }, { id: 'd', text: "2" }], correctOptionId: 'c', explanation: "Массив үргэлж 0-ээс тоолж эхэлнэ." },
+  { id: 'c11', question: "for(int i=0; i<5; i++) давталт хэд удаа ажиллах вэ?", options: [{ id: 'a', text: "4" }, { id: 'b', text: "6" }, { id: 'c', text: "5" }, { id: 'd', text: "Төгсгөлгүй" }], correctOptionId: 'c', explanation: "i=0, 1, 2, 3, 4 үед ажиллана." },
+  { id: 'c12', question: "if(5 == 5) нөхцөл юу буцаах вэ?", options: [{ id: 'a', text: "False" }, { id: 'b', text: "True (1)" }, { id: 'c', text: "0" }, { id: 'd', text: "Алдаа" }], correctOptionId: 'b', explanation: "5 нь 5-тай тэнцүү тул үнэн утга буцаана." },
+  { id: 'c13', question: "double төрөл float-аас юугаараа ялгаатай вэ?", options: [{ id: 'a', text: "Бага зай эзэлдэг" }, { id: 'b', text: "Илүү нарийвчлалтай" }, { id: 'c', text: "Бүхэл тоо хадгалдаг" }, { id: 'd', text: "Ялгаагүй" }], correctOptionId: 'b', explanation: "double нь 8 байт эзэлдэг тул илүү нарийвчлалтай." },
+  { id: 'c14', question: "sizeof(char) хэдэн байт байдаг вэ?", options: [{ id: 'a', text: "2" }, { id: 'b', text: "4" }, { id: 'c', text: "1" }, { id: 'd', text: "8" }], correctOptionId: 'c', explanation: "char төрөл ердийн үед 1 байт байдаг." },
+  { id: 'c15', question: "while(0) давталт хэд удаа ажиллах вэ?", options: [{ id: 'a', text: "1" }, { id: 'b', text: "Хэзээ ч үгүй" }, { id: 'c', text: "Төгсгөлгүй" }, { id: 'd', text: "Алдаа өгнө" }], correctOptionId: 'b', explanation: "0 утга нь 'False' тул нөхцөл биелэхгүй." },
+  { id: 'c16', question: "%d формат юунд ашиглагддаг вэ?", options: [{ id: 'a', text: "Бутархай тоо" }, { id: 'b', text: "Тэмдэгт" }, { id: 'c', text: "Бүхэл тоо" }, { id: 'd', text: "Үг" }], correctOptionId: 'c', explanation: "%d нь decimal буюу бүхэл тоо хэвлэхэд ашиглагдана." },
+  { id: 'c17', question: "С хэлэнд 'Ба' логик оператор аль нь вэ?", options: [{ id: 'a', text: "||" }, { id: 'b', text: "|" }, { id: 'c', text: "&&" }, { id: 'd', text: "&" }], correctOptionId: 'c', explanation: "&& оператор нь хоёр нөхцөл зэрэг биелэхийг шалгана." },
+  { id: 'c18', question: "break тушаал юу хийдэг вэ?", options: [{ id: 'a', text: "Давталтыг алгасах" }, { id: 'b', text: "Давталтыг хүчээр зогсоох" }, { id: 'c', text: "Програмыг зогсоох" }, { id: 'd', text: "Буцаах" }], correctOptionId: 'b', explanation: "break нь ажиллаж буй давталтаас шууд гаргана." },
+  { id: 'c19', question: "/* тайлбар */ нь ямар тайлбар вэ?", options: [{ id: 'a', text: "Нэг мөр" }, { id: 'b', text: "Олон мөр" }, { id: 'c', text: "Алдаатай" }, { id: 'd', text: "Гарчиг" }], correctOptionId: 'b', explanation: "/* */ тэмдэг нь олон мөрт тайлбарт зориулагдсан." },
+  { id: 'c20', question: "Тэмдэгт мөрийн төгсгөлийг ямар тэмдэг заадаг вэ?", options: [{ id: 'a', text: "\\n" }, { id: 'b', text: "\\t" }, { id: 'c', text: "\\0" }, { id: 'd', text: "\\s" }], correctOptionId: 'c', explanation: "\\0 буюу Null character нь үг дууссаныг илтгэнэ." },
+  { id: 'c21', question: "switch дотор тодорхойгүй утгыг юу гэж заадаг вэ?", options: [{ id: 'a', text: "else" }, { id: 'b', text: "other" }, { id: 'c', text: "default" }, { id: 'd', text: "break" }], correctOptionId: 'c', explanation: "default нь case-үүд таарахгүй үед ажиллана." },
+  { id: 'c22', question: "x = 5; y = x++; y хэд байх вэ?", options: [{ id: 'a', text: "6" }, { id: 'b', text: "4" }, { id: 'c', text: "5" }, { id: 'd', text: "0" }], correctOptionId: 'c', explanation: "Post-increment тул утгыг оноосны дараа нэмэгдүүлнэ." },
+  { id: 'c23', question: "|| оператор юуг илэрхийлэх вэ?", options: [{ id: 'a', text: "Ба" }, { id: 'b', text: "Үгүй" }, { id: 'c', text: "Эсвэл" }, { id: 'd', text: "Тэнцүү" }], correctOptionId: 'c', explanation: "|| бол Logical OR буюу 'Эсвэл' оператор." },
+  { id: 'c24', question: "return 0; нь юуг илэрхийлэх вэ?", options: [{ id: 'a', text: "Програм амжилттай дууссан" }, { id: 'b', text: "Алдаа гарсан" }, { id: 'c', text: "Дахин эхлэх" }, { id: 'd', text: "Зогсохгүй" }], correctOptionId: 'a', explanation: "0 буцаах нь системд програмыг зөв ажиллаж дууссаныг хэлдэг." },
+  { id: 'c25', question: "int a[3] = {1, 2, 3}; a[2] хэд вэ?", options: [{ id: 'a', text: "1" }, { id: 'b', text: "2" }, { id: 'c', text: "3" }, { id: 'd', text: "Алдаа" }], correctOptionId: 'c', explanation: "0, 1, 2-р индекс тул 3 дахь утга нь 3 байна." },
+  { id: 'c26', question: "printf(\"%.2f\", 3.1415); юу хэвлэх вэ?", options: [{ id: 'a', text: "3" }, { id: 'b', text: "3.1" }, { id: 'c', text: "3.14" }, { id: 'd', text: "3.1415" }], correctOptionId: 'c', explanation: "%.2f нь таслалаас хойш 2 орноор тасална." },
+  { id: 'c27', question: "x = 10 % 3; x хэд вэ?", options: [{ id: 'a', text: "3" }, { id: 'b', text: "0" }, { id: 'c', text: "1" }, { id: 'd', text: "3.33" }], correctOptionId: 'c', explanation: "10-ыг 3-т хуваахад 1 үлдэнэ." },
+  { id: 'c28', question: "char x = 'A'; printf(\"%d\", x); юу хэвлэх вэ?", options: [{ id: 'a', text: "A" }, { id: 'b', text: "Алдаа" }, { id: 'c', text: "65 (ASCII)" }, { id: 'd', text: "0" }], correctOptionId: 'c', explanation: "Тэмдэгтийг %d-ээр хэвлэвэл ASCII кодыг нь гаргана." },
+  { id: 'c29', question: "do-while давталт хамгийн багадаа хэд ажиллах вэ?", options: [{ id: 'a', text: "0" }, { id: 'b', text: "2" }, { id: 'c', text: "1" }, { id: 'd', text: "Төгсгөлгүй" }], correctOptionId: 'c', explanation: "Нөхцөл шалгахаас өмнө үйлдлийг нэг удаа хийдэг." },
+  { id: 'c30', question: "sqrt() функц аль санд байдаг вэ?", options: [{ id: 'a', text: "stdio.h" }, { id: 'b', text: "string.h" }, { id: 'c', text: "math.h" }, { id: 'd', text: "stdlib.h" }], correctOptionId: 'c', explanation: "Математикийн үйлдлүүд math.h санд байдаг." },
+  { id: 'c31', question: "const түлхүүр үг юуг илэрхийлэх вэ?", options: [{ id: 'a', text: "Хувьсах" }, { id: 'b', text: "Түр зуурын" }, { id: 'c', text: "Тогтмол" }, { id: 'd', text: "Алдаа" }], correctOptionId: 'c', explanation: "const нь утга нь өөрчлөгдөхгүй тогтмол гэсэн үг." },
+  { id: 'c32', question: "continue тушаал юу хийдэг вэ?", options: [{ id: 'a', text: "Зогсоно" }, { id: 'b', text: "Гарна" }, { id: 'c', text: "Дараагийн алхам руу үсэрнэ" }, { id: 'd', text: "Буцна" }], correctOptionId: 'c', explanation: "Доорх кодуудыг алгасаад шууд дараагийн эргэлт рүү явна." },
+  { id: 'c33', question: "С хэлэнд 'Үгүй' логик оператор аль нь вэ?", options: [{ id: 'a', text: "~" }, { id: 'b', text: "NOT" }, { id: 'c', text: "!" }, { id: 'd', text: "!!" }], correctOptionId: 'c', explanation: "! оператор нь утгыг эсрэгээр нь болгоно." },
+  { id: 'c34', question: "scanf-д олон хувьсагч нэг дор уншиж болох уу?", options: [{ id: 'a', text: "Үгүй" }, { id: 'b', text: "Зөвхөн 2-ыг" }, { id: 'c', text: "Тийм" }, { id: 'd', text: "Мэдэхгүй" }], correctOptionId: 'c', explanation: "Тийм, scanf(\"%d %d\", &a, &b); гэж уншиж болно." },
+  { id: 'c35', question: "int x=5, y=5; if(x == y) нөхцөл үнэн үү?", options: [{ id: 'a', text: "Үгүй" }, { id: 'b', text: "Мэдэхгүй" }, { id: 'c', text: "Тийм" }, { id: 'd', text: "Алдаа" }], correctOptionId: 'c', explanation: "Хоёр утга ижил тул тэнцүү байна." },
+  { id: 'c36', question: "x = 10; x += 5; x-ийн эцсийн утга?", options: [{ id: 'a', text: "10" }, { id: 'b', text: "5" }, { id: 'c', text: "15" }, { id: 'd', text: "50" }], correctOptionId: 'c', explanation: "x = x + 5 гэсэн үг." },
+  { id: 'c37', question: "С хэлний нэг мөрт тайлбар?", options: [{ id: 'a', text: "#" }, { id: 'b', text: "--" }, { id: 'c', text: "//" }, { id: 'd', text: "/*" }], correctOptionId: 'c', explanation: "// тэмдэг нь зөвхөн нэг мөрийг тайлбар болгоно." },
+  { id: 'c38', question: "Бүхэл тоог хуваахад үлдэгдэл олох оператор?", options: [{ id: 'a', text: "/" }, { id: 'b', text: "div" }, { id: 'c', text: "%" }, { id: 'd', text: "rem" }], correctOptionId: 'c', explanation: "% (Modulo) нь хуваалтын үлдэгдэл олдог." },
+  { id: 'c39', question: "int x; printf(\"%d\", x); юу хэвлэх вэ (утга оноогоогүй бол)?", options: [{ id: 'a', text: "0" }, { id: 'b', text: "Алдаа" }, { id: 'c', text: "Санамсаргүй тоо (Garbage)" }, { id: 'd', text: "null" }], correctOptionId: 'c', explanation: "Утга оноогоогүй бол санах ойд байсан хуучин утгыг хэвлэнэ." },
+  { id: 'c40', question: "ASCII кодоор жижиг 'a' хэд вэ?", options: [{ id: 'a', text: "65" }, { id: 'b', text: "48" }, { id: 'c', text: "97" }, { id: 'd', text: "0" }], correctOptionId: 'c', explanation: "97 бол жижиг 'a' үсгийн код юм." },
+  { id: 'c41', question: "pow(2, 3) ямар хариу өгөх вэ?", options: [{ id: 'a', text: "6" }, { id: 'b', text: "9" }, { id: 'c', text: "8" }, { id: 'd', text: "5" }], correctOptionId: 'c', explanation: "2-ын 3 зэрэг нь 8 юм." },
+  { id: 'c42', question: "printf(\"Hello\\nWorld\"); юу хэвлэх вэ?", options: [{ id: 'a', text: "HelloWorld" }, { id: 'b', text: "Hello World" }, { id: 'c', text: "Hello (дараагийн мөр) World" }, { id: 'd', text: "Алдаа" }], correctOptionId: 'c', explanation: "\\n нь шинэ мөрөнд шилжүүлдэг." },
+  { id: 'c43', question: "10 > 5 && 3 < 1 нөхцөл юу буцаах вэ?", options: [{ id: 'a', text: "True" }, { id: 'b', text: "Алдаа" }, { id: 'c', text: "False" }, { id: 'd', text: "1" }], correctOptionId: 'c', explanation: "3 < 1 нь худал тул &&-ийн үр дүн худал гарна." },
+  { id: 'c44', question: "int nums[10]; массивын сүүлийн индекс хэд вэ?", options: [{ id: 'a', text: "10" }, { id: 'b', text: "0" }, { id: 'c', text: "9" }, { id: 'd', text: "1" }], correctOptionId: 'c', explanation: "0-ээс эхэлдэг тул 10 элементийн сүүлчийнх нь 9 байна." },
+  { id: 'c45', question: "void функц юу буцаах вэ?", options: [{ id: 'a', text: "0" }, { id: 'b', text: "null" }, { id: 'c', text: "Утга буцаахгүй" }, { id: 'd', text: "1" }], correctOptionId: 'c', explanation: "void гэдэг нь хоосон буюу утга буцаахгүй гэсэн утгатай." },
+  { id: 'c46', question: "main функц заавал int байх ёстой юу?", options: [{ id: 'a', text: "Тийм" }, { id: 'b', text: "Стандарт ёсоор тийм" }, { id: 'c', text: "Заавал биш" }, { id: 'd', text: "Мэдэхгүй" }], correctOptionId: 'b', explanation: "Орчин үеийн стандартаар int main() гэж бичих нь зөв юм." },
+  { id: 'c47', question: "abs(-5) ямар хариу өгөх вэ?", options: [{ id: 'a', text: "-5" }, { id: 'b', text: "0" }, { id: 'c', text: "5" }, { id: 'd', text: "Алдаа" }], correctOptionId: 'c', explanation: "abs нь тооны модулийг олдог." },
+  { id: 'c48', question: "string.h санд аль функц байдаг вэ?", options: [{ id: 'a', text: "printf" }, { id: 'b', text: "sqrt" }, { id: 'c', text: "strlen" }, { id: 'd', text: "scanf" }], correctOptionId: 'c', explanation: "strlen нь тэмдэгт мөрийн уртыг олдог." },
+  { id: 'c49', question: "if...else if...else-ийн else хэзээ ажиллах вэ?", options: [{ id: 'a', text: "Үргэлж" }, { id: 'b', text: "Эхний нөхцөл биелэхэд" }, { id: 'c', text: "Өмнөх бүх нөхцөл биелэхгүй бол" }, { id: 'd', text: "Хэзээ ч үгүй" }], correctOptionId: 'c', explanation: "Дээрх бүх нөхцөл худал байвал else ажиллана." },
+  { id: 'c50', question: "1 бол 'True' гэсэн утгатай юу?", options: [{ id: 'a', text: "Үгүй" }, { id: 'b', text: "Мэдэхгүй" }, { id: 'c', text: "Тийм" }, { id: 'd', text: "Заримдаа" }], correctOptionId: 'c', explanation: "С хэлэнд 0 биш бүх утга Үнэн (True) болдог." },
+  { id: 'c51', question: "exit(0) юу хийдэг вэ?", options: [{ id: 'a', text: "Давталтаас гарна" }, { id: 'b', text: "Функцээс гарна" }, { id: 'c', text: "Програмыг шууд зогсооно" }, { id: 'd', text: "Алдаа өгнө" }], correctOptionId: 'c', explanation: "Програмыг бүрэн зогсооход ашигладаг." },
+  { id: 'c52', question: "int x = 10 / 4; x хэд вэ?", options: [{ id: 'a', text: "2.5" }, { id: 'b', text: "3" }, { id: 'c', text: "2" }, { id: 'd', text: "0" }], correctOptionId: 'c', explanation: "int тул бутархай хэсэг нь таслагдана." },
+  { id: 'c53', question: "&& оператор 'Битийн БА' мөн үү?", options: [{ id: 'a', text: "Тийм" }, { id: 'b', text: "Мэдэхгүй" }, { id: 'c', text: "Үгүй (Логик БА)" }, { id: 'd', text: "Хоёулаа" }], correctOptionId: 'c', explanation: "Ганц & бол битийн БА, давхар && бол логик БА юм." },
+  { id: 'c54', question: "scanf-д %s юунд ашиглагддаг вэ?", options: [{ id: 'a', text: "Тоо" }, { id: 'b', text: "Тэмдэгт" }, { id: 'c', text: "Тэмдэгт мөр (Үг)" }, { id: 'd', text: "Бутархай" }], correctOptionId: 'c', explanation: "%s нь string буюу үг уншихад ашиглагдана." },
+  { id: 'c55', question: "switch дотор float ашиглаж болох уу?", options: [{ id: 'a', text: "Тийм" }, { id: 'b', text: "Мэдэхгүй" }, { id: 'c', text: "Үгүй (Зөвхөн бүхэл төрөл)" }, { id: 'd', text: "Заримдаа" }], correctOptionId: 'c', explanation: "switch нь зөвхөн бүхэл тоо эсвэл тэмдэгт дээр ажилладаг." },
+  { id: 'c56', question: "sizeof(int) заавал 4 байт байх ёстой юу?", options: [{ id: 'a', text: "Тийм" }, { id: 'b', text: "Мэдэхгүй" }, { id: 'c', text: "Архитектураас хамаарна" }, { id: 'd', text: "Үгүй, үргэлж 2" }], correctOptionId: 'c', explanation: "Процессорын төрлөөс хамаарч өөр байж болно." },
+  { id: 'c57', question: "C хэл хэдэн онд үүссэн бэ?", options: [{ id: 'a', text: "1990" }, { id: 'b', text: "1985" }, { id: 'c', text: "1972" }, { id: 'd', text: "2000" }], correctOptionId: 'c', explanation: "Деннис Ритчи 1972 онд Bell Labs-т зохиосон." },
+  { id: 'c58', question: "toupper() функц юу хийдэг вэ?", options: [{ id: 'a', text: "Томруулна" }, { id: 'b', text: "Жижигрүүлнэ" }, { id: 'c', text: "Тэмдэгтийг том үсэг болгоно" }, { id: 'd', text: "Устгана" }], correctOptionId: 'c', explanation: "Жижиг үсгийг том болгож хувиргадаг." },
+  { id: 'c59', question: "int x = 2; x = x << 1; x хэд вэ?", options: [{ id: 'a', text: "2" }, { id: 'b', text: "1" }, { id: 'c', text: "4" }, { id: 'd', text: "8" }], correctOptionId: 'c', explanation: "Битийн зүүн тийш шилжилт нь 2-оор үржсэнтэй ижил (2 * 2 = 4)." },
+  { id: 'c60', question: "char-д сөрөг утга хадгалж болох уу?", options: [{ id: 'a', text: "Үгүй" }, { id: 'b', text: "Мэдэхгүй" }, { id: 'c', text: "Тийм (signed char)" }, { id: 'd', text: "Заримдаа" }], correctOptionId: 'c', explanation: "char нь -128-аас 127 хүртэл утга авч болно." },
+  { id: 'c61', question: "С хэлний түлхүүр үг (keyword) аль нь вэ?", options: [{ id: 'a', text: "integer" }, { id: 'b', text: "real" }, { id: 'c', text: "volatile" }, { id: 'd', text: "string" }], correctOptionId: 'c', explanation: "volatile нь С-ийн 32 үндсэн түлхүүр үгийн нэг." },
+  { id: 'c62', question: "printf-д %% бичвэл юу хэвлэх вэ?", options: [{ id: 'a', text: "Алдаа" }, { id: 'b', text: "Юу ч үгүй" }, { id: 'c', text: "% тэмдэг" }, { id: 'd', text: "Хоосон зай" }], correctOptionId: 'c', explanation: "Хувь тэнцүү тэмдэг өөрөө хэвлэхэд %% ашигладаг." },
+  { id: 'c63', question: "while болон do-while-ийн гол ялгаа?", options: [{ id: 'a', text: "Хурд" }, { id: 'b', text: "Ялгаагүй" }, { id: 'c', text: "Нөхцөл шалгах дараалал" }, { id: 'd', text: "Санах ой" }], correctOptionId: 'c', explanation: "while нөхцөлийг эхэнд нь, do-while төгсгөлд нь шалгадаг." },
+  { id: 'c64', question: "char str[] = \"Hi\"; strlen(str) хэд вэ?", options: [{ id: 'a', text: "3" }, { id: 'b', text: "1" }, { id: 'c', text: "2" }, { id: 'd', text: "4" }], correctOptionId: 'c', explanation: "strlen нь төгсгөлийн \\0-ийг тоолдоггүй." },
+  { id: 'c65', question: "fabs() функц ямар төрөлд ажилладаг вэ?", options: [{ id: 'a', text: "int" }, { id: 'b', text: "char" }, { id: 'c', text: "float/double" }, { id: 'd', text: "void" }], correctOptionId: 'c', explanation: "Бутархай тооны модулийг олоход fabs() ашиглана." },
+  { id: 'c66', question: "x = 5; printf(\"%d\", ++x); юу хэвлэх вэ?", options: [{ id: 'a', text: "5" }, { id: 'b', text: "Алдаа" }, { id: 'c', text: "6" }, { id: 'd', text: "4" }], correctOptionId: 'c', explanation: "Pre-increment тул нэмээд шууд хэвлэнэ." },
+  { id: 'c67', question: "if (x = 0) бол нөхцөл үнэн үү?", options: [{ id: 'a', text: "Тийм" }, { id: 'b', text: "Алдаа" }, { id: 'c', text: "Үгүй (Худал)" }, { id: 'd', text: "Мэдэхгүй" }], correctOptionId: 'c', explanation: "x-д 0 утга оноогдох тул үр дүн нь 0 буюу False болно." },
+  { id: 'c68', question: "Массивыг int a[3] = {1, 2, 3, 4}; гэж зарлаж болох уу?", options: [{ id: 'a', text: "Тийм" }, { id: 'b', text: "Мэдэхгүй" }, { id: 'c', text: "Үгүй (Хэмжээ хэтэрсэн)" }, { id: 'd', text: "Заримдаа" }], correctOptionId: 'c', explanation: "Заасан хэмжээнээс их утга өгч болохгүй." },
+  { id: 'c69', question: "isdigit() юу шалгадаг вэ?", options: [{ id: 'a', text: "Үсэг" }, { id: 'b', text: "Тэмдэг" }, { id: 'c', text: "Цифр мөн эсэх" }, { id: 'd', text: "Хоосон зай" }], correctOptionId: 'c', explanation: "Тэмдэгт нь тоо (0-9) мөн эсэхийг шалгана." },
+  { id: 'c70', question: "C хэл 'case-sensitive' мөн үү?", options: [{ id: 'a', text: "Үгүй" }, { id: 'b', text: "Заримдаа" }, { id: 'c', text: "Тийм (Том жижиг үсэг ялгаатай)" }, { id: 'd', text: "Мэдэхгүй" }], correctOptionId: 'c', explanation: "Main болон main нь өөр утгатай." },
+  { id: 'c71', question: "bool төрөл С хэлний анхны стандартад байсан уу?", options: [{ id: 'a', text: "Тийм" }, { id: 'b', text: "Мэдэхгүй" }, { id: 'c', text: "Үгүй (C99 онд нэмэгдсэн)" }, { id: 'd', text: "Тийм, 1 байт" }], correctOptionId: 'c', explanation: "Анх 0 болон 1-ээр л илэрхийлдэг байсан." },
+  { id: 'c72', question: "printf-д %X юу хэвлэх вэ?", options: [{ id: 'a', text: "X үсэг" }, { id: 'b', text: "Бутархай" }, { id: 'c', text: "16-тын тоо (Том үсгээр)" }, { id: 'd', text: "8-тын тоо" }], correctOptionId: 'c', explanation: "Hexadecimal буюу 16-тын системийг хэвлэнэ." },
+  { id: 'c73', question: "int x = 1, 2, 3; алдаатай юу?", options: [{ id: 'a', text: "Тийм" }, { id: 'b', text: "Мэдэхгүй" }, { id: 'c', text: "Тийм, таслал буруу" }, { id: 'd', text: "Үгүй" }], correctOptionId: 'c', explanation: "Зөвхөн нэг утга оноох эсвэл массив ашиглана." },
+  { id: 'c74', question: "pow() функц double утга буцаадаг уу?", options: [{ id: 'a', text: "Үгүй" }, { id: 'b', text: "Заримдаа" }, { id: 'c', text: "Тийм" }, { id: 'd', text: "Мэдэхгүй" }], correctOptionId: 'c', explanation: "Математикийн ихэнх функцууд double буцаадаг." },
+  { id: 'c75', question: "C хэл 'Low-level' үү 'High-level' үү?", options: [{ id: 'a', text: "Low" }, { id: 'b', text: "High" }, { id: 'c', text: "Middle-level (Дунд)" }, { id: 'd', text: "Мэдэхгүй" }], correctOptionId: 'c', explanation: "Техник болон хүний хэлний аль алинд ойр тул дунд гэдэг." },
+  { id: 'c76', question: "enum гэж юу вэ?", options: [{ id: 'a', text: "Тоо" }, { id: 'b', text: "Функц" }, { id: 'c', text: "Нэрлэсэн тогтмол" }, { id: 'd', text: "Алдаа" }], correctOptionId: 'c', explanation: "Enumeration буюу хэрэглэгчийн тодорхойлсон тогтмолууд." },
+  { id: 'c77', question: "void main() бичих нь алдаа юу?", options: [{ id: 'a', text: "Тийм" }, { id: 'b', text: "Зарим системд зөвшөөрнө" }, { id: 'c', text: "Тийм, int байх ёстой" }, { id: 'd', text: "Мэдэхгүй" }], correctOptionId: 'b', explanation: "Стандарт бус ч олон хөрвүүлэгч дээр ажилладаг." },
+  { id: 'c78', question: "strcmp(s1, s2) == 0 бол юу гэсэн үг вэ?", options: [{ id: 'a', text: "Ялгаатай" }, { id: 'b', text: "Алдаатай" }, { id: 'c', text: "Хоёр үг ижил" }, { id: 'd', text: "Хоосон" }], correctOptionId: 'c', explanation: "Ижил үед 0 утга буцаадаг." },
+  { id: 'c79', question: "int x = 5 / 2.0; x хэд вэ?", options: [{ id: 'a', text: "2.5" }, { id: 'b', text: "3" }, { id: 'c', text: "2" }, { id: 'd', text: "Алдаа" }], correctOptionId: 'c', explanation: "Бутархай гараад int-д оноогдохдоо таслагдана." },
+  { id: 'c80', question: "fflush(stdin) юу хийдэг вэ?", options: [{ id: 'a', text: "Цэвэрлэнэ" }, { id: 'b', text: "Уншина" }, { id: 'c', text: "Оролтын буферийг цэвэрлэнэ" }, { id: 'd', text: "Гарна" }], correctOptionId: 'c', explanation: "scanf-ийн дараа үлдсэн тэмдэгтүүдийг арилгана." },
+  { id: 'c81', question: "long long төрөл хэдэн байт вэ?", options: [{ id: 'a', text: "4" }, { id: 'b', text: "2" }, { id: 'c', text: "8" }, { id: 'd', text: "16" }], correctOptionId: 'c', explanation: "Ихэвчлэн 64 бит буюу 8 байт эзэлнэ." },
+  { id: 'c82', question: "С хэлэнд 'Structure' ашиглаж болох уу?", options: [{ id: 'a', text: "Үгүй" }, { id: 'b', text: "Заримдаа" }, { id: 'c', text: "Тийм (struct)" }, { id: 'd', text: "Мэдэхгүй" }], correctOptionId: 'c', explanation: "Өгөгдлийг багцлахад struct ашигладаг." },
+  { id: 'c83', question: "scanf-д %f уншихдаа & хэрэгтэй юу?", options: [{ id: 'a', text: "Үгүй" }, { id: 'b', text: "Заримдаа" }, { id: 'c', text: "Тийм" }, { id: 'd', text: "Мэдэхгүй" }], correctOptionId: 'c', explanation: "Массив биш бол бүх төрөлд & хэрэгтэй." },
+  { id: 'c84', question: "10 == 10.0 үнэн үү?", options: [{ id: 'a', text: "Үгүй" }, { id: 'b', text: "Алдаа" }, { id: 'c', text: "Тийм" }, { id: 'd', text: "Мэдэхгүй" }], correctOptionId: 'c', explanation: "Утгууд нь ижил тул С хөрвүүлээд жишиж чадна." },
+  { id: 'c85', question: "printf-д \\r юу хийдэг вэ?", options: [{ id: 'a', text: "Шинэ мөр" }, { id: 'b', text: "Таб" }, { id: 'c', text: "Мөрийн эхэнд шилжих" }, { id: 'd', text: "Устгах" }], correctOptionId: 'c', explanation: "Carriage Return буюу курсорыг мөрийн эхэнд аваачна." },
+  { id: 'c86', question: "int x = (5 > 2) ? 10 : 20; x хэд вэ?", options: [{ id: 'a', text: "20" }, { id: 'b', text: "0" }, { id: 'c', text: "10" }, { id: 'd', text: "5" }], correctOptionId: 'c', explanation: "Нөхцөл үнэн тул эхний утга болох 10-ыг авна." },
+  { id: 'c87', question: "srand() функц юунд ашиглагддаг вэ?", options: [{ id: 'a', text: "Язгуур" }, { id: 'b', text: "Гаралт" }, { id: 'c', text: "Санамсаргүй тооны эхлэлийг тавих" }, { id: 'd', text: "Унших" }], correctOptionId: 'c', explanation: "rand() функцийн эхлэл утгыг тохируулна." },
+  { id: 'c88', question: "getchar() юу хийдэг вэ?", options: [{ id: 'a', text: "Тоо уншина" }, { id: 'b', text: "Үг уншина" }, { id: 'c', text: "Ганц тэмдэгт уншина" }, { id: 'd', text: "Гарна" }], correctOptionId: 'c', explanation: "Гарнаас ганц тэмдэгт аваад буцаана." },
+  { id: 'c89', question: "extern юуг илэрхийлэх вэ?", options: [{ id: 'a', text: "Дотоод" }, { id: 'b', text: "Алдаа" }, { id: 'c', text: "Гадны хувьсагч" }, { id: 'd', text: "Түр зуурын" }], correctOptionId: 'c', explanation: "Өөр файлд зарлагдсан хувьсагчийг ашиглахад хэрэглэнэ." },
+  { id: 'c90', question: "floor(3.9) ямар хариу өгөх вэ?", options: [{ id: 'a', text: "4" }, { id: 'b', text: "3.9" }, { id: 'c', text: "3" }, { id: 'd', text: "0" }], correctOptionId: 'c', explanation: "Доош нь бүхэл болгож орхино." },
+  { id: 'c91', question: "C хэлэнд 'boolean' сан аль нь вэ?", options: [{ id: 'a', text: "bool.h" }, { id: 'b', text: "logic.h" }, { id: 'c', text: "stdbool.h" }, { id: 'd', text: "stdlib.h" }], correctOptionId: 'c', explanation: "true, false ашиглахын тулд stdbool.h хэрэгтэй." },
+  { id: 'c92', question: "main(int argc, char *argv[]) дахь argc юу вэ?", options: [{ id: 'a', text: "Тэмдэгт" }, { id: 'b', text: "Алдаа" }, { id: 'c', text: "Аргументийн тоо" }, { id: 'd', text: "Нэр" }], correctOptionId: 'c', explanation: "Програм ажиллуулахад дамжуулсан аргументийн тоо." },
+  { id: 'c93', question: "printf-д %o юунд ашиглагддаг вэ?", options: [{ id: 'a', text: "10-тын тоо" }, { id: 'b', text: "16-тын тоо" }, { id: 'c', text: "8-тын тоо" }, { id: 'd', text: "2-тын тоо" }], correctOptionId: 'c', explanation: "Octal буюу 8-тын системийг илэрхийлнэ." },
+  { id: 'c94', question: "int x = 10; x >>= 1; x хэд вэ?", options: [{ id: 'a', text: "10" }, { id: 'b', text: "20" }, { id: 'c', text: "5" }, { id: 'd', text: "0" }], correctOptionId: 'c', explanation: "Баруун тийш шилжилт нь 2-т хуваасныг хэлнэ (10 / 2 = 5)." },
+  { id: 'c95', question: "time(NULL) хаана тодорхойлогдсон бэ?", options: [{ id: 'a', text: "stdio.h" }, { id: 'b', text: "math.h" }, { id: 'c', text: "time.h" }, { id: 'd', text: "stdlib.h" }], correctOptionId: 'c', explanation: "Цаг хугацааны функцууд time.h-д бий." },
+  { id: 'c96', question: "static хувьсагч утгаа хадгалдаг уу?", options: [{ id: 'a', text: "Үгүй" }, { id: 'b', text: "Мэдэхгүй" }, { id: 'c', text: "Тийм (Функц дуусахад устахгүй)" }, { id: 'd', text: "Заримдаа" }], correctOptionId: 'c', explanation: "Програмыг дуустал утгаа санах ойд хадгална." },
+  { id: 'c97', question: "rand() % 10 юу буцаах вэ?", options: [{ id: 'a', text: "0-10" }, { id: 'b', text: "1-10" }, { id: 'c', text: "0-9" }, { id: 'd', text: "Санамсаргүй" }], correctOptionId: 'c', explanation: "10-т хуваагаад үлдэгдэл авч байгаа тул 0-ээс 9 хүртэл тоо гарна." },
+  { id: 'c98', question: "void func(int a); нь юу вэ?", options: [{ id: 'a', text: "Дуудалт" }, { id: 'b', text: "Зарлалт (Prototype)" }, { id: 'c', text: "Тодорхойлолт" }, { id: 'd', text: "Алдаа" }], correctOptionId: 'b', explanation: "Функцийг ашиглахаас өмнө биеийг нь бичилгүй зарлахыг хэлнэ." },
+  { id: 'c99', question: "ceil(3.1) ямар хариу өгөх вэ?", options: [{ id: 'a', text: "3" }, { id: 'b', text: "3.1" }, { id: 'c', text: "4" }, { id: 'd', text: "Алдаа" }], correctOptionId: 'c', explanation: "Дээш нь бүхэл болгож ахиулна." },
+  { id: 'c100', question: "Эцсийн асуулт: C хэл сурах гоё байна уу?", options: [{ id: 'a', text: "Үгүй" }, { id: 'b', text: "Мэдэхгүй" }, { id: 'c', text: "Тийм (Мэдээж!)" }, { id: 'd', text: "Хэцүү байна" }], correctOptionId: 'c', explanation: "Мэдээж гоё шүү дээ! Амжилт хүсье." }
 ];
