@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { QuizQuestion } from '../data/quizzes';
 
 interface QuizViewProps {
@@ -10,7 +10,12 @@ interface QuizViewProps {
 }
 
 const QuizView: React.FC<QuizViewProps> = ({ user, quizData, onBack, onComplete }) => {
-  const quizStoreKey = `codequest_${user}_quiz_v3_${quizData.length}`;
+  const quizStoreKey = `codequest_${user}_quiz_shuffled_v1_${quizData.length}`;
+
+  // Shuffle questions only once when the component mounts or quizData changes
+  const shuffledQuestions = useMemo(() => {
+    return [...quizData].sort(() => Math.random() - 0.5);
+  }, [quizData]);
 
   const [currentIdx, setCurrentIdx] = useState(() => {
     const saved = localStorage.getItem(quizStoreKey);
@@ -41,8 +46,8 @@ const QuizView: React.FC<QuizViewProps> = ({ user, quizData, onBack, onComplete 
     }
   }, [currentIdx, selectedId, isAnswered, score, showResult, quizStoreKey]);
 
-  const question = quizData[currentIdx];
-  const progressPercent = ((currentIdx + (isAnswered ? 1 : 0)) / quizData.length) * 100;
+  const question = shuffledQuestions[currentIdx];
+  const progressPercent = ((currentIdx + (isAnswered ? 1 : 0)) / shuffledQuestions.length) * 100;
 
   if (!question && !showResult) return <div className="p-10 text-white">Тест олдсонгүй.</div>;
 
@@ -56,13 +61,13 @@ const QuizView: React.FC<QuizViewProps> = ({ user, quizData, onBack, onComplete 
   };
 
   const nextQuestion = () => {
-    if (currentIdx < quizData.length - 1) {
+    if (currentIdx < shuffledQuestions.length - 1) {
       setCurrentIdx(prev => prev + 1);
       setSelectedId(null);
       setIsAnswered(false);
     } else {
       setShowResult(true);
-      onComplete(score, quizData.length);
+      onComplete(score, shuffledQuestions.length);
       localStorage.removeItem(quizStoreKey);
     }
   };
@@ -77,7 +82,7 @@ const QuizView: React.FC<QuizViewProps> = ({ user, quizData, onBack, onComplete 
   };
 
   if (showResult) {
-    const win = score / quizData.length >= 0.7;
+    const win = score / shuffledQuestions.length >= 0.7;
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-10 bg-[#f8faf9] dark:bg-[#0d1a13] font-display">
         <div className="bg-white dark:bg-slate-900 p-12 rounded-[48px] shadow-2xl border-4 border-primary/20 max-w-lg w-full text-center animate-in zoom-in duration-500">
@@ -86,9 +91,9 @@ const QuizView: React.FC<QuizViewProps> = ({ user, quizData, onBack, onComplete 
                 {win ? 'emoji_events' : 'sentiment_very_dissatisfied'}
               </span>
            </div>
-           <h2 className="text-4xl font-black mb-2 uppercase tracking-tighter">Дүн: {score} / {quizData.length}</h2>
+           <h2 className="text-4xl font-black mb-2 uppercase tracking-tighter">Дүн: {score} / {shuffledQuestions.length}</h2>
            <p className="text-slate-500 font-bold uppercase tracking-widest text-sm mb-12">
-             {win ? 'Гайхалтай! Чи С хэлийг сайн мэдэж байна.' : 'Бага зэрэг хичээх хэрэгтэй байна.'}
+             {win ? 'Гайхалтай! Чи энэ хэлийг маш сайн эзэмшиж байна.' : 'Бага зэрэг хичээх хэрэгтэй байна. Дахин оролдоод үзээрэй.'}
            </p>
            
            <div className="grid grid-cols-2 gap-4">
@@ -112,7 +117,7 @@ const QuizView: React.FC<QuizViewProps> = ({ user, quizData, onBack, onComplete 
         <div className="flex items-center gap-4">
            <div className="text-right">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Оноо</p>
-              <p className="text-xl font-black text-primary">{score} / {quizData.length}</p>
+              <p className="text-xl font-black text-primary">{score} / {shuffledQuestions.length}</p>
            </div>
            <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
               <span className="material-symbols-outlined">psychology</span>
@@ -127,7 +132,7 @@ const QuizView: React.FC<QuizViewProps> = ({ user, quizData, onBack, onComplete 
       <main className="flex-1 overflow-y-auto p-10 flex flex-col items-center custom-scrollbar">
         <div className="max-w-3xl w-full">
            <div className="mb-12">
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-4 block">Асуулт {currentIdx + 1}</span>
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-4 block">Асуулт {currentIdx + 1} / {shuffledQuestions.length}</span>
               <h1 className="text-3xl md:text-4xl font-black leading-tight tracking-tight">{question.question}</h1>
            </div>
 
@@ -136,7 +141,7 @@ const QuizView: React.FC<QuizViewProps> = ({ user, quizData, onBack, onComplete 
                 const isSelected = selectedId === opt.id;
                 const isThisCorrect = opt.id === question.correctOptionId;
                 
-                let btnClass = "bg-white dark:bg-slate-900 border-4 border-slate-100 dark:border-slate-800 hover:border-primary/40";
+                let btnClass = "bg-white dark:bg-slate-900 border-4 border-slate-100 dark:border-white/5 hover:border-primary/40";
                 if (isAnswered) {
                   if (isThisCorrect) btnClass = "bg-primary/10 border-primary text-primary shadow-lg shadow-primary/10 scale-[1.02]";
                   else if (isSelected) btnClass = "bg-red-500/10 border-red-500 text-red-500 opacity-60";
@@ -173,7 +178,7 @@ const QuizView: React.FC<QuizViewProps> = ({ user, quizData, onBack, onComplete 
                    </div>
                    <p className="text-lg font-medium mb-8 leading-relaxed opacity-80">{question.explanation}</p>
                    <button onClick={nextQuestion} className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3">
-                      <span>{currentIdx < quizData.length - 1 ? 'Дараагийн асуулт' : 'Дуусгах'}</span>
+                      <span>{currentIdx < shuffledQuestions.length - 1 ? 'Дараагийн асуулт' : 'Дуусгах'}</span>
                       <span className="material-symbols-outlined">arrow_forward</span>
                    </button>
                 </div>

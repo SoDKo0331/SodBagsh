@@ -31,6 +31,342 @@ export const PYTHON_QUIZ: QuizQuestion[] = [
     ],
     correctOptionId: 'c',
     explanation: "# тэмдэг нь Python-д нэг мөрийн тайлбар бичихэд ашиглагддаг."
+  },
+  {
+    id: 'p3',
+    question: "Python-д жагсаалтад (list) шинэ элемент нэмэхдээ аль функцийг ашигладаг вэ?",
+    options: [
+      { id: 'a', text: "add()" },
+      { id: 'b', text: "push()" },
+      { id: 'c', text: "append()" },
+      { id: 'd', text: "insert_last()" }
+    ],
+    correctOptionId: 'c',
+    explanation: "append() функц нь жагсаалтын төгсгөлд нэг элемент нэмдэг."
+  },
+  {
+    id: 'p4',
+    question: "range(1, 5) функц ямар тоонуудыг үүсгэх вэ?",
+    options: [
+      { id: 'a', text: "1, 2, 3, 4, 5" },
+      { id: 'b', text: "1, 2, 3, 4" },
+      { id: 'c', text: "0, 1, 2, 3, 4" },
+      { id: 'd', text: "1, 5" }
+    ],
+    correctOptionId: 'b',
+    explanation: "range(start, stop) функц нь 'stop' утгыг оролцуулдаггүй тул 1-ээс 4 хүртэлх тоог үүсгэнэ."
+  },
+  {
+    id: 'p5',
+    question: "Python хэлний файлыг ямар өргөтгөлтэй (.extension) хадгалдаг вэ?",
+    options: [
+      { id: 'a', text: ".python" },
+      { id: 'b', text: ".pt" },
+      { id: 'c', text: ".py" },
+      { id: 'd', text: ".pyt" }
+    ],
+    correctOptionId: 'c',
+    explanation: ".py бол Python програмын стандарт файлын өргөтгөл юм."
+  },
+  {
+    id: 'p6',
+    question: "10 // 3 үйлдлийн үр дүн хэд вэ?",
+    options: [
+      { id: 'a', text: "3.333" },
+      { id: 'b', text: "3" },
+      { id: 'c', text: "3.0" },
+      { id: 'd', text: "1" }
+    ],
+    correctOptionId: 'b',
+    explanation: "// оператор нь бүхэл тоон хуваалт (floor division) гүйцэтгэж бутархай хэсгийг хаядаг."
+  },
+  {
+    id: 'p7',
+    question: "Python-д утга нь өөрчлөгддөггүй (immutable) өгөгдлийн бүтцийг нэрлэнэ үү.",
+    options: [
+      { id: 'a', text: "list" },
+      { id: 'b', text: "dictionary" },
+      { id: 'c', text: "tuple" },
+      { id: 'd', text: "set" }
+    ],
+    correctOptionId: 'c',
+    explanation: "Tuple-ийг үүсгэсэн бол доторх элементүүдийг нь өөрчлөх боломжгүй байдаг."
+  },
+  {
+    id: 'p8',
+    question: "input() функцээр авсан мэдээлэл ямар төрөлтэй (type) байдаг вэ?",
+    options: [
+      { id: 'a', text: "int" },
+      { id: 'b', text: "float" },
+      { id: 'c', text: "string" },
+      { id: 'd', text: "bool" }
+    ],
+    correctOptionId: 'c',
+    explanation: "input() функц хэрэглэгчийн оруулсан утгыг үргэлж тэмдэгт мөр (string) болгож авдаг."
+  },
+  {
+    id: 'p9',
+    question: "Python хэлэнд 'And' логик операторыг хэрхэн бичдэг вэ?",
+    options: [
+      { id: 'a', text: "&&" },
+      { id: 'b', text: "and" },
+      { id: 'c', text: "&" },
+      { id: 'd', text: "AND" }
+    ],
+    correctOptionId: 'b',
+    explanation: "Python-д логик операторуудыг шууд англи үгээр (and, or, not) бичдэг."
+  },
+  {
+    id: 'p10',
+    question: "len('CodeQuest') үйлдлийн хариу хэд вэ?",
+    options: [
+      { id: 'a', text: "8" },
+      { id: 'b', text: "9" },
+      { id: 'c', text: "10" },
+      { id: 'd', text: "7" }
+    ],
+    correctOptionId: 'b',
+    explanation: "len() функц нь тэмдэгт мөр эсвэл жагсаалтын уртыг буцаадаг. 'CodeQuest' нь 9 тэмдэгттэй."
+  },
+  {
+    id: 'p11',
+    question: "bool(0) юу буцаах вэ?",
+    options: [
+      { id: 'a', text: "True" },
+      { id: 'b', text: "None" },
+      { id: 'c', text: "False" },
+      { id: 'd', text: "Error" }
+    ],
+    correctOptionId: 'c',
+    explanation: "Тоон утга 0 байх нь логик утгаараа үргэлж False байдаг."
+  },
+  {
+    id: 'p12',
+    question: "Функц зарлахдаа ямар түлхүүр үг (keyword) ашигладаг вэ?",
+    options: [
+      { id: 'a', text: "function" },
+      { id: 'b', text: "func" },
+      { id: 'c', text: "def" },
+      { id: 'd', text: "define" }
+    ],
+    correctOptionId: 'c',
+    explanation: "def (definition) түлхүүр үгийг функц тодорхойлоход ашигладаг."
+  },
+  {
+    id: 'p13',
+    question: "Dictionary-аас утга авахдаа юуг ашигладаг вэ?",
+    options: [
+      { id: 'a', text: "Index (0, 1, ...)" },
+      { id: 'b', text: "Key (Түлхүүр)" },
+      { id: 'c', text: "Value (Утга)" },
+      { id: 'd', text: "Tag" }
+    ],
+    correctOptionId: 'b',
+    explanation: "Dictionary бол Түлхүүр-Утга (Key-Value) хослол дээр суурилдаг өгөгдлийн бүтэц юм."
+  },
+  {
+    id: 'p14',
+    question: "x = [1, 2, 3]; x[1] хэд вэ?",
+    options: [
+      { id: 'a', text: "1" },
+      { id: 'b', text: "2" },
+      { id: 'c', text: "3" },
+      { id: 'd', text: "Алдаа" }
+    ],
+    correctOptionId: 'b',
+    explanation: "Python-д индекс 0-ээс эхэлдэг тул 1-р индекс дэх элемент нь 2 юм."
+  },
+  {
+    id: 'p15',
+    question: "2 ** 3 үйлдлийн хариу хэд вэ?",
+    options: [
+      { id: 'a', text: "6" },
+      { id: 'b', text: "9" },
+      { id: 'c', text: "8" },
+      { id: 'd', text: "5" }
+    ],
+    correctOptionId: 'c',
+    explanation: "** оператор нь зэрэг дэвшүүлэх үйлдэл гүйцэтгэнэ. 2-ын 3 зэрэг бол 8."
+  },
+  {
+    id: 'p16',
+    question: "Python-д блок кодыг хэрхэн ялгаж заагладаг вэ?",
+    options: [
+      { id: 'a', text: "{ } хаалтаар" },
+      { id: 'b', text: "( ) хаалтаар" },
+      { id: 'c', text: "Indentation (Догол мөрөөр)" },
+      { id: 'd', text: "; тэмдэгтээр" }
+    ],
+    correctOptionId: 'c',
+    explanation: "Python-д догол мөр (indentation) нь кодын бүтцийг тодорхойлдог маш чухал хэсэг юм."
+  },
+  {
+    id: 'p17',
+    question: "try...except блок юунд зориулагдсан бэ?",
+    options: [
+      { id: 'a', text: "Давталт хийх" },
+      { id: 'b', text: "Алдааг барьж, боловсруулах" },
+      { id: 'c', text: "Функц дуудах" },
+      { id: 'd', text: "Хувьсагч зарлах" }
+    ],
+    correctOptionId: 'b',
+    explanation: "Exception handling буюу програмын явцад гарч болзошгүй алдааг удирдахад ашигладаг."
+  },
+  {
+    id: 'p18',
+    question: "Жагсаалтаас элементийг индексээр нь устгахдаа юу ашиглах вэ?",
+    options: [
+      { id: 'a', text: "remove()" },
+      { id: 'b', text: "delete()" },
+      { id: 'c', text: "pop()" },
+      { id: 'd', text: "clear()" }
+    ],
+    correctOptionId: 'c',
+    explanation: "pop() функц нь өгөгдсөн индекс дэх элементийг устгаад, утгыг нь буцаадаг."
+  },
+  {
+    id: 'p19',
+    question: "'apple' in ['apple', 'banana'] юу буцаах вэ?",
+    options: [
+      { id: 'a', text: "True" },
+      { id: 'b', text: "False" },
+      { id: 'c', text: "None" },
+      { id: 'd', text: "Error" }
+    ],
+    correctOptionId: 'a',
+    explanation: "in оператор нь тухайн утга жагсаалт дотор байгаа эсэхийг шалгадаг."
+  },
+  {
+    id: 'p20',
+    question: "x = lambda a : a + 10; x(5) үйлдлийн хариу?",
+    options: [
+      { id: 'a', text: "5" },
+      { id: 'b', text: "10" },
+      { id: 'c', text: "15" },
+      { id: 'd', text: "Алдаа" }
+    ],
+    correctOptionId: 'c',
+    explanation: "Lambda бол нэрсгүй богино функц юм. 5 + 10 = 15."
+  },
+  {
+    id: 'p21',
+    question: "10 % 3 үйлдлийн хариу хэд вэ?",
+    options: [
+      { id: 'a', text: "3" },
+      { id: 'b', text: "1" },
+      { id: 'c', text: "0" },
+      { id: 'd', text: "3.33" }
+    ],
+    correctOptionId: 'b',
+    explanation: "% оператор нь хуваалтын үлдэгдлийг (modulo) олдог."
+  },
+  {
+    id: 'p22',
+    question: "random тоо гаргахын тулд аль модулийг import хийх в้?",
+    options: [
+      { id: 'a', text: "math" },
+      { id: 'b', text: "rand" },
+      { id: 'c', text: "random" },
+      { id: 'd', text: "sys" }
+    ],
+    correctOptionId: 'c',
+    explanation: "random модуль нь санамсаргүй тоотой ажиллах функцуудыг агуулдаг."
+  },
+  {
+    id: 'p23',
+    question: "None төрлийн хувьсагч юуг илэрхийлэх вэ?",
+    options: [
+      { id: 'a', text: "0 утгыг" },
+      { id: 'b', text: "Хоосон мөрийг" },
+      { id: 'c', text: "Утга байхгүйг (Null)" },
+      { id: 'd', text: "False-ийг" }
+    ],
+    correctOptionId: 'c',
+    explanation: "None нь Python-д 'утга байхгүй' эсвэл хоосон төлвийг илэрхийлэх тусгай объект юм."
+  },
+  {
+    id: 'p24',
+    question: "'Python'[0:2] юу буцаах вэ?",
+    options: [
+      { id: 'a', text: "Py" },
+      { id: 'b', text: "Pyt" },
+      { id: 'c', text: "y" },
+      { id: 'd', text: "Pyth" }
+    ],
+    correctOptionId: 'a',
+    explanation: "Slicing хийхэд 0-ээс эхлээд 2-р индекс хүртэл (2-ыг оролцуулахгүй) тэмдэгтүүдийг авна."
+  },
+  {
+    id: 'p25',
+    question: "Давталтыг хүчээр зогсоож гарахад аль түлхүүр үгийг ашигладаг вэ?",
+    options: [
+      { id: 'a', text: "stop" },
+      { id: 'b', text: "exit" },
+      { id: 'c', text: "break" },
+      { id: 'd', text: "continue" }
+    ],
+    correctOptionId: 'c',
+    explanation: "break түлхүүр үг нь хамгийн ойр байгаа давталтаас шууд гаргана."
+  },
+  {
+    id: 'p26',
+    question: "Сет (set) өгөгдлийн төрлийн гол онцлог юу вэ?",
+    options: [
+      { id: 'a', text: "Эрэмбэлэгдсэн байдаг" },
+      { id: 'b', text: "Давхардсан утга хадгалдаггүй" },
+      { id: 'c', text: "Индексээр хандаж болдог" },
+      { id: 'd', text: "Өөрчлөх боломжгүй" }
+    ],
+    correctOptionId: 'b',
+    explanation: "Set нь зөвхөн давтагдаагүй (unique) элементүүдийг хадгалдаг."
+  },
+  {
+    id: 'p27',
+    question: "Python-ийг хэн зохиосон бэ?",
+    options: [
+      { id: 'a', text: "Dennis Ritchie" },
+      { id: 'b', text: "Bill Gates" },
+      { id: 'c', text: "Guido van Rossum" },
+      { id: 'd', text: "James Gosling" }
+    ],
+    correctOptionId: 'c',
+    explanation: "Нидерландын програмч Guido van Rossum 1991 онд Python-ийг анх гаргасан."
+  },
+  {
+    id: 'p28',
+    question: "isinstance(5, int) юу буцаах вэ?",
+    options: [
+      { id: 'a', text: "True" },
+      { id: 'b', text: "False" },
+      { id: 'c', text: "Error" },
+      { id: 'd', text: "int" }
+    ],
+    correctOptionId: 'a',
+    explanation: "isinstance() нь объект тухайн төрөлд хамаарч байгаа эсэхийг шалгадаг."
+  },
+  {
+    id: 'p29',
+    question: "x = {1, 2, 3}; x.add(2); len(x) хэд вэ?",
+    options: [
+      { id: 'a', text: "4" },
+      { id: 'b', text: "2" },
+      { id: 'c', text: "3" },
+      { id: 'd', text: "Алдаа" }
+    ],
+    correctOptionId: 'c',
+    explanation: "Set-д 2 аль хэдийн байгаа тул дахиж нэмэгдэхгүй, хэмжээ нь 3 хэвээр байна."
+  },
+  {
+    id: 'p30',
+    question: "global түлхүүр үг ямар үүрэгтэй вэ?",
+    options: [
+      { id: 'a', text: "Програмыг дэлхий даяар түгээх" },
+      { id: 'b', text: "Функц дотроос гаднах хувьсагчийг өөрчлөх" },
+      { id: 'c', text: "Интернетэд холбогдох" },
+      { id: 'd', text: "Алдааг засах" }
+    ],
+    correctOptionId: 'b',
+    explanation: "global түлхүүр үгийг функц дотор ашиглаж, функцийн гаднах scope-д байгаа хувьсагчийг удирдахад ашигладаг."
   }
 ];
 
@@ -39,7 +375,7 @@ export const C_QUIZ: QuizQuestion[] = [
   { id: 'c2', question: "printf() функцийг ашиглахын тулд аль санг include хийх вэ?", options: [{ id: 'a', text: "math.h" }, { id: 'b', text: "stdlib.h" }, { id: 'c', text: "stdio.h" }, { id: 'd', text: "conio.h" }], correctOptionId: 'c', explanation: "Standard Input Output (stdio.h) сан нь printf-ийг агуулдаг." },
   { id: 'c3', question: "Бүхэл тоо зарлахад ямар түлхүүр үг ашиглах вэ?", options: [{ id: 'a', text: "float" }, { id: 'b', text: "double" }, { id: 'c', text: "int" }, { id: 'd', text: "char" }], correctOptionId: 'c', explanation: "int нь бүхэл тоо (Integer)-д зориулагдсан." },
   { id: 'c4', question: "Тушаал болгоны ард ямар тэмдэг тавих ёстой вэ?", options: [{ id: 'a', text: "." }, { id: 'b', text: ":" }, { id: 'c', text: ";" }, { id: 'd', text: "," }], correctOptionId: 'c', explanation: "С хэлний тушаал цэгтэй таслалаар дуусдаг." },
-  { id: 'c5', question: "float төрөл хэдэн байт зай эзэлдэг вэ (ерөнхийдөө)?", options: [{ id: 'a', text: "1" }, { id: 'b', text: "2" }, { id: 'c', text: "4" }, { id: 'd', text: "8" }], correctOptionId: 'c', explanation: "float нь ихэвчлэн 4 байт санах ой эзэлдэг." },
+  { id: 'c5', question: "float төрөл хэдэн байт зай эзэлдэг вэ (ерөнхийдөө)?", options: [{ id: 'a', text: "1" }, { id: 'b', text: "2" }, { id: 'c', text: "4" }, { id: 'd', text: "8" }], correctOptionId: 'c', explanation: "float нь ихэвчэн 4 байт санах ой эзэлдэг." },
   { id: 'c6', question: "scanf(\"%d\", &x); үйлдлийн '&' ямар үүрэгтэй вэ?", options: [{ id: 'a', text: "Нэмэх" }, { id: 'b', text: "Хаяг заах" }, { id: 'c', text: "Үржих" }, { id: 'd', text: "Индекс" }], correctOptionId: 'b', explanation: "Утгыг санах ойн хаягт хадгалахын тулд & ашиглана." },
   { id: 'c7', question: "Тэмдэгт зарлахад аль төрлийг ашиглах вэ?", options: [{ id: 'a', text: "string" }, { id: 'b', text: "text" }, { id: 'c', text: "char" }, { id: 'd', text: "letter" }], correctOptionId: 'c', explanation: "char (character) нь ганц тэмдэгтэд зориулагдсан." },
   { id: 'c8', question: "10 / 3 үйлдлийн үр дүн бүхэл тоон хуваалтаар хэд гарах вэ?", options: [{ id: 'a', text: "3.33" }, { id: 'b', text: "4" }, { id: 'c', text: "3" }, { id: 'd', text: "0" }], correctOptionId: 'c', explanation: "Бүхэл тоон хуваалтад бутархай хэсэг хаягдана." },
@@ -78,7 +414,7 @@ export const C_QUIZ: QuizQuestion[] = [
   { id: 'c41', question: "pow(2, 3) ямар хариу өгөх вэ?", options: [{ id: 'a', text: "6" }, { id: 'b', text: "9" }, { id: 'c', text: "8" }, { id: 'd', text: "5" }], correctOptionId: 'c', explanation: "2-ын 3 зэрэг нь 8 юм." },
   { id: 'c42', question: "printf(\"Hello\\nWorld\"); юу хэвлэх вэ?", options: [{ id: 'a', text: "HelloWorld" }, { id: 'b', text: "Hello World" }, { id: 'c', text: "Hello (дараагийн мөр) World" }, { id: 'd', text: "Алдаа" }], correctOptionId: 'c', explanation: "\\n нь шинэ мөрөнд шилжүүлдэг." },
   { id: 'c43', question: "10 > 5 && 3 < 1 нөхцөл юу буцаах вэ?", options: [{ id: 'a', text: "True" }, { id: 'b', text: "Алдаа" }, { id: 'c', text: "False" }, { id: 'd', text: "1" }], correctOptionId: 'c', explanation: "3 < 1 нь худал тул &&-ийн үр дүн худал гарна." },
-  { id: 'c44', question: "int nums[10]; массивын сүүлийн индекс хэд вэ?", options: [{ id: 'a', text: "10" }, { id: 'b', text: "0" }, { id: 'c', text: "9" }, { id: 'd', text: "1" }], correctOptionId: 'c', explanation: "0-ээс эхэлдэг тул 10 элементийн сүүлчийнх нь 9 байна." },
+  { id: 'c44', question: "int nums[10]; массивын сүүлийн индекс хэд вэ?", options: [{ id: 'a', text: "10" }, { id: 'b', text: "0" }, { id: 'c', text: "9" }, { id: 'd', text: "1" }], correctOptionId: 'c', explanation: "0-ээс эхэлдэг тул 10 элементийн sүүлчийнх нь 9 байна." },
   { id: 'c45', question: "void функц юу буцаах вэ?", options: [{ id: 'a', text: "0" }, { id: 'b', text: "null" }, { id: 'c', text: "Утга буцаахгүй" }, { id: 'd', text: "1" }], correctOptionId: 'c', explanation: "void гэдэг нь хоосон буюу утга буцаахгүй гэсэн утгатай." },
   { id: 'c46', question: "main функц заавал int байх ёстой юу?", options: [{ id: 'a', text: "Тийм" }, { id: 'b', text: "Стандарт ёсоор тийм" }, { id: 'c', text: "Заавал биш" }, { id: 'd', text: "Мэдэхгүй" }], correctOptionId: 'b', explanation: "Орчин үеийн стандартаар int main() гэж бичих нь зөв юм." },
   { id: 'c47', question: "abs(-5) ямар хариу өгөх вэ?", options: [{ id: 'a', text: "-5" }, { id: 'b', text: "0" }, { id: 'c', text: "5" }, { id: 'd', text: "Алдаа" }], correctOptionId: 'c', explanation: "abs нь тооны модулийг олдог." },
