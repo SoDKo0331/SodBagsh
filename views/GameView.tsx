@@ -338,28 +338,28 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack, onEarnBadge, initialL
         </div>
 
         {/* Action Panel */}
-        <div className="flex-1 bg-slate-900 border-t-4 border-white/5 p-10 flex gap-10">
+        <div className="flex-1 bg-white border-t-4 border-slate-200 p-10 flex gap-10 text-slate-900">
            {/* Question Section */}
            <div className="flex-1 flex flex-col">
               <div className="flex items-center gap-4 mb-8">
-                 <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${currentQ.category === hero.preferredCategory ? 'bg-primary text-slate-900' : 'bg-white/10 text-slate-400'}`}>
+                 <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${currentQ.category === hero.preferredCategory ? 'bg-primary text-slate-900' : 'bg-slate-100 text-slate-500'}`}>
                     {currentQ.category}
                  </span>
                  {currentQ.category === hero.preferredCategory && (
                    <span className="text-[10px] font-black text-primary uppercase animate-pulse">Bonus Active!</span>
                  )}
               </div>
-              <h3 className="text-2xl font-black mb-8 leading-tight italic">"{currentQ.q}"</h3>
+              <h3 className="text-2xl font-black mb-8 leading-tight italic text-black">"{currentQ.q}"</h3>
               <div className="grid grid-cols-2 gap-4">
                  {currentQ.options.map((opt, i) => (
                     <button 
                       key={i} 
                       onClick={() => handleAnswer(i)}
                       disabled={turn !== 'player'}
-                      className="p-6 rounded-3xl bg-white/5 border-2 border-white/5 hover:border-primary/50 text-left font-bold transition-all disabled:opacity-50"
+                      className="p-6 rounded-3xl bg-slate-50 border-2 border-slate-100 hover:border-primary text-left font-bold transition-all disabled:opacity-50 text-black shadow-sm group"
                     >
                        <div className="flex gap-4 items-center">
-                          <span className="size-8 rounded-lg bg-black/40 flex items-center justify-center text-xs font-black text-slate-500">{String.fromCharCode(65 + i)}</span>
+                          <span className="size-8 rounded-lg bg-slate-200 flex items-center justify-center text-xs font-black text-slate-500 group-hover:bg-primary group-hover:text-slate-900 transition-colors">{String.fromCharCode(65 + i)}</span>
                           <span>{opt}</span>
                        </div>
                     </button>
@@ -372,14 +372,14 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack, onEarnBadge, initialL
               <button 
                 onClick={useAbility}
                 disabled={playerMana < 100 || turn !== 'player'}
-                className={`w-full py-6 rounded-[32px] border-4 font-black uppercase tracking-widest text-sm flex flex-col items-center gap-2 transition-all ${playerMana >= 100 ? 'bg-primary border-primary text-slate-900 shadow-lg shadow-primary/20' : 'bg-white/5 border-white/5 text-slate-600 cursor-not-allowed'}`}
+                className={`w-full py-6 rounded-[32px] border-4 font-black uppercase tracking-widest text-sm flex flex-col items-center gap-2 transition-all ${playerMana >= 100 ? 'bg-primary border-primary text-slate-900 shadow-lg shadow-primary/20' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'}`}
               >
                  <span className="material-symbols-outlined text-4xl">{hero.icon}</span>
                  <span>Special Ability</span>
               </button>
 
-              <div className="flex-1 bg-black/40 rounded-[32px] p-6 font-mono text-xs overflow-y-auto custom-scrollbar border border-white/5">
-                 <p className="text-[9px] font-black uppercase text-slate-600 mb-4 tracking-widest">System Logs</p>
+              <div className="flex-1 bg-slate-900 rounded-[32px] p-6 font-mono text-xs overflow-y-auto custom-scrollbar border border-slate-200 text-slate-300">
+                 <p className="text-[9px] font-black uppercase text-slate-500 mb-4 tracking-widest">System Logs</p>
                  <div className="space-y-3">
                     {logs.map(log => (
                        <div key={log.id} className={`flex flex-col gap-1 ${log.type === 'boss' ? 'text-red-400' : log.type === 'player' ? 'text-blue-400' : log.type === 'ability' ? 'text-purple-400 font-bold' : log.type === 'success' ? 'text-primary' : 'text-slate-500'}`}>
