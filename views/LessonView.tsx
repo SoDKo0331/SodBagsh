@@ -30,7 +30,6 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
   const [showCelebration, setShowCelebration] = useState(false);
   const [activeLanguage, setActiveLanguage] = useState<'python' | 'c' | 'cpp'>(initialLanguage);
   
-  // For MiniGame
   const [gameItems, setGameItems] = useState<{id: string, text: string}[]>([]);
   const [gameFeedback, setGameFeedback] = useState<string | null>(null);
 
@@ -96,14 +95,28 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
       return { success: false, output: "Code contains empty placeholders", feedback: "___ хэсгийг нөхөж бичнэ үү.", hint: "Код доторх дутуу хэсгүүдийг утгаар солин бичээрэй." };
     }
 
-    // Fix: Upgrade model to gemini-3-pro-preview for advanced coding reasoning
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const prompt = `Act as a strict code mentor. Analyze this ${lang} code.
-    Goal: Output should be exactly "${currentTask.expectedOutput}".
-    User Code: ${codeToVerify}
-    
-    Response strictly in JSON format: 
-    { "success": boolean, "output": "actual program output", "feedback": "short motivational message", "hint": "if failed, give 1 specific hint what to change" }`;
+    const prompt = `Act as a strictly critical Automated Code Judge for students. 
+    Analyze this ${lang} code.
+    REQUIRED PROGRAM OUTPUT: Exactly "${currentTask.expectedOutput}" (trimmed).
+    USER SOURCE CODE: 
+    ---
+    ${codeToVerify}
+    ---
+
+    INSTRUCTIONS:
+    1. Check if the code compiles/interprets without syntax errors.
+    2. Check if the logic produces the EXACT target output.
+    3. Be extremely strict. If there is even a minor mismatch or syntax flaw, return success: false.
+    4. Provide constructive but direct feedback in Mongolian.
+
+    RESPONSE FORMAT (STRICT JSON ONLY): 
+    { 
+      "success": boolean, 
+      "output": "actual simulated output string", 
+      "feedback": "motivational feedback in Mongolian", 
+      "hint": "one specific hint if failed" 
+    }`;
     
     try {
       const response = await ai.models.generateContent({
@@ -116,14 +129,14 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
       });
       return JSON.parse(response.text || "{}");
     } catch (e) {
-      return { success: false, output: "Error", feedback: "Алдаа гарлаа.", hint: "Интернэт холболтоо шалгана уу." };
+      return { success: false, output: "Error", feedback: "Шалгалт хийхэд алдаа гарлаа.", hint: "Интернэт холболтоо шалгана уу." };
     }
   };
 
   const handleRunCode = async () => {
     if (!currentTask || isRunning) return;
     setIsRunning(true);
-    setTerminalOutput([{type: 'info', text: `> Running validation...`}]);
+    setTerminalOutput([{type: 'info', text: `> Шалгалт эхэлж байна...`}]);
     
     const result = await verifyCode(userCode, activeLanguage);
     
@@ -140,6 +153,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
         {type: 'err', text: `✗ АЛДАА: ${result.output || 'Logic error'}`},
         {type: 'hint', text: `БАГШИЙН ЗӨВЛӨГӨӨ: ${result.hint}`}
       ]);
+      setIsTaskCompleted(false);
     }
     setIsRunning(false);
   };
@@ -154,6 +168,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
       setIsTaskCompleted(true);
     } else {
       setGameFeedback("Буруу дараалал байна. Дахиад оролдоод үзээрэй.");
+      setIsTaskCompleted(false);
     }
   };
 
@@ -186,7 +201,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
-        contents: `Код: ${userCode}\nАсуулт: ${userMsg}`,
+        contents: `Одоогийн Код: ${userCode}\nСэдэв: ${step.title}\nАсуулт: ${userMsg}`,
         config: { thinkingConfig: { thinkingBudget: 0 } }
       });
       setChatMessages(prev => [...prev, { role: 'model', text: response.text || "" }]);
@@ -205,7 +220,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
              <span className="material-symbols-outlined text-6xl text-primary font-black">celebration</span>
           </div>
           <h2 className="text-6xl font-black text-white mb-4 uppercase tracking-tighter">МОДУЛЬ ДУУСЛАА!</h2>
-          <p className="text-white/80 font-bold mb-10 text-xl">Чи С хэлний нэгэн чухал давааг давлаа. Баяр хүргэе!</p>
+          <p className="text-white/80 font-bold mb-10 text-xl">Чи энэхүү давааг амжилттай давлаа. Баяр хүргэе!</p>
           <button onClick={() => onExit(true)} className="bg-slate-900 text-white px-12 py-5 rounded-[24px] font-black text-xl shadow-2xl hover:scale-110 active:scale-95 transition-all uppercase tracking-widest">
             Дараагийн Модуль
           </button>
@@ -361,7 +376,7 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
                         line.type === 'success' ? 'text-primary' : 
                         'text-white'
                       }`}>
-                         <span className="opacity-20 select-none">❯</span>
+                         <span className="opacity-20 select-none">{">>>"}</span>
                          <span className="whitespace-pre-wrap">{line.text}</span>
                       </div>
                   ))}

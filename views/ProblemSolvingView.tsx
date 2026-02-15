@@ -50,15 +50,31 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({ problem, onBack
   const lineNumbers = Array.from({ length: Math.max(lineCount, 20) }, (_, i) => i + 1);
 
   const verifyCodeWithAI = async (userCode: string, lang: string) => {
-    // Fix: Upgrade to gemini-3-pro-preview for complex coding reasoning
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const prompt = `Act as a Code Judge. Analyze this ${lang} code for the problem: "${problem.title}".
-    Problem Description: ${problem.description}
-    Target Output: "${problem.expectedOutput}"
-    User Code: ${userCode}
+    const prompt = `Act as an extremely strict and precise Code Judge. 
+    Problem: "${problem.title}"
+    Description: ${problem.description}
+    Target Output: Exactly "${problem.expectedOutput}" (trimmed).
+    Language: ${lang}
+    User Submission:
+    ---
+    ${userCode}
+    ---
+
+    TASK:
+    - Verify if the code is syntactically valid ${lang}.
+    - Verify if the code logically solves the problem for ALL edge cases.
+    - Check if the output produced is EXACTLY what is required.
+    - Return success: true ONLY if all conditions are perfectly met.
+    - If logic is slightly off, return success: false and a detailed hint.
 
     Respond ONLY in JSON:
-    { "success": boolean, "output": "program output", "feedback": "very short message", "hint": "specific hint if failed" }`;
+    { 
+      "success": boolean, 
+      "output": "simulated program output", 
+      "feedback": "constructive result message in Mongolian", 
+      "hint": "specific hint if logic failed" 
+    }`;
 
     try {
       const response = await ai.models.generateContent({

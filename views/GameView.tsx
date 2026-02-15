@@ -5,6 +5,7 @@ import type { User } from "firebase/auth";
 interface GameViewProps {
   user: User;
   onBack: () => void;
+  onEarnBadge: (badgeId: string) => void;
 }
 
 type GameMode = 'raid' | 'bug-hunter';
@@ -25,41 +26,40 @@ interface BugFix {
 }
 
 const BATTLE_QUESTIONS: Question[] = [
-  // Existing & Basic Concepts
   { q: "print(type([])) юу буцаах вэ?", options: ["<class 'list'>", "<class 'tuple'>", "<class 'array'>", "Алдаа"], correct: 0, explanation: "[] бол Python-ийн list төрөл юм." },
   { q: "x = [1, 2] * 2; print(x) юу хэвлэх вэ?", options: ["[2, 4]", "[1, 2, 1, 2]", "[1, 1, 2, 2]", "Алдаа"], correct: 1, explanation: "List-ийг тоогоор үржихэд элементүүд нь давтагдана." },
   { q: "Python-д 2-ын 3 зэргийг яаж тооцох вэ?", options: ["2 ^ 3", "2 ** 3", "pow(2, 3)", "b ба c хоёулаа"], correct: 3, explanation: "** болон pow() функц хоёулаа зэрэг дэвшүүлнэ." },
   { q: "range(1, 5) функц ямар утгуудыг үүсгэх вэ?", options: ["1, 2, 3, 4, 5", "1, 2, 3, 4", "0, 1, 2, 3, 4", "1, 5"], correct: 1, explanation: "Range-ийн төгсгөлийн тоо орохгүй." },
-  { q: "print(10 / 4) ямар хариу гаргах вэ?", options: ["2", "2.5", "2.0", "Алдаа"], correct: 1, explanation: "Python 3-т / тэмдэг нь үргэлж float буюу бутархай тоо буцаадаг." },
-  { q: "print(10 // 4) ямар хариу гаргах вэ?", options: ["2", "2.5", "3", "2.0"], correct: 0, explanation: "// оператор нь бүхэл хэсгийг нь авдаг (integer division)." },
-  { q: "print(7 % 3) ямар хариу гаргах вэ?", options: ["1", "2", "3", "0"], correct: 0, explanation: "% (modulo) оператор нь хуваалтын үлдэгдлийг олдог." },
+  { q: "print(10 / 4) ямар хариу гаргах вэ?", options: ["2.0", "2", "2.5", "Алдаа"], correct: 2, explanation: "Python 3-т / тэмдэг нь үргэлж float буюу бутархай тоо буцаадаг." },
+  { q: "print(10 // 4) ямар хариу гаргах вэ?", options: ["2.5", "2", "3", "2.0"], correct: 1, explanation: "// оператор нь бүхэл хэсгийг нь авдаг (integer division)." },
+  { q: "print(7 % 3) ямар хариу гаргах вэ?", options: ["2", "1", "3", "0"], correct: 1, explanation: "% (modulo) оператор нь хуваалтын үлдэгдлийг олдог." },
   { q: "input() функц ямар төрлийн өгөгдөл буцаадаг вэ?", options: ["int", "float", "string", "bool"], correct: 2, explanation: "input() функц хэрэглэгчийн оруулсан утгыг үргэлж тэмдэгт мөр (string) болгож авдаг." },
   { q: "bool(0) юу буцаах вэ?", options: ["True", "False", "None", "0"], correct: 1, explanation: "Тоон утга 0 байх нь логик утгаараа False байдаг." },
-  { q: "Python-д 'үнэн' гэсэн утгыг яаж бичдэг вэ?", options: ["true", "True", "TRUE", "1"], correct: 1, explanation: "Python-ийн Boolean утгууд том үсгээр эхэлдэг: True, False." },
-  { q: "print(type(3.14)) юу хэвлэх вэ?", options: ["int", "double", "float", "decimal"], correct: 2, explanation: "Бутархай тоог Python-д float гэж нэрлэдэг." },
+  { q: "Python-д 'үнэн' гэсэн утгыг яаж бичдэг вэ?", options: ["true", "TRUE", "True", "1"], correct: 2, explanation: "Python-ийн Boolean утгууд том үсгээр эхэлдэг: True, False." },
+  { q: "print(type(3.14)) юу хэвлэх вэ?", options: ["int", "float", "double", "decimal"], correct: 1, explanation: "Бутархай тоог Python-д float гэж нэрлэдэг." },
   { q: "x = '10'; print(int(x) + 5) юу хэвлэх вэ?", options: ["105", "15", "Алдаа", "10 + 5"], correct: 1, explanation: "int() нь тэмдэгт мөрийг бүхэл тоо болгож хөрвүүлнэ." },
   { q: "items = [10, 20, 30]; print(items[1]) юу хэвлэх вэ?", options: ["10", "20", "30", "Алдаа"], correct: 1, explanation: "List-ийн индекс 0-ээс эхэлдэг тул 1-р индекс нь 20 байна." },
-  { q: "len(range(5)) хэдтэй тэнцүү вэ?", options: ["4", "5", "6", "0"], correct: 1, explanation: "range(5) нь 0, 1, 2, 3, 4 гэсэн 5 элемент үүсгэнэ." },
-  { q: "print('Hi' + 5) юу болох вэ?", options: ["Hi5", "HiHiHiHiHi", "TypeError (Алдаа)", "Hi 5"], correct: 2, explanation: "String болон Integer-ийг нэмж (+) болдоггүй." },
-  { q: "x = {1, 2, 3}; x.add(2); print(len(x))?", options: ["4", "2", "3", "Алдаа"], correct: 2, explanation: "Set нь давхардсан утга хадгалдаггүй тул хэмжээ нь 3 хэвээр байна." },
+  { q: "len(range(5)) хэдтэй тэнцүү вэ?", options: ["4", "6", "5", "0"], correct: 2, explanation: "range(5) нь 0, 1, 2, 3, 4 гэсэн 5 элемент үүсгэнэ." },
+  { q: "print('Hi' + 5) юу болох вэ?", options: ["Hi5", "TypeError (Алдаа)", "HiHiHiHiHi", "Hi 5"], correct: 1, explanation: "String болон Integer-ийг нэмж (+) болдоггүй." },
+  { q: "x = {1, 2, 3}; x.add(2); print(len(x))?", options: ["2", "4", "3", "Алдаа"], correct: 2, explanation: "Set нь давхардсан утга хадгалдаггүй тул хэмжээ нь 3 хэвээр байна." },
   { q: "isinstance(5, int) юу буцаах вэ?", options: ["True", "False", "int", "Алдаа"], correct: 0, explanation: "isinstance нь объектыг тухайн төрөл мөн эсэхийг шалгадаг." },
-  { q: "str(123) ямар төрлийн утга үүсгэх вэ?", options: ["int", "string", "float", "list"], correct: 1, explanation: "str() функц утгыг тэмдэгт мөр (string) болгоно." }
+  { q: "str(123) ямар төрлийн утга үүсгэх вэ?", options: ["int", "float", "string", "list"], correct: 2, explanation: "str() функц утгыг тэмдэгт мөр (string) болгоно." }
 ];
 
 const BUG_FIXES: BugFix[] = [
-  { code: "print \"Hello World\"", options: ["Add parentheses ()", "Use single quotes", "Remove quotes", "No error in Py2"], correct: 0, description: "Python 3 requires print() as a function." },
-  { code: "if x = 10:\n    print(x)", options: ["Use == for comparison", "Remove colon :", "Add indent", "Change if to while"], correct: 0, description: "Assignment '=' cannot be used inside 'if' condition." },
-  { code: "for i in 10:\n    print(i)", options: ["Use range(10)", "Change in to =", "Add brackets", "Remove i"], correct: 0, description: "Integer is not iterable, range() is needed." },
+  { code: "print \"Hello World\"", options: ["Add parentheses ()", "Use single quotes", "Remove quotes", "No error"], correct: 0, description: "Python 3 requires print() as a function." },
+  { code: "if x = 10:\n    print(x)", options: ["Remove colon :", "Use == for comparison", "Add indent", "Change if to while"], correct: 1, description: "Assignment '=' cannot be used inside 'if' condition." },
+  { code: "for i in 10:\n    print(i)", options: ["Change in to =", "Remove i", "Use range(10)", "Add brackets"], correct: 2, description: "Integer is not iterable, range() is needed." },
   { code: "x = input(\"Age: \")\ny = x + 1", options: ["Use int(x)", "Change x to y", "Remove quotes", "Add float(y)"], correct: 0, description: "input() returns a string; you must convert it to int to add numbers." },
-  { code: "def my_func:\n    pass", options: ["Add parentheses ()", "Change def to func", "Remove indent", "No error"], correct: 0, description: "Function definitions require parentheses." },
-  { code: "x = (1, 2)\nx[0] = 5", options: ["Change tuple to list", "Use .set()", "Remove brackets", "Tuples are mutable"], correct: 0, description: "Tuples are immutable; they cannot be changed after creation." },
-  { code: "if x > 5\n    print(x)", options: ["Add colon : after 5", "Remove indent", "Add else", "Use brackets ()"], correct: 0, description: "If statements require a colon at the end of the condition." },
-  { code: "x = true\nif x:", options: ["Capitalize 'True'", "Remove if", "Change x to y", "No error"], correct: 0, description: "Python Boolean values are 'True' and 'False' with a capital first letter." },
-  { code: "for i in range(5)\n    print(i)", options: ["Add colon : after (5)", "Change for to if", "Remove i", "Add brackets []"], correct: 0, description: "For loops require a colon after the iterable." },
+  { code: "def my_func:\n    pass", options: ["Change def to func", "Add parentheses ()", "Remove indent", "No error"], correct: 1, description: "Function definitions require parentheses." },
+  { code: "x = (1, 2)\nx[0] = 5", options: ["Use .set()", "Remove brackets", "Change tuple to list", "Tuples are mutable"], correct: 2, description: "Tuples are immutable; they cannot be changed after creation." },
+  { code: "if x > 5\n    print(x)", options: ["Remove indent", "Add else", "Use brackets ()", "Add colon : after 5"], correct: 3, description: "If statements require a colon at the end of the condition." },
+  { code: "x = true\nif x:", options: ["Remove if", "Capitalize 'True'", "Change x to y", "No error"], correct: 1, description: "Python Boolean values are 'True' and 'False' with a capital first letter." },
+  { code: "for i in range(5)\n    print(i)", options: ["Change for to if", "Add colon : after (5)", "Remove i", "Add brackets []"], correct: 1, description: "For loops require a colon after the iterable." },
   { code: "items = [1, 2]\nitems.append 3", options: ["Add parentheses ()", "Change .append to +", "Use brackets []", "No error"], correct: 0, description: "Method calls require parentheses: .append(3)." },
   { code: "print('It's a trap')", options: ["Use double quotes \"\"", "Escape with \\", "Both A and B", "Change print"], correct: 2, description: "A single quote inside a single-quoted string needs escaping or double quotes." },
-  { code: "while x < 5\n    x += 1", options: ["Add colon : after 5", "Remove indent", "Use if instead", "Add break"], correct: 0, description: "While loops require a colon at the end of the condition." },
-  { code: "x = [1, 2]\nprint(x[2])", options: ["Change index to 0 or 1", "Add brackets", "Use .get()", "Add append"], correct: 0, description: "Index 2 is out of range for a list with 2 elements (0 and 1)." },
+  { code: "while x < 5\n    x += 1", options: ["Remove indent", "Add colon : after 5", "Use if instead", "Add break"], correct: 1, description: "While loops require a colon at the end of the condition." },
+  { code: "x = [1, 2]\nprint(x[2])", options: ["Add brackets", "Use .get()", "Change index to 0 or 1", "Add append"], correct: 2, description: "Index 2 is out of range for a list with 2 elements (0 and 1)." },
   { code: "x = 5 % 0", options: ["Division by zero error", "Change 0 to 1", "Remove %", "No error"], correct: 0, description: "You cannot perform modulo or division by zero." }
 ];
 
@@ -72,7 +72,7 @@ const CLASSES: Record<PlayerClass, { name: string; hp: number; dmg: number; icon
 
 const BOSS = { name: 'The Global Interpreter Lock', hp: 500, maxHp: 500, dmg: 35, icon: 'token' };
 
-const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
+const GameView: React.FC<GameViewProps> = ({ user, onBack, onEarnBadge }) => {
   const [view, setView] = useState<'mode' | 'lobby' | 'battle' | 'bug-fix' | 'result'>('mode');
   const [gameMode, setGameMode] = useState<GameMode>('raid');
   const [p1Class, setP1Class] = useState<PlayerClass>('knight');
@@ -119,13 +119,15 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
     setTimer(60);
     setScore(0);
     setBugIdx(Math.floor(Math.random() * BUG_FIXES.length));
+    setFeedback(null);
     setView('bug-fix');
   };
 
   const handleBattleAnswer = (idx: number) => {
     if (turn !== 'player' || feedback) return;
 
-    const correct = idx === BATTLE_QUESTIONS[qIdx].correct;
+    const currentQuestion = BATTLE_QUESTIONS[qIdx];
+    const correct = idx === currentQuestion.correct;
     let pDmg = CLASSES[p1Class].dmg;
     if (isBurstActive) {
       pDmg *= 2;
@@ -141,6 +143,15 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
       setLogs(prev => [`Success! You dealt ${pDmg} damage to GIL.`, ...prev]);
       
       if (newBossHp <= 0) {
+        // Award Badge on Raid Victory
+        const classBadgeMap: Record<PlayerClass, string> = {
+          knight: 'raid_knight',
+          mage: 'raid_mage',
+          rogue: 'raid_rogue',
+          techno: 'raid_techno'
+        };
+        onEarnBadge(classBadgeMap[p1Class]);
+        
         setTimeout(() => setView('result'), 1200);
         return;
       }
@@ -153,19 +164,19 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
 
     } else {
       setFeedback({ msg: "SYNTAX ERROR!", type: 'bad' });
-      setLogs(prev => [`Traceback Error: Attack intercepted by Boss!`, ...prev]);
+      setLogs(prev => [`Traceback Error: Attack intercepted by Boss! Answer was: ${currentQuestion.options[currentQuestion.correct]}`, ...prev]);
       
       setTurn('boss');
       setTimeout(() => {
         setFeedback(null);
         setIsShaking(null);
         bossAction();
-      }, 1200);
+      }, 1500);
     }
   };
 
   const useAbility = () => {
-    if (playerMana < 100 || turn !== 'player') return;
+    if (playerMana < 100 || turn !== 'player' || feedback) return;
     setPlayerMana(0);
     setLogs(prev => [`Ability: ${CLASSES[p1Class].ability} triggered!`, ...prev]);
 
@@ -206,7 +217,9 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
   };
 
   const handleBugFix = (idx: number) => {
-    const correct = idx === BUG_FIXES[bugIdx].correct;
+    if (feedback) return;
+    const currentBug = BUG_FIXES[bugIdx];
+    const correct = idx === currentBug.correct;
     if (correct) {
       setScore(s => s + 150);
       setTimer(t => t + 5);
@@ -219,7 +232,7 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
     setTimeout(() => {
       setFeedback(null);
       setBugIdx(Math.floor(Math.random() * BUG_FIXES.length));
-    }, 600);
+    }, 800);
   };
 
   const playerHpPercent = `${(playerHp / (CLASSES[p1Class]?.hp || 100)) * 100}%`;

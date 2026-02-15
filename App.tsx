@@ -50,6 +50,10 @@ const INITIAL_BADGES: Badge[] = [
   { id: 'b4', title: 'Эрэмбэлэгч', description: 'Bubble Sort-ыг бүрэн эзэмшив.', icon: 'format_list_numbered', color: 'bg-primary', isEarned: false },
   { id: 's1', title: 'Тууштай сурагч', description: '3 хоног дараалан суралцав.', icon: 'local_fire_department', color: 'bg-orange-500', isEarned: false },
   { id: 'q1', title: 'Python Master', description: 'Python-ий 30 асуултанд 100% зөв хариулж мастер болов.', icon: 'psychology', color: 'bg-red-600', isEarned: false },
+  { id: 'raid_knight', title: 'Python Knight', description: 'GIL Raid-ийг Knight ангилалаар ялав.', icon: 'shield', color: 'bg-blue-600', isEarned: false },
+  { id: 'raid_mage', title: 'Script Mage', description: 'GIL Raid-ийг Mage ангилалаар ялав.', icon: 'magic_button', color: 'bg-purple-600', isEarned: false },
+  { id: 'raid_rogue', title: 'Syntax Rogue', description: 'GIL Raid-ийг Rogue ангилалаар ялав.', icon: 'bolt', color: 'bg-yellow-600', isEarned: false },
+  { id: 'raid_techno', title: 'AI Techno', description: 'GIL Raid-ийг Techno ангилалаар ялав.', icon: 'memory', color: 'bg-green-600', isEarned: false },
 ];
 
 const App: React.FC = () => {
@@ -82,20 +86,24 @@ const App: React.FC = () => {
     if (user) {
       const userDocRef = firestore.doc(db, "users", user.uid);
       
-      // Fix: Added error callback to onSnapshot to handle permission-denied gracefully
       const unsubscribe = firestore.onSnapshot(userDocRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.modules) setModules(data.modules);
-          if (data.badges) setBadges(data.badges);
+          if (data.badges) {
+            // Merge existing earned badges into the initial list to ensure new badges show up for old users
+            const mergedBadges = INITIAL_BADGES.map(ib => {
+               const saved = data.badges.find((b: any) => b.id === ib.id);
+               return saved ? { ...ib, isEarned: saved.isEarned } : ib;
+            });
+            setBadges(mergedBadges);
+          }
           if (data.solvedProblems) setSolvedProblems(data.solvedProblems);
           if (data.streak) setStreak(data.streak);
         } else {
-          // Document doesn't exist, initialize with defaults
           saveToFirebase(user.uid, INITIAL_MODULES, INITIAL_BADGES, [], 1);
         }
       }, (error) => {
-        // If permission is denied or any other error occurs, we log it and stick to INITIAL state
         console.warn("Firestore sync error or permission denied. Operating in local mode.", error);
       });
       
@@ -152,6 +160,9 @@ const App: React.FC = () => {
   };
 
   const earnBadge = (badgeId: string) => {
+    const alreadyEarned = badges.find(b => b.id === badgeId)?.isEarned;
+    if (alreadyEarned) return;
+
     const newBadges = badges.map(b => b.id === badgeId ? { ...b, isEarned: true } : b);
     setBadges(newBadges);
     if (user) saveToFirebase(user.uid, modules, newBadges, solvedProblems, streak);
@@ -287,7 +298,7 @@ const App: React.FC = () => {
             onComplete={handleQuizComplete}
           />
         ) : currentView === 'game' ? (
-          <GameView user={user} onBack={() => setCurrentView('dashboard')} />
+          <GameView user={user} onBack={() => setCurrentView('dashboard')} onEarnBadge={earnBadge} />
         ) : currentView === 'badges' ? (
           <BadgesView badges={badges} onBack={() => setCurrentView('dashboard')} />
         ) : (
