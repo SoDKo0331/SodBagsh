@@ -29,7 +29,7 @@ const firebaseConfig = {
   measurementId: "G-RZ5KNH6556"
 };
 
-// Fix: Initialize Firebase using the namespaced objects to bypass export member errors
+// Initialize Firebase
 const app = firebaseApp.initializeApp(firebaseConfig);
 const db = firestore.getFirestore(app);
 const auth = firebaseAuth.getAuth(app);
@@ -81,6 +81,8 @@ const App: React.FC = () => {
   useEffect(() => {
     if (user) {
       const userDocRef = firestore.doc(db, "users", user.uid);
+      
+      // Fix: Added error callback to onSnapshot to handle permission-denied gracefully
       const unsubscribe = firestore.onSnapshot(userDocRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -89,9 +91,14 @@ const App: React.FC = () => {
           if (data.solvedProblems) setSolvedProblems(data.solvedProblems);
           if (data.streak) setStreak(data.streak);
         } else {
+          // Document doesn't exist, initialize with defaults
           saveToFirebase(user.uid, INITIAL_MODULES, INITIAL_BADGES, [], 1);
         }
+      }, (error) => {
+        // If permission is denied or any other error occurs, we log it and stick to INITIAL state
+        console.warn("Firestore sync error or permission denied. Operating in local mode.", error);
       });
+      
       return () => unsubscribe();
     }
   }, [user]);
@@ -108,7 +115,7 @@ const App: React.FC = () => {
         lastActive: new Date().toISOString()
       }, { merge: true });
     } catch (e) {
-      console.error("Firebase sync error", e);
+      console.warn("Firebase save error (possibly permission denied).", e);
     }
     setIsSyncing(false);
   };
@@ -183,7 +190,7 @@ const App: React.FC = () => {
   };
 
   if (isAuthLoading) {
-    return <div className="h-screen w-full flex items-center justify-center bg-background-dark text-primary">Loading...</div>;
+    return <div className="h-screen w-full flex items-center justify-center bg-background-dark text-primary font-black uppercase tracking-widest animate-pulse">Initializing...</div>;
   }
 
   if (!user) {
@@ -201,7 +208,7 @@ const App: React.FC = () => {
               type="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800 border-2 rounded-2xl px-6 py-4 font-bold outline-none"
+              className="w-full bg-slate-50 dark:bg-slate-800 border-2 rounded-2xl px-6 py-4 font-bold outline-none border-slate-100 dark:border-slate-800 focus:border-primary transition-colors"
               placeholder="Email"
               required
             />
@@ -209,18 +216,18 @@ const App: React.FC = () => {
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800 border-2 rounded-2xl px-6 py-4 font-bold outline-none"
+              className="w-full bg-slate-50 dark:bg-slate-800 border-2 rounded-2xl px-6 py-4 font-bold outline-none border-slate-100 dark:border-slate-800 focus:border-primary transition-colors"
               placeholder="Password"
               required
             />
-            <button type="submit" className="w-full bg-primary text-slate-900 py-4 rounded-2xl font-black text-lg uppercase tracking-widest">
+            <button type="submit" className="w-full bg-primary text-slate-900 py-4 rounded-2xl font-black text-lg uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20">
               {authMode === 'login' ? 'Нэвтрэх' : 'Бүртгүүлэх'}
             </button>
           </form>
 
           <div className="mt-8">
-             <button onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="text-primary font-black uppercase tracking-widest text-xs">
-                {authMode === 'login' ? 'Бүртгүүлэх' : 'Нэвтрэх'}
+             <button onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="text-primary font-black uppercase tracking-widest text-xs hover:underline">
+                {authMode === 'login' ? 'Шинээр бүртгүүлэх' : 'Хуучин хаягаар нэвтрэх'}
              </button>
           </div>
         </div>
@@ -229,7 +236,6 @@ const App: React.FC = () => {
   }
 
   const activeProblem = selectedProblemId ? PROBLEMS.find(p => p.id === selectedProblemId) : null;
-  // Сонгосон хэлнээс хамаарч тестыг шийдэх
   const activeQuiz = preferredLanguage === 'python' ? PYTHON_QUIZ : C_QUIZ;
 
   return (
