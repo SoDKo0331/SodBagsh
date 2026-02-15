@@ -23,7 +23,7 @@ interface TerminalLine {
 const TEMPLATES = {
   python: "name = 'Super Coder'\nprint('Сайн уу, ' + name + '!')\n\nfor i in range(3):\n    print('Код бичих гоё байна!')",
   c: "#include <stdio.h>\n\nint main() {\n    char name[] = \"Super Coder\";\n    printf(\"Сайн уу, %s!\\n\", name);\n    \n    for(int i=0; i<3; i++) {\n        printf(\"Код бичих гоё байна!\\n\");\n    }\n    return 0;\n}",
-  cpp: "#include <iostream>\n#include <string>\n\nint main() {\n    std::string name = \"Super Coder\";\n    std::cout << \"Сайн уу, \" << name << \"!\" << std::endl;\n    \n    for(let i=0; i<3; i++) {\n        std::cout << \"Код бичих гоё байна!\" << std::endl;\n    }\n    return 0;\n}"
+  cpp: "#include <iostream>\n#include <string>\n\nint main() {\n    std::string name = \"Super Coder\";\n    std::cout << \"Сайн уу, \" << name << \"!\" << std::endl;\n    \n    for(int i=0; i<3; i++) {\n        std::cout << \"Код бичих гоё байна!\" << std::endl;\n    }\n    return 0;\n}"
 };
 
 const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
@@ -67,6 +67,48 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = e.currentTarget.selectionStart;
+      const end = e.currentTarget.selectionEnd;
+      const value = e.currentTarget.value;
+      const newValue = value.substring(0, start) + "    " + value.substring(end);
+      setCode(newValue);
+      setTimeout(() => {
+        if (editorRef.current) {
+          editorRef.current.selectionStart = editorRef.current.selectionEnd = start + 4;
+        }
+      }, 0);
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const cursor = e.currentTarget.selectionStart;
+      const value = e.currentTarget.value;
+      const lineStart = value.lastIndexOf('\n', cursor - 1) + 1;
+      const currentLine = value.substring(lineStart, cursor);
+      const indentMatch = currentLine.match(/^\s*/);
+      const indent = indentMatch ? indentMatch[0] : "";
+      
+      let extraIndent = "";
+      const trimmedLine = currentLine.trim();
+      if (trimmedLine.endsWith(':') || trimmedLine.endsWith('{')) {
+        extraIndent = "    ";
+      }
+
+      const insertion = "\n" + indent + extraIndent;
+      const newValue = value.substring(0, cursor) + insertion + value.substring(e.currentTarget.selectionEnd);
+      setCode(newValue);
+      
+      setTimeout(() => {
+        if (editorRef.current) {
+          editorRef.current.selectionStart = editorRef.current.selectionEnd = cursor + insertion.length;
+        }
+      }, 0);
+    }
+  };
+
   const highlightedHtml = useMemo(() => {
     const lang = activeLanguage === 'python' ? 'python' : activeLanguage === 'c' ? 'c' : 'cpp';
     const grammar = Prism.languages[lang];
@@ -78,7 +120,10 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
     setIsRunning(true);
     setOutput([]);
     
-    const compilationCmd = activeLanguage === 'python' ? `python3 main.py` : `./main`;
+    const compilationCmd = activeLanguage === 'python' ? `python3 main.py` : 
+                           activeLanguage === 'cpp' ? `g++ main.cpp -o main && ./main` :
+                           `gcc main.c -o main && ./main`;
+                           
     setOutput(prev => [...prev, {type: 'cmd', text: compilationCmd}]);
 
     setTimeout(() => {
@@ -92,10 +137,10 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
       setOutput(prev => [
         ...prev, 
         ...mockResult.map(r => ({type: 'out', text: r} as TerminalLine)),
-        {type: 'success', text: `Terminated with exit code 0.`}
+        {type: 'success', text: `Process finished with exit code 0.`}
       ]);
       setIsRunning(false);
-    }, 600);
+    }, 800);
   };
 
   const askAi = async () => {
@@ -106,7 +151,6 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
     setIsAiLoading(true);
 
     try {
-      // Fix: Always use named parameter for apiKey and use gemini-3-pro-preview for coding questions
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
@@ -123,7 +167,7 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
 
   return (
     <div className="flex flex-col h-full bg-[#1e1e1e] font-display overflow-hidden relative">
-      <header className="h-20 bg-white dark:bg-[#111814] border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-8 shrink-0 z-20">
+      <header className="h-20 bg-white dark:bg-[#111814] border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-8 shrink-0 z-20 shadow-xl">
         <div className="flex items-center gap-6">
           <button onClick={onBack} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
             <span className="material-symbols-outlined text-slate-500">arrow_back</span>
@@ -134,7 +178,7 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
         <div className="flex items-center gap-4">
           <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
             {['python', 'c', 'cpp'].map((lang) => (
-               <button key={lang} onClick={() => handleLanguageChange(lang as any)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase ${activeLanguage === lang ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500'}`}>{lang.toUpperCase()}</button>
+               <button key={lang} onClick={() => handleLanguageChange(lang as any)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase ${activeLanguage === lang ? 'bg-primary text-slate-900 shadow-sm' : 'text-slate-500'}`}>{lang === 'cpp' ? 'C++' : lang.toUpperCase()}</button>
             ))}
           </div>
           
@@ -164,6 +208,7 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
                value={code} 
                onChange={(e) => setCode(e.target.value)} 
                onScroll={handleScroll}
+               onKeyDown={handleKeyDown}
                className="absolute inset-0 bg-transparent text-transparent caret-white outline-none border-none resize-none custom-scrollbar leading-[28px] overflow-auto z-10" 
                spellCheck={false} 
              />
@@ -174,7 +219,7 @@ const Sandbox: React.FC<SandboxProps> = ({ onBack }) => {
           <div className="px-6 py-2 bg-[#1a1a1a] text-[10px] font-black text-slate-500 uppercase">Terminal</div>
           <div className="flex-1 p-6 font-mono text-base overflow-y-auto custom-scrollbar bg-black/40 text-primary">
             {output.map((line, i) => (
-              <div key={i} className={`flex gap-3 ${line.type === 'cmd' ? 'text-blue-400' : line.type === 'err' ? 'text-red-400' : 'text-primary'}`}>
+              <div key={i} className={`flex gap-3 ${line.type === 'cmd' ? 'text-blue-400' : line.type === 'err' ? 'text-red-400' : line.type === 'success' ? 'text-green-400' : 'text-primary'}`}>
                  <span className="select-none text-slate-800">❯</span>
                  <span>{line.text}</span>
               </div>

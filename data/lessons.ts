@@ -24,6 +24,20 @@ export const LESSON_DATA: Record<string, FullLesson> = {
             template: "#include <stdio.h>\n\nint main() {\n    ___(\"Hello\");\n    return 0;\n}",
             explanation: ["printf - С хэлний хэвлэх функц"],
             expectedOutput: "Hello"
+          },
+          {
+            language: 'cpp',
+            fileName: 'hello.cpp',
+            template: "#include <iostream>\n\nint main() {\n    std::___ << \"Hello\";\n    return 0;\n}",
+            explanation: ["cout - C++ хэлний стандарт гаралтын урсгал"],
+            expectedOutput: "Hello"
+          },
+          {
+            language: 'python',
+            fileName: 'hello.py',
+            template: "___(\"Hello\")",
+            explanation: ["print() - Python-ий хэвлэх функц"],
+            expectedOutput: "Hello"
           }
         ]
       }
@@ -67,103 +81,128 @@ export const LESSON_DATA: Record<string, FullLesson> = {
             template: "#include <stdio.h>\n\nint main() {\n    ___ age = 15;\n    printf(\"%d\", ___);\n    return 0;\n}",
             explanation: ["int - бүхэл тоо", "age - хувьсагчийн нэр"],
             expectedOutput: "15"
+          },
+          {
+            language: 'cpp',
+            fileName: 'vars.cpp',
+            template: "#include <iostream>\n\nint main() {\n    ___ age = 15;\n    std::cout << ___;\n    return 0;\n}",
+            explanation: ["int - бүхэл тоо", "age - хувьсагчийн нэр"],
+            expectedOutput: "15"
+          },
+          {
+            language: 'python',
+            fileName: 'vars.py',
+            template: "age = ___\nprint(___)",
+            explanation: ["Python-д төрөл заах шаардлагагүй"],
+            expectedOutput: "15"
           }
         ]
       }
     ]
   },
-  'm3': {
-    id: 'm3',
-    title: 'LEVEL 1: IF/ELSE - Сонголт',
+  'm6': {
+    id: 'm6',
+    title: 'LEVEL 4: OOP - Класс ба Объект',
     steps: [
       {
         id: 1,
         type: 'concept',
-        title: 'Шийдвэр гаргах',
-        body: "Компьютер нөхцөл шалгаж шийдвэр гаргадаг. Хэрэв (if) оноо 60-аас их бол тэнцэнэ, үгүй бол (else) унана.",
+        title: 'Объект Хандалтат Програмчлал',
+        body: "C++ бол объект хандалтат хэл юм. Класс гэдэг нь объектын загвар (blueprint) бөгөөд дотроо өгөгдөл болон функцуудыг багтаадаг.",
       },
       {
         id: 2,
         type: 'coding',
-        title: 'Нөхөж бич: Тэнцсэн үү?',
-        body: "Оноо 60-аас их бол 'PASS' гэж хэвлэх нөхцөлийг бич.",
+        title: 'Класс үүсгэх',
+        body: "Robot нэртэй класс үүсгэж, 'greet' функцийг гүйцээнэ үү. Дэлгэцэнд 'Beep Boop' гэж хэвлэх ёстой.",
         codingTasks: [
           {
-            language: 'c',
-            fileName: 'if.c',
-            template: "#include <stdio.h>\n\nint main() {\n    int score = 70;\n    ___ (score > 60) {\n        printf(\"PASS\");\n    }\n    return 0;\n}",
-            explanation: ["if - хэрэв гэсэн нөхцөл"],
-            expectedOutput: "PASS"
+            language: 'cpp',
+            fileName: 'oop.cpp',
+            template: "#include <iostream>\n#include <string>\n\nclass Robot {\n___:\n    void greet() {\n        std::cout << \"Beep Boop\";\n    }\n};\n\nint main() {\n    Robot myBot;\n    myBot.___();\n    return 0;\n}",
+            explanation: ["public - хандах эрх", "greet() - гишүүн функц"],
+            expectedOutput: "Beep Boop"
           }
         ]
       }
     ]
   },
-  'm4': {
-    id: 'm4',
-    title: 'LEVEL 2: Давталт - For Loop',
+  'm7': {
+    id: 'm7',
+    title: 'LEVEL 4: Удамшил - Inheritance',
     steps: [
       {
         id: 1,
         type: 'concept',
-        title: 'Уйтгартай ажлыг давтах',
-        body: "For давталт нь нэг үйлдлийг олон удаа давтахад ашиглагддаг. i++ гэдэг нь i-ийн утгыг нэгээр нэмэгдүүлнэ гэсэн үг.",
+        title: 'Эцэг ба Хүү класс',
+        body: "Удамшил ашиглан нэг классын шинж чанарыг нөгөөд шилжүүлж болно. Ингэснээр кодыг дахин ашиглах боломжтой болно.",
       },
       {
         id: 2,
-        type: 'minigame',
-        title: 'Логик Таавар',
-        body: "Давталт 3 удаа ажиллахын тулд нөхцөл ямар байх ёстой вэ?",
-        minigame: {
-          type: 'sorter',
-          question: "3 удаа 'Hi' хэвлэх дараалал:",
-          items: [
-            { id: 'a', text: 'for(int i=0; i<3; i++) {' },
-            { id: 'b', text: '  printf("Hi");' },
-            { id: 'c', text: '}' }
-          ],
-          correctOrder: ['a', 'b', 'c']
-        }
-      },
-      {
-        id: 3,
         type: 'coding',
-        title: 'Нөхөж бич: 5 удаа тоолох',
-        body: "0-ээс 4 хүртэл тоолох давталтын дутууг нөх.",
+        title: 'Удамшлыг нөхөж бичих',
+        body: "Animal классаас Dog классыг удамшуулж, 'bark' функцийг дуудна уу.",
         codingTasks: [
           {
-            language: 'c',
-            fileName: 'loop.c',
-            template: "#include <stdio.h>\n\nint main() {\n    for(int i=0; ___ < 5; i___) {\n        printf(\"%d \", i);\n    }\n    return 0;\n}",
-            explanation: ["i < 5 - зогсох нөхцөл", "i++ - нэмэгдүүлэлт"],
-            expectedOutput: "0 1 2 3 4 "
+            language: 'cpp',
+            fileName: 'inheritance.cpp',
+            template: "#include <iostream>\n\nclass Animal {\npublic:\n    void eat() { std::cout << \"Eating...\"; }\n};\n\nclass Dog : ___ Animal {\npublic:\n    void bark() { std::cout << \"Woof!\"; }\n};\n\nint main() {\n    Dog myDog;\n    myDog.___();\n    return 0;\n}",
+            explanation: [": public - удамших синтакс", "bark() - Dog-ийн функц"],
+            expectedOutput: "Woof!"
           }
         ]
       }
     ]
   },
-  'm5': {
-    id: 'm5',
-    title: 'LEVEL 3: Массив - Олон хайрцаг',
+  'm8': {
+    id: 'm8',
+    title: 'LEVEL 5: STL - Vector',
     steps: [
       {
         id: 1,
         type: 'concept',
-        title: 'Массив гэж юу вэ?',
-        body: "Массив бол олон тоог нэг дор хадгалах урт хайрцаг юм. Индекс нь 0-ээс эхэлдэг гэдгийг санаарай!",
+        title: 'Standard Template Library',
+        body: "STL-ийн 'vector' нь динамик массив юм. Массивын хэмжээг урьдчилан заах шаардлагагүйгээр элемент нэмж болно.",
       },
       {
         id: 2,
         type: 'coding',
-        title: 'Массивын утга оноох',
-        body: "Массивын эхний элемент буюу 0-р индекст 100 гэсэн утга оноож хэвлэ.",
+        title: 'Vector-т элемент нэмэх',
+        body: "Vector үүсгэж, push_back функц ашиглан 42-ыг нэмээд хэвлэ.",
         codingTasks: [
           {
-            language: 'c',
-            fileName: 'array.c',
-            template: "#include <stdio.h>\n\nint main() {\n    int nums[3] = {1, 2, 3};\n    nums[___] = 100;\n    printf(\"%d\", nums[0]);\n    return 0;\n}",
-            explanation: ["0 - эхний индекс"],
-            expectedOutput: "100"
+            language: 'cpp',
+            fileName: 'stl_vector.cpp',
+            template: "#include <iostream>\n#include <vector>\n\nint main() {\n    std::vector<int> nums;\n    nums.___(___);\n    std::cout << nums[0];\n    return 0;\n}",
+            explanation: ["push_back - элемент нэмэх", "nums[0] - эхний элемент"],
+            expectedOutput: "42"
+          }
+        ]
+      }
+    ]
+  },
+  'm9': {
+    id: 'm9',
+    title: 'LEVEL 6: Холбоост жагсаалт',
+    steps: [
+      {
+        id: 1,
+        type: 'concept',
+        title: 'Linked Lists & Pointers',
+        body: "Холбоост жагсаалт нь санах ойд тархсан 'Node'-үүдээс бүрдэнэ. Node бүр дараагийнхаа Node-ийн хаягийг (pointer) хадгалдаг.",
+      },
+      {
+        id: 2,
+        type: 'coding',
+        title: 'Node үүсгэх',
+        body: "Node бүтэц (struct) доторх заагч (pointer) хувьсагчийг нөхөж бич.",
+        codingTasks: [
+          {
+            language: 'cpp',
+            fileName: 'linked_list.cpp',
+            template: "#include <iostream>\n\nstruct Node {\n    int data;\n    Node* ___;\n};\n\nint main() {\n    Node head;\n    head.data = 101;\n    head.next = nullptr;\n    std::cout << head.data;\n    return 0;\n}",
+            explanation: ["Node* next - дараагийн зангилаа руу заах"],
+            expectedOutput: "101"
           }
         ]
       }

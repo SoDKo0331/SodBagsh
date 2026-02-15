@@ -1,72 +1,58 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { GoogleGenAI } from "@google/genai";
 import Prism from 'prismjs';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-c';
 import 'prismjs/components/prism-cpp';
 import { LESSON_DATA } from '../data/lessons';
 import { StepContent, CodingTask } from '../types';
+import { AiService, GradeResult } from '../services/AiService';
 
 interface LessonViewProps {
   onExit: (completed?: boolean) => void;
   moduleId: string | null;
   initialLanguage: 'python' | 'c' | 'cpp';
-  onLanguageChange?: (lang: 'python' | 'c' | 'cpp') => void;
-}
-
-interface ChatMessage {
-  role: 'user' | 'model';
-  text: string;
+  // Add missing onLanguageChange prop to fix App.tsx error
+  onLanguageChange: (lang: 'python' | 'c' | 'cpp') => void;
 }
 
 const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLanguage, onLanguageChange }) => {
   const lesson = moduleId ? LESSON_DATA[moduleId] : null;
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
-  const [selectedQuizOption, setSelectedQuizOption] = useState<string | null>(null);
-  const [isTaskCompleted, setIsTaskCompleted] = useState(false);
-  const [terminalOutput, setTerminalOutput] = useState<{type: 'cmd' | 'out' | 'err' | 'success' | 'info' | 'warn' | 'hint', text: string}[]>([]);
-  const [isRunning, setIsRunning] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [activeLanguage, setActiveLanguage] = useState<'python' | 'c' | 'cpp'>(initialLanguage);
-  
-  const [gameItems, setGameItems] = useState<{id: string, text: string}[]>([]);
-  const [gameFeedback, setGameFeedback] = useState<string | null>(null);
-
+  const [activeLanguage, setActiveLanguage] = useState(initialLanguage);
   const [userCode, setUserCode] = useState('');
+  const [isTaskCompleted, setIsTaskCompleted] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [terminalOutput, setTerminalOutput] = useState<any[]>([]);
+  const [inspectedVars, setInspectedVars] = useState<GradeResult['variables']>([]);
+  const [bottomTab, setBottomTab] = useState<'output' | 'debugger'>('output');
   const [isAiOpen, setIsAiOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: `Сайн уу! 🤖 Чиний багш бэлэн байна. Кодоо бичээд шалгуулаарай.` }
-  ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
-  
-  const chatEndRef = useRef<HTMLDivElement>(null);
+
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLPreElement>(null);
 
-  const step: StepContent | undefined = lesson?.steps[currentStepIdx];
-  const isLastStep = lesson ? currentStepIdx === lesson.steps.length - 1 : false;
-  const currentTask: CodingTask | undefined = step?.codingTasks?.find(t => t.language === activeLanguage);
+  const step = lesson?.steps[currentStepIdx];
+  const currentTask = useMemo(() => 
+    step?.codingTasks?.find(t => t.language === activeLanguage) || step?.codingTasks?.[0]
+  , [step, activeLanguage]);
 
   useEffect(() => {
-    if (step?.type === 'minigame' && step.minigame) {
-      setGameItems([...step.minigame.items].sort(() => Math.random() - 0.5));
-      setGameFeedback(null);
-      setIsTaskCompleted(false);
-    } else if (currentTask) {
+    if (currentTask) {
       setUserCode(currentTask.template);
       setTerminalOutput([]);
+      setInspectedVars([]);
       setIsTaskCompleted(false);
-    } else if (step?.type === 'concept') {
-      setIsTaskCompleted(true);
+      // Sync language selection if the task forces a specific language fallback
+      if (currentTask.language !== activeLanguage) {
+        setActiveLanguage(currentTask.language);
+        onLanguageChange(currentTask.language);
+      }
     }
-  }, [currentStepIdx, activeLanguage, moduleId]);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages]);
+  }, [currentStepIdx, currentTask, activeLanguage, onLanguageChange]);
 
   const handleScroll = () => {
     if (editorRef.current && lineNumbersRef.current && highlightRef.current) {
@@ -76,343 +62,225 @@ const LessonView: React.FC<LessonViewProps> = ({ onExit, moduleId, initialLangua
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = editorRef.current!.selectionStart;
+      const end = editorRef.current!.selectionEnd;
+      const val = editorRef.current!.value;
+      setUserCode(val.substring(0, start) + "    " + val.substring(end));
+      setTimeout(() => {
+        editorRef.current!.selectionStart = editorRef.current!.selectionEnd = start + 4;
+      }, 0);
+    }
+    // Auto-indent logic
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const cursor = editorRef.current!.selectionStart;
+      const val = editorRef.current!.value;
+      const lineStart = val.lastIndexOf('\n', cursor - 1) + 1;
+      const currentLine = val.substring(lineStart, cursor);
+      const indent = currentLine.match(/^\s*/)?.[0] || "";
+      const extraIndent = (currentLine.trim().endsWith(':') || currentLine.trim().endsWith('{')) ? "    " : "";
+      const insertion = "\n" + indent + extraIndent;
+      setUserCode(val.substring(0, cursor) + insertion + val.substring(cursor));
+      setTimeout(() => {
+        editorRef.current!.selectionStart = editorRef.current!.selectionEnd = cursor + insertion.length;
+      }, 0);
+    }
+  };
+
   const highlightedHtml = useMemo(() => {
-    const lang = activeLanguage === 'python' ? 'python' : activeLanguage === 'c' ? 'c' : 'cpp';
-    const grammar = Prism.languages[lang];
-    if (!grammar) return userCode;
-    return Prism.highlight(userCode, grammar, lang);
+    const lang = activeLanguage === 'cpp' ? 'cpp' : activeLanguage === 'c' ? 'c' : 'python';
+    return Prism.highlight(userCode, Prism.languages[lang], lang);
   }, [userCode, activeLanguage]);
 
-  const lineCount = userCode.split('\n').length;
-  const lineNumbers = Array.from({ length: Math.max(lineCount, 15) }, (_, i) => i + 1);
-
-  if (!lesson || !step) return <div className="p-10 text-white">Алдаа: Хичээл олдсонгүй.</div>;
-
-  const verifyCode = async (codeToVerify: string, lang: string) => {
-    if (!currentTask) return { success: false, output: "", feedback: "", hint: "" };
-
-    if (codeToVerify.includes('___')) {
-      return { success: false, output: "Code contains empty placeholders", feedback: "___ хэсгийг нөхөж бичнэ үү.", hint: "Код доторх дутуу хэсгүүдийг утгаар солин бичээрэй." };
-    }
-
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const prompt = `Act as a strictly critical Automated Code Judge for students. 
-    Analyze this ${lang} code.
-    REQUIRED PROGRAM OUTPUT: Exactly "${currentTask.expectedOutput}" (trimmed).
-    USER SOURCE CODE: 
-    ---
-    ${codeToVerify}
-    ---
-
-    INSTRUCTIONS:
-    1. Check if the code compiles/interprets without syntax errors.
-    2. Check if the logic produces the EXACT target output.
-    3. Be extremely strict. If there is even a minor mismatch or syntax flaw, return success: false.
-    4. Provide constructive but direct feedback in Mongolian.
-
-    RESPONSE FORMAT (STRICT JSON ONLY): 
-    { 
-      "success": boolean, 
-      "output": "actual simulated output string", 
-      "feedback": "motivational feedback in Mongolian", 
-      "hint": "one specific hint if failed" 
-    }`;
-    
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: prompt,
-        config: { 
-          responseMimeType: "application/json",
-          thinkingConfig: { thinkingBudget: 0 }
-        }
-      });
-      return JSON.parse(response.text || "{}");
-    } catch (e) {
-      return { success: false, output: "Error", feedback: "Шалгалт хийхэд алдаа гарлаа.", hint: "Интернэт холболтоо шалгана уу." };
-    }
-  };
-
-  const handleRunCode = async () => {
+  const runCode = async () => {
     if (!currentTask || isRunning) return;
     setIsRunning(true);
-    setTerminalOutput([{type: 'info', text: `> Шалгалт эхэлж байна...`}]);
+    setTerminalOutput([{ type: 'info', text: 'Grading submission...' }]);
     
-    const result = await verifyCode(userCode, activeLanguage);
-    
-    if (result.success) {
+    try {
+      const result = await AiService.gradeSubmission(userCode, activeLanguage, currentTask.expectedOutput);
       setTerminalOutput(prev => [
-        ...prev, 
-        {type: 'out', text: result.output}, 
-        {type: 'success', text: `✓ БОДЛОГО ЗӨВ: ${result.feedback}`}
+        ...prev,
+        { type: result.success ? 'success' : 'err', text: result.output || 'No output' },
+        { type: 'hint', text: result.success ? result.feedback : result.hint }
       ]);
-      setIsTaskCompleted(true);
-    } else {
-      setTerminalOutput(prev => [
-        ...prev, 
-        {type: 'err', text: `✗ АЛДАА: ${result.output || 'Logic error'}`},
-        {type: 'hint', text: `БАГШИЙН ЗӨВЛӨГӨӨ: ${result.hint}`}
-      ]);
-      setIsTaskCompleted(false);
-    }
-    setIsRunning(false);
-  };
-
-  const checkGameOrder = () => {
-    if (!step.minigame) return;
-    const currentOrder = gameItems.map(i => i.id);
-    const isCorrect = JSON.stringify(currentOrder) === JSON.stringify(step.minigame.correctOrder);
-    
-    if (isCorrect) {
-      setGameFeedback("Зөв байна! Гайхалтай.");
-      setIsTaskCompleted(true);
-    } else {
-      setGameFeedback("Буруу дараалал байна. Дахиад оролдоод үзээрэй.");
-      setIsTaskCompleted(false);
-    }
-  };
-
-  const moveGameItem = (fromIdx: number, toIdx: number) => {
-    const newItems = [...gameItems];
-    const [movedItem] = newItems.splice(fromIdx, 1);
-    newItems.splice(toIdx, 0, movedItem);
-    setGameItems(newItems);
-  };
-
-  const handleNext = () => {
-    if (isLastStep) {
-      setShowCelebration(true);
-    } else {
-      setCurrentStepIdx(prev => prev + 1);
-      setIsTaskCompleted(false);
-      setSelectedQuizOption(null);
-      setTerminalOutput([]);
-      setGameFeedback(null);
+      setInspectedVars(result.variables);
+      if (result.success) setIsTaskCompleted(true);
+    } catch (err) {
+      setTerminalOutput(prev => [...prev, { type: 'err', text: 'Evaluation Service Offline' }]);
+    } finally {
+      setIsRunning(false);
     }
   };
 
   const askAi = async () => {
     if (!chatInput.trim() || isAiLoading) return;
-    const userMsg = chatInput;
+    const msg = chatInput;
     setChatInput('');
-    setChatMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    setChatMessages(prev => [...prev, { role: 'user', text: msg }]);
     setIsAiLoading(true);
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Одоогийн Код: ${userCode}\nСэдэв: ${step.title}\nАсуулт: ${userMsg}`,
-        config: { thinkingConfig: { thinkingBudget: 0 } }
-      });
-      setChatMessages(prev => [...prev, { role: 'model', text: response.text || "" }]);
-    } catch (error) {
-      setChatMessages(prev => [...prev, { role: 'model', text: "Алдаа гарлаа." }]);
-    } finally {
-      setIsAiLoading(false);
-    }
+    const reply = await AiService.askTutor(msg, userCode, step?.title || "");
+    setChatMessages(prev => [...prev, { role: 'model', text: reply }]);
+    setIsAiLoading(false);
   };
 
-  return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background-light dark:bg-background-dark relative font-display text-slate-900 dark:text-slate-100">
-      {showCelebration && (
-        <div className="absolute inset-0 z-[100] bg-primary flex flex-col items-center justify-center p-10 animate-in fade-in zoom-in duration-300 text-center">
-          <div className="size-32 rounded-full bg-white flex items-center justify-center mb-8 shadow-2xl animate-bounce">
-             <span className="material-symbols-outlined text-6xl text-primary font-black">celebration</span>
-          </div>
-          <h2 className="text-6xl font-black text-white mb-4 uppercase tracking-tighter">МОДУЛЬ ДУУСЛАА!</h2>
-          <p className="text-white/80 font-bold mb-10 text-xl">Чи энэхүү давааг амжилттай давлаа. Баяр хүргэе!</p>
-          <button onClick={() => onExit(true)} className="bg-slate-900 text-white px-12 py-5 rounded-[24px] font-black text-xl shadow-2xl hover:scale-110 active:scale-95 transition-all uppercase tracking-widest">
-            Дараагийн Модуль
-          </button>
-        </div>
-      )}
+  if (!lesson || !step) return null;
 
-      <header className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#111814] px-6 py-4 z-30 shrink-0">
+  return (
+    <div className="flex h-screen flex-col bg-background-dark font-display text-slate-100 overflow-hidden">
+      {/* Header */}
+      <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-[#0d1410] z-50">
         <div className="flex items-center gap-4">
-          <button onClick={() => onExit()} className="size-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
-             <span className="material-symbols-outlined text-slate-400">arrow_back</span>
+          <button onClick={() => onExit()} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
+            <span className="material-symbols-outlined text-slate-400">arrow_back</span>
           </button>
-          <div>
-            <h1 className="text-lg font-black tracking-tight leading-none mb-1">{lesson.title}</h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{currentStepIdx + 1} / {lesson.steps.length} АЛХАМ</p>
+          <div className="hidden md:block">
+            <h1 className="text-sm font-black tracking-tight">{lesson.title}</h1>
+            <p className="text-[10px] text-primary font-black uppercase tracking-widest">{currentStepIdx + 1} / {lesson.steps.length} Алхам</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setIsAiOpen(!isAiOpen)} className={`flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-black transition-all ${isAiOpen ? 'bg-primary text-slate-900' : 'bg-slate-900 text-white'}`}>
-            <span className="material-symbols-outlined text-xl">smart_toy</span>
-            <span className="hidden md:inline">AI Багш</span>
-          </button>
+          <button onClick={() => setIsAiOpen(!isAiOpen)} className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${isAiOpen ? 'bg-primary text-slate-900' : 'bg-white/5 text-primary'}`}>AI Mentor</button>
+          <button onClick={() => onExit()} className="px-4 py-2 bg-white/5 hover:bg-red-500/10 hover:text-red-500 rounded-xl text-xs font-black transition-all">Гарах</button>
         </div>
       </header>
 
-      <main className="flex flex-1 overflow-hidden relative">
-        <section className={`flex flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1410] transition-all duration-300 relative ${isAiOpen ? 'w-[35%]' : 'w-[45%]'}`}>
-          <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-10 pb-32">
-            <div className="mb-8">
-              <h2 className="text-3xl font-black tracking-tight mb-6">{step.title}</h2>
-              <div className="prose dark:prose-invert max-w-none">
-                 <p className="text-lg leading-relaxed text-slate-600 dark:text-slate-300 font-medium">{step.body}</p>
-              </div>
-            </div>
-
-            {step.type === 'minigame' && step.minigame && (
-              <div className="mt-8 space-y-4">
-                 <div className="p-4 bg-primary/10 rounded-2xl border-2 border-primary/20 mb-6">
-                    <p className="text-sm font-black text-primary uppercase tracking-widest flex items-center gap-2">
-                       <span className="material-symbols-outlined text-sm">extension</span> Mini-Game: Кодын эрэмбэ
-                    </p>
-                 </div>
-                 <div className="space-y-2">
-                   {gameItems.map((item, idx) => (
-                     <div key={item.id} className="flex items-center gap-3">
-                        <div className="flex flex-col gap-1">
-                           <button onClick={() => idx > 0 && moveGameItem(idx, idx - 1)} className="material-symbols-outlined text-slate-400 hover:text-primary transition-colors text-sm">keyboard_arrow_up</button>
-                           <button onClick={() => idx < gameItems.length - 1 && moveGameItem(idx, idx + 1)} className="material-symbols-outlined text-slate-400 hover:text-primary transition-colors text-sm">keyboard_arrow_down</button>
-                        </div>
-                        <div className="flex-1 p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl font-mono text-sm shadow-sm">
-                           {item.text}
-                        </div>
-                     </div>
-                   ))}
-                 </div>
-                 <button onClick={checkGameOrder} className="w-full mt-6 bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-slate-800 transition-all">Шалгах</button>
-                 {gameFeedback && (
-                   <p className={`mt-4 text-center font-bold text-sm ${gameFeedback.includes('Зөв') ? 'text-primary' : 'text-red-400'}`}>{gameFeedback}</p>
-                 )}
-              </div>
-            )}
+      <main className="flex-1 flex overflow-hidden">
+        {/* Content Panel */}
+        <section className="w-1/3 border-r border-white/5 bg-[#0d1410] flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <h2 className="text-2xl font-black mb-6 tracking-tight">{step.title}</h2>
+            <p className="text-slate-400 leading-relaxed mb-10">{step.body}</p>
 
             {step.type === 'quiz' && (
-               <div className="space-y-3 mt-8">
-                  {step.quiz?.options.map((opt) => (
-                    <button 
-                      key={opt.id} 
-                      onClick={() => { setSelectedQuizOption(opt.id); setIsTaskCompleted(opt.isCorrect); }} 
-                      className={`flex w-full items-center justify-between rounded-2xl border-4 p-5 text-left transition-all ${
-                        selectedQuizOption === opt.id 
-                          ? opt.isCorrect ? 'border-primary bg-primary/10 text-primary' : 'border-red-400 bg-red-50 text-red-500' 
-                          : 'border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5 hover:border-primary/50'
-                      }`}
-                    >
-                      <span className="font-bold text-lg">{opt.text}</span>
-                    </button>
-                  ))}
-               </div>
+              <div className="space-y-3">
+                {step.quiz?.options.map(opt => (
+                  <button key={opt.id} onClick={() => setIsTaskCompleted(opt.isCorrect)} className="w-full p-4 rounded-2xl bg-white/5 border-2 border-transparent hover:border-primary/50 text-left transition-all font-bold">
+                    {opt.text}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
-
-          <div className="absolute bottom-0 left-0 right-0 p-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-white/10 flex items-center justify-between z-20">
-             <button onClick={() => setCurrentStepIdx(prev => Math.max(0, prev - 1))} disabled={currentStepIdx === 0} className="px-6 py-3 text-slate-400 font-black uppercase text-xs disabled:opacity-0 transition-all flex items-center gap-1">
-               <span className="material-symbols-outlined text-sm">arrow_back</span> Өмнөх
-             </button>
+          <div className="p-6 border-t border-white/5 bg-black/20 flex justify-between items-center">
+             <button disabled={currentStepIdx === 0} onClick={() => setCurrentStepIdx(prev => prev - 1)} className="text-xs font-black uppercase text-slate-500 disabled:opacity-0">Буцах</button>
              {isTaskCompleted && (
-               <button onClick={handleNext} className="bg-primary text-slate-900 px-10 py-4 rounded-[20px] font-black text-sm uppercase shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
-                 <span>{isLastStep ? 'Дуусгах' : 'Дараах'}</span>
-                 <span className="material-symbols-outlined text-sm font-bold">arrow_forward</span>
+               <button onClick={() => {
+                 if (currentStepIdx < lesson.steps.length - 1) {
+                   setCurrentStepIdx(v => v + 1);
+                   setIsTaskCompleted(false);
+                 } else {
+                   onExit(true);
+                 }
+               }} className="px-8 py-3 bg-primary text-slate-900 rounded-xl font-black text-xs uppercase shadow-lg shadow-primary/20 animate-in zoom-in duration-300">
+                 {currentStepIdx === lesson.steps.length - 1 ? 'Дуусгах' : 'Дараах'}
                </button>
              )}
           </div>
         </section>
 
-        <section className={`flex flex-col bg-[#0d0d0d] transition-all duration-300 overflow-hidden relative flex-1`}>
+        {/* IDE Panel */}
+        <section className="flex-1 flex flex-col bg-black relative">
           {step.type === 'coding' ? (
             <>
-              <div className="flex items-center justify-between border-b border-white/5 bg-[#151515] px-6 py-2 shrink-0">
+              <div className="h-10 bg-[#1a1a1a] border-b border-white/5 flex items-center justify-between px-4">
                 <div className="flex items-center gap-2">
-                   <span className="size-2 rounded-full bg-yellow-500"></span>
-                   <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">IDE - Editor</span>
+                   <div className="flex gap-1 bg-black/40 p-1 rounded-lg">
+                     {['python', 'c', 'cpp'].map(l => (
+                       <button 
+                         key={l} 
+                         onClick={() => {
+                           setActiveLanguage(l as any);
+                           onLanguageChange(l as any); // Update global preferred language
+                         }} 
+                         className={`px-3 py-1 rounded-md text-[9px] font-black uppercase transition-all ${activeLanguage === l ? 'bg-primary text-slate-900' : 'text-slate-500'}`}
+                       >
+                         {l}
+                       </button>
+                     ))}
+                   </div>
                 </div>
-                <div className="text-[10px] font-black text-slate-500">main.{activeLanguage === 'python' ? 'py' : activeLanguage}</div>
+                <span className="text-[10px] font-mono text-slate-600">main.{activeLanguage === 'python' ? 'py' : activeLanguage}</span>
               </div>
               
-              <div className="flex-1 flex overflow-hidden font-mono text-lg bg-[#0d0d0d] relative prism-editor-container">
-                <div 
-                  ref={lineNumbersRef}
-                  className="w-12 bg-[#111] text-[#333] py-8 text-right pr-3 select-none overflow-hidden shrink-0 border-r border-white/5 z-10"
-                >
-                  {lineNumbers.map(n => <div key={n} className="h-[28px]">{n}</div>)}
+              <div className="flex-1 flex overflow-hidden prism-editor-container">
+                <div ref={lineNumbersRef} className="w-12 bg-[#0d0d0d] text-[#2a2a2a] py-8 text-right pr-4 select-none font-mono text-sm border-r border-white/5 overflow-hidden">
+                  {Array.from({length: 100}).map((_, i) => <div key={i} className="h-[25.6px] leading-[25.6px]">{i+1}</div>)}
                 </div>
                 <div className="flex-1 relative overflow-hidden">
-                  <pre 
-                    ref={highlightRef}
-                    aria-hidden="true"
-                    className="absolute inset-0 pointer-events-none custom-scrollbar overflow-auto"
-                  >
-                    <code 
-                      className={`language-${activeLanguage === 'python' ? 'python' : activeLanguage === 'c' ? 'c' : 'cpp'}`}
-                      dangerouslySetInnerHTML={{ __html: highlightedHtml + '\n' }} 
-                    />
+                  <pre ref={highlightRef} className="absolute inset-0 m-0 p-8 pointer-events-none custom-scrollbar overflow-auto leading-[25.6px]">
+                    <code className={`language-${activeLanguage}`} dangerouslySetInnerHTML={{ __html: highlightedHtml + '\n' }} />
                   </pre>
                   <textarea 
                     ref={editorRef}
                     value={userCode} 
                     onChange={(e) => setUserCode(e.target.value)} 
                     onScroll={handleScroll}
-                    className="absolute inset-0 bg-transparent text-transparent caret-white outline-none border-none resize-none custom-scrollbar leading-[28px] overflow-auto z-20" 
+                    onKeyDown={handleKeyDown}
+                    className="absolute inset-0 bg-transparent text-transparent caret-white outline-none border-none p-8 resize-none font-mono text-base leading-[25.6px] custom-scrollbar overflow-auto z-10" 
                     spellCheck={false} 
-                    autoFocus
                   />
                 </div>
               </div>
 
-              <div className="h-[35%] flex flex-col border-t border-white/5 bg-[#080808]">
+              {/* Bottom Console */}
+              <div className="h-[35%] bg-[#080808] border-t border-white/5 flex flex-col">
                 <div className="flex items-center justify-between px-6 py-2 bg-[#111] border-b border-white/5">
-                   <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm text-slate-500">terminal</span>
-                      <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Output</span>
+                   <div className="flex gap-4">
+                      <button onClick={() => setBottomTab('output')} className={`text-[10px] font-black uppercase transition-colors ${bottomTab === 'output' ? 'text-primary' : 'text-slate-500'}`}>Terminal</button>
+                      <button onClick={() => setBottomTab('debugger')} className={`text-[10px] font-black uppercase transition-colors ${bottomTab === 'debugger' ? 'text-primary' : 'text-slate-500'}`}>Memory</button>
                    </div>
-                   <button 
-                    onClick={handleRunCode} 
-                    disabled={isRunning} 
-                    className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isRunning ? 'bg-slate-800 text-slate-500' : 'bg-primary text-slate-900 shadow-lg'}`}
-                   >
-                     {isRunning ? 'Checking...' : 'Шалгах'}
-                   </button>
+                   <button onClick={runCode} disabled={isRunning} className="px-6 py-1.5 bg-primary text-slate-900 rounded-lg text-[10px] font-black uppercase shadow-lg disabled:opacity-50">Шалгах</button>
                 </div>
-                <div className="flex-1 p-6 font-mono text-sm overflow-y-auto custom-scrollbar bg-black/40">
-                  {terminalOutput.map((line, i) => (
-                      <div key={i} className={`mb-1.5 flex gap-3 ${
-                        line.type === 'err' ? 'text-red-400' : 
-                        line.type === 'success' ? 'text-primary' : 
-                        'text-white'
-                      }`}>
-                         <span className="opacity-20 select-none">{">>>"}</span>
-                         <span className="whitespace-pre-wrap">{line.text}</span>
+                <div className="flex-1 p-6 font-mono text-sm overflow-y-auto custom-scrollbar">
+                  {bottomTab === 'output' ? (
+                    terminalOutput.map((l, i) => (
+                      <div key={i} className={`mb-1.5 ${l.type === 'err' ? 'text-red-400' : l.type === 'success' ? 'text-primary' : l.type === 'hint' ? 'text-yellow-200 opacity-60 italic' : 'text-slate-300'}`}>
+                        {l.text}
                       </div>
-                  ))}
+                    ))
+                  ) : (
+                    <table className="w-full text-left text-xs opacity-80">
+                      <thead><tr className="text-slate-500 border-b border-white/5"><th className="pb-2">Variable</th><th className="pb-2">Value</th><th className="pb-2">Type</th></tr></thead>
+                      <tbody>
+                        {inspectedVars.map((v, i) => (
+                          <tr key={i} className="border-b border-white/5"><td className="py-2 text-primary">{v.name}</td><td className="py-2">{v.value}</td><td className="py-2 text-slate-500">{v.type}</td></tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-               <div className="size-48 rounded-[48px] bg-white/5 flex items-center justify-center mb-10 border-2 border-white/5 shadow-inner">
-                  <span className="material-symbols-outlined text-[100px] text-primary opacity-20 animate-pulse">code_off</span>
-               </div>
-               <h3 className="text-3xl font-black text-slate-500 mb-4 uppercase tracking-widest italic">Visual Study Mode</h3>
-               <p className="text-slate-600 max-w-sm font-medium leading-relaxed">Зүүн талын онолыг уншиж дуусаад, сорилыг бөглөн дараагийн алхам руу шилжээрэй.</p>
+            <div className="h-full flex flex-col items-center justify-center opacity-20">
+              <span className="material-symbols-outlined text-[120px]">auto_awesome</span>
+              <p className="font-black uppercase tracking-widest text-sm mt-4">Visual Lesson Mode</p>
             </div>
           )}
         </section>
 
+        {/* AI Tutor Panel */}
         {isAiOpen && (
-          <div className="w-[30%] bg-white dark:bg-slate-900 border-l-4 border-primary/20 flex flex-col animate-in slide-in-from-right duration-300 shadow-2xl">
-            <div className="p-5 border-b flex items-center justify-between bg-slate-50 dark:bg-slate-800/80">
-              <h4 className="font-black text-xs uppercase tracking-widest">AI Tutor Helper</h4>
-              <button onClick={() => setIsAiOpen(false)} className="material-symbols-outlined text-slate-400">close</button>
+          <div className="w-[350px] bg-slate-900 border-l border-white/5 flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="p-4 border-b border-white/5 flex justify-between items-center bg-black/20">
+              <h4 className="text-[10px] font-black uppercase text-slate-500">AI Tutor</h4>
+              <button onClick={() => setIsAiOpen(false)} className="material-symbols-outlined text-sm text-slate-500">close</button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-              {chatMessages.map((msg, idx) => (
-                <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`max-w-[90%] px-4 py-3 rounded-[20px] text-sm leading-relaxed ${msg.role === 'user' ? 'bg-primary text-slate-900 font-bold' : 'bg-slate-100 dark:bg-slate-800 border'}`}>
-                    {msg.text}
-                  </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+              {chatMessages.map((m, i) => (
+                <div key={i} className={`p-3 rounded-xl text-xs leading-relaxed ${m.role === 'user' ? 'bg-primary/10 text-primary self-end' : 'bg-white/5 text-slate-300'}`}>
+                  {m.text}
                 </div>
               ))}
-              <div ref={chatEndRef} />
+              {isAiLoading && <div className="text-[10px] text-slate-600 animate-pulse font-bold uppercase">Thinking...</div>}
             </div>
-            <form onSubmit={(e) => { e.preventDefault(); askAi(); }} className="p-4 border-t flex gap-2 bg-white dark:bg-slate-900">
-              <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Асуултаа бичээрэй..." className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-5 py-3 text-sm font-bold" />
-              <button type="submit" className="bg-primary text-slate-900 size-11 rounded-xl flex items-center justify-center shadow-lg"><span className="material-symbols-outlined">send</span></button>
+            <form onSubmit={(e) => {e.preventDefault(); askAi();}} className="p-4 border-t border-white/5 flex gap-2">
+              <input value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="Асуух..." className="flex-1 bg-white/5 border-none rounded-lg px-4 py-2 text-xs focus:ring-1 ring-primary" />
+              <button className="p-2 bg-primary text-slate-900 rounded-lg material-symbols-outlined text-sm">send</button>
             </form>
           </div>
         )}

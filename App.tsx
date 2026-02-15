@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-// Fix: Use namespaced imports for Firebase to resolve resolution issues in some environments
 import * as firebaseApp from "firebase/app";
 import * as firestore from "firebase/firestore";
 import * as firebaseAuth from "firebase/auth";
@@ -14,11 +13,11 @@ import ProblemSolvingView from './views/ProblemSolvingView';
 import QuizView from './views/QuizView';
 import GameView from './views/GameView';
 import BadgesView from './views/BadgesView';
-import { LessonStatus, Module, Badge } from './types';
+import { LessonStatus, Module, Badge, UserProfile, UserProgress } from './types';
+import { FirebaseService } from './services/FirebaseService';
 import { PROBLEMS } from './data/problems';
 import { PYTHON_QUIZ, C_QUIZ } from './data/quizzes';
 
-// --- Firebase Configuration ---
 const firebaseConfig = {
   apiKey: "AIzaSyBZ3yL48P81whM5OTJbsoN3YgM1mHRRXxQ",
   authDomain: "fluttershop-4c9e0.firebaseapp.com",
@@ -26,283 +25,339 @@ const firebaseConfig = {
   storageBucket: "fluttershop-4c9e0.firebasestorage.app",
   messagingSenderId: "976865178982",
   appId: "1:976865178982:web:f1022d04f08ef9dd1504a7",
-  measurementId: "G-RZ5KNH6556"
 };
 
-// Initialize Firebase
-const app = firebaseApp.initializeApp(firebaseConfig);
-const db = firestore.getFirestore(app);
-const auth = firebaseAuth.getAuth(app);
+let db: firestore.Firestore;
+let auth: firebaseAuth.Auth;
 
-const INITIAL_MODULES: Module[] = [
-  { id: 'm1', number: 1, title: 'LEVEL 1: Эхлэл', description: 'Код гэж юу вэ? Хамгийн анхны тушаалаа компьютерт өгье.', status: LessonStatus.IN_PROGRESS, progressText: '0/2 Алхам', icon: 'campaign', badgeId: 'b1' },
-  { id: 'm2', number: 2, title: 'LEVEL 1: Хувьсагч', description: 'Мэдээллийг хэрхэн хайрцаглаж хадгалах вэ?', status: LessonStatus.LOCKED, icon: 'inventory_2', badgeId: 'b2' },
-  { id: 'm3', number: 3, title: 'LEVEL 1: IF/ELSE', description: 'Компьютер хэрхэн шийдвэр гаргадаг вэ? Logic сурцгаая.', status: LessonStatus.LOCKED, icon: 'alt_route', badgeId: 'b3' },
-  { id: 'm4', number: 4, title: 'LEVEL 2: Давталт', description: 'Уйтгартай ажлыг 100 удаа хийх хэрэггүй боллоо.', status: LessonStatus.LOCKED, icon: 'rebase_edit' },
-  { id: 'm5', number: 5, title: 'LEVEL 3: Массив', description: 'Олон өгөгдлийг нэг дор хадгалж сурна.', status: LessonStatus.LOCKED, icon: 'database' },
-  { id: 'm6', number: 6, title: 'LEVEL 4: Sorting', description: 'Bubble Sort болон бусад эрэмбэлэх аргууд.', status: LessonStatus.LOCKED, lockedType: 'ultimate', icon: 'format_list_numbered', badgeId: 'b4' }
+try {
+  const app = firebaseApp.initializeApp(firebaseConfig);
+  db = firestore.getFirestore(app);
+  auth = firebaseAuth.getAuth(app);
+} catch (e) {
+  console.warn("Firebase initialization failed, falling back to local mode.");
+}
+
+const MODULE_DEFINITIONS: Module[] = [
+  { id: 'm1', number: 1, title: 'LEVEL 1: Эхлэл', description: 'Код гэж юу вэ? Хамгийн анхны тушаал.', isPremium: false, icon: 'campaign', badgeId: 'b1' },
+  { id: 'm2', number: 2, title: 'LEVEL 1: Хувьсагч', description: 'Мэдээллийг хайрцаглаж хадгалах нь.', isPremium: false, icon: 'inventory_2', badgeId: 'b2' },
+  { id: 'm6', number: 3, title: 'LEVEL 4: OOP', description: 'Класс ба Объект. Программчлалын шинэ ертөнц.', isPremium: true, icon: 'category', badgeId: 'b3' },
+  { id: 'm9', number: 4, title: 'LEVEL 6: Data Structures', description: 'Linked Lists болон Pointer-ийн ид шид.', isPremium: true, icon: 'link', badgeId: 'b4' }
 ];
 
 const INITIAL_BADGES: Badge[] = [
-  { id: 'b1', title: 'Анхны алхам', description: 'Эхний хичээлийг амжилттай дуусгав.', icon: 'rocket_launch', color: 'bg-blue-500', isEarned: false },
-  { id: 'b2', title: 'Хайрцаглагч', description: 'Хувьсагчийн тухай хичээлийг дуусгав.', icon: 'inventory_2', color: 'bg-yellow-500', isEarned: false },
-  { id: 'b3', title: 'Логикч', description: 'Шийдвэр гаргах логикийг сурав.', icon: 'alt_route', color: 'bg-purple-500', isEarned: false },
-  { id: 'b4', title: 'Эрэмбэлэгч', description: 'Bubble Sort-ыг бүрэн эзэмшив.', icon: 'format_list_numbered', color: 'bg-primary', isEarned: false },
-  { id: 's1', title: 'Тууштай сурагч', description: '3 хоног дараалан суралцав.', icon: 'local_fire_department', color: 'bg-orange-500', isEarned: false },
-  { id: 'q1', title: 'Python Master', description: 'Python-ий 30 асуултанд 100% зөв хариулж мастер болов.', icon: 'psychology', color: 'bg-red-600', isEarned: false },
-  { id: 'raid_knight', title: 'Python Knight', description: 'GIL Raid-ийг Knight ангилалаар ялав.', icon: 'shield', color: 'bg-blue-600', isEarned: false },
-  { id: 'raid_mage', title: 'Script Mage', description: 'GIL Raid-ийг Mage ангилалаар ялав.', icon: 'magic_button', color: 'bg-purple-600', isEarned: false },
-  { id: 'raid_rogue', title: 'Syntax Rogue', description: 'GIL Raid-ийг Rogue ангилалаар ялав.', icon: 'bolt', color: 'bg-yellow-600', isEarned: false },
-  { id: 'raid_techno', title: 'AI Techno', description: 'GIL Raid-ийг Techno ангилалаар ялав.', icon: 'memory', color: 'bg-green-600', isEarned: false },
+  { id: 'b1', title: 'Анхны алхам', description: 'Эхний хичээлийг дуусгав.', icon: 'rocket_launch', color: 'bg-blue-500', isEarned: false },
+  { id: 'b2', title: 'Хайрцаглагч', description: 'Хувьсагчийн тухай сурав.', icon: 'inventory_2', color: 'bg-yellow-500', isEarned: false },
+  { id: 'b3', title: 'Класс Мастер', description: 'OOP үндсийг сурав.', icon: 'category', color: 'bg-purple-500', isEarned: false },
+  { id: 'b4', title: 'Холбогч', description: 'Linked List-ыг эзэмшив.', icon: 'link', color: 'bg-primary', isEarned: false },
+  { id: 'b5', title: 'Асуудал шийдэгч', description: 'Анхны бодлогоо амжилттай бодов.', icon: 'task_alt', color: 'bg-emerald-500', isEarned: false },
+  { id: 'b6', title: 'Кодны дайчин', description: '10 бодлого амжилттай бодов.', icon: 'military_tech', color: 'bg-orange-500', isEarned: false },
+  { id: 'b7', title: 'Алгоритмч', description: '50 бодлого амжилттай бодов.', icon: 'precision_manufacturing', color: 'bg-rose-500', isEarned: false },
+  { id: 'b8', title: 'Аренагийн баатар', description: 'Game Arena-д анхны ялалтаа авав.', icon: 'swords', color: 'bg-indigo-500', isEarned: false },
+  { id: 'b9', title: 'Системийн Архитектор', description: 'Системийн боссыг ялж чадлаа.', icon: 'terminal', color: 'bg-slate-800', isEarned: false },
+  { id: 'b10', title: 'Туршигч', description: 'Sandbox ашиглан код туршиж үзэв.', icon: 'science', color: 'bg-cyan-500', isEarned: false },
+  { id: 'b11', title: '7 Хоногийн Стрик', description: 'Долоо хоног тасралтгүй суралцав.', icon: 'local_fire_department', color: 'bg-orange-600', isEarned: false },
+  { id: 'b12', title: 'Сарны кодлогч', description: '30 хоног тасралтгүй суралцав.', icon: 'calendar_month', color: 'bg-blue-800', isEarned: false },
+  { id: 'b13', title: 'Онц сурлагатан', description: 'Тестээс 100% оноо авав.', icon: 'school', color: 'bg-amber-400', isEarned: false },
+  { id: 'b14', title: 'Python Мэргэжилтэн', description: 'Python замыг бүрэн дуусгав.', icon: 'language', color: 'bg-sky-600', isEarned: false },
+  { id: 'b15', title: 'C++ Инженер', description: 'C++ замыг бүрэн дуусгав.', icon: 'settings_ethernet', color: 'bg-blue-400', isEarned: false },
+  { id: 'b16', title: 'XP Баян', description: 'Нийт 5000-аас дээш XP цуглуулав.', icon: 'diamond', color: 'bg-violet-600', isEarned: false },
 ];
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<firebaseAuth.User | null>(null);
+  const [user, setUser] = useState<{ uid: string; email: string | null } | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [progress, setProgress] = useState<UserProgress[]>([]);
+  const [solvedProblemIds, setSolvedProblemIds] = useState<string[]>([]);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [authError, setAuthError] = useState('');
-
-  const [modules, setModules] = useState<Module[]>(INITIAL_MODULES);
-  const [badges, setBadges] = useState<Badge[]>(INITIAL_BADGES);
-  const [solvedProblems, setSolvedProblems] = useState<string[]>([]);
-  const [streak, setStreak] = useState(1);
+  const [isLocalSession, setIsLocalSession] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  
   const [currentView, setCurrentView] = useState<'dashboard' | 'lesson' | 'sandbox' | 'badges' | 'problems' | 'solving-problem' | 'quiz' | 'game'>('dashboard');
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
   const [preferredLanguage, setPreferredLanguage] = useState<'python' | 'c' | 'cpp'>('python');
 
   useEffect(() => {
-    const unsubscribe = firebaseAuth.onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const localUser = localStorage.getItem('cq_local_user');
+    if (localUser) {
+      const parsed = JSON.parse(localUser);
+      setUser(parsed);
+      setIsLocalSession(true);
+      setIsAuthLoading(false);
+      return;
+    }
+
+    if (!auth) {
+      setIsAuthLoading(false);
+      return;
+    }
+
+    return firebaseAuth.onAuthStateChanged(auth, (u) => {
+      if (u) {
+        setUser({ uid: u.uid, email: u.email });
+        setIsLocalSession(false);
+      } else {
+        setUser(null);
+      }
       setIsAuthLoading(false);
     });
-    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
     if (user) {
-      const userDocRef = firestore.doc(db, "users", user.uid);
-      
-      const unsubscribe = firestore.onSnapshot(userDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data.modules) setModules(data.modules);
-          if (data.badges) {
-            // Merge existing earned badges into the initial list to ensure new badges show up for old users
-            const mergedBadges = INITIAL_BADGES.map(ib => {
-               const saved = data.badges.find((b: any) => b.id === ib.id);
-               return saved ? { ...ib, isEarned: saved.isEarned } : ib;
-            });
-            setBadges(mergedBadges);
+      const syncData = async () => {
+        try {
+          let p: UserProfile | null = null;
+          let pr: UserProgress[] = [];
+          
+          if (!isLocalSession && db) {
+            p = await FirebaseService.getUserProfile(db, user.uid);
+            pr = await FirebaseService.getUserProgress(db, user.uid);
+            const solvedSnap = await firestore.getDocs(firestore.collection(db, "users", user.uid, "solvedProblems"));
+            const sIds = solvedSnap.docs.map(doc => doc.id);
+            setSolvedProblemIds(sIds);
+          } else {
+            const savedProfile = localStorage.getItem(`cq_profile_${user.uid}`);
+            const savedProgress = localStorage.getItem(`cq_progress_${user.uid}`);
+            const savedSolved = localStorage.getItem(`cq_solved_${user.uid}`);
+            p = savedProfile ? JSON.parse(savedProfile) : null;
+            pr = savedProgress ? JSON.parse(savedProgress) : [];
+            setSolvedProblemIds(savedSolved ? JSON.parse(savedSolved) : []);
           }
-          if (data.solvedProblems) setSolvedProblems(data.solvedProblems);
-          if (data.streak) setStreak(data.streak);
-        } else {
-          saveToFirebase(user.uid, INITIAL_MODULES, INITIAL_BADGES, [], 1);
+
+          if (p) {
+            setProfile(p);
+            setProgress(pr);
+          } else {
+            const newProfile: UserProfile = {
+              uid: user.uid,
+              email: user.email || "guest@codequest.local",
+              role: 'student',
+              subscriptionStatus: 'pro',
+              xp: 0,
+              streak: 1,
+              lastActive: new Date().toISOString()
+            };
+            
+            if (!isLocalSession && db) {
+              await firestore.setDoc(firestore.doc(db, "users", user.uid), newProfile);
+            } else {
+              localStorage.setItem(`cq_profile_${user.uid}`, JSON.stringify(newProfile));
+            }
+            setProfile(newProfile);
+          }
+        } catch (err) {
+          console.error("Sync error:", err);
         }
-      }, (error) => {
-        console.warn("Firestore sync error or permission denied. Operating in local mode.", error);
-      });
-      
-      return () => unsubscribe();
+      };
+      syncData();
     }
-  }, [user]);
+  }, [user, isLocalSession]);
 
-  const saveToFirebase = async (uid: string, currentModules: Module[], currentBadges: Badge[], currentSolved: string[], currentStreak: number) => {
-    setIsSyncing(true);
-    try {
-      await firestore.setDoc(firestore.doc(db, "users", uid), {
-        email: user?.email,
-        modules: currentModules,
-        badges: currentBadges,
-        solvedProblems: currentSolved,
-        streak: currentStreak,
-        lastActive: new Date().toISOString()
-      }, { merge: true });
-    } catch (e) {
-      console.warn("Firebase save error (possibly permission denied).", e);
-    }
-    setIsSyncing(false);
-  };
-
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAuthError('');
-    if (!email || !password) {
-      setAuthError("И-мэйл болон нууц үгээ оруулна уу.");
-      return;
-    }
+    if (!authEmail || !authPassword) return;
+    setIsAuthLoading(true);
+    setAuthError(null);
 
     try {
       if (authMode === 'login') {
-        await firebaseAuth.signInWithEmailAndPassword(auth, email, password);
+        await firebaseAuth.signInWithEmailAndPassword(auth, authEmail, authPassword);
       } else {
-        await firebaseAuth.createUserWithEmailAndPassword(auth, email, password);
+        await firebaseAuth.createUserWithEmailAndPassword(auth, authEmail, authPassword);
       }
-    } catch (error: any) {
-      console.error("Auth error", error);
-      let msg = "Алдаа гарлаа.";
-      if (error.code === 'auth/invalid-credential') {
-        msg = "И-мэйл эсвэл нууц үг буруу байна.";
-      } else if (error.code === 'auth/email-already-in-use') {
-        msg = "Энэ и-мэйл хаяг аль хэдийн бүртгэлтэй байна. Нэвтрэх хэсгийг ашиглана уу.";
+    } catch (err: any) {
+      switch (err.code) {
+        case 'auth/invalid-credential': setAuthError('Нэвтрэх нэр эсвэл нууц үг буруу байна.'); break;
+        case 'auth/email-already-in-use': setAuthError('Энэ имэйл хаяг аль хэдийн бүртгэгдсэн байна.'); break;
+        case 'auth/weak-password': setAuthError('Нууц үг хэтэрхий богино байна.'); break;
+        default: setAuthError('Алдаа гарлаа. Дахин оролдоно уу.');
       }
-      setAuthError(msg);
+    } finally {
+      setIsAuthLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    await firebaseAuth.signOut(auth);
-    setCurrentView('dashboard');
-  };
-
-  const earnBadge = (badgeId: string) => {
-    const alreadyEarned = badges.find(b => b.id === badgeId)?.isEarned;
-    if (alreadyEarned) return;
-
-    const newBadges = badges.map(b => b.id === badgeId ? { ...b, isEarned: true } : b);
-    setBadges(newBadges);
-    if (user) saveToFirebase(user.uid, modules, newBadges, solvedProblems, streak);
-  };
-
-  const handleSolveProblem = (pid: string) => {
-    if (!solvedProblems.includes(pid)) {
-      const newSolved = [...solvedProblems, pid];
-      setSolvedProblems(newSolved);
-      if (user) saveToFirebase(user.uid, modules, badges, newSolved, streak);
+  const handleGuestLogin = async () => {
+    setIsAuthLoading(true);
+    try {
+      await firebaseAuth.signInAnonymously(auth);
+    } catch (err: any) {
+      const guestId = `guest_${Math.random().toString(36).substr(2, 9)}`;
+      const guestUser = { uid: guestId, email: "local.hero@quest.com" };
+      localStorage.setItem('cq_local_user', JSON.stringify(guestUser));
+      setUser(guestUser);
+      setIsLocalSession(true);
+    } finally {
+      setIsAuthLoading(false);
     }
   };
 
-  const handleExitLesson = (completed?: boolean) => {
-    if (completed && selectedModuleId && user) {
-      const newModules = modules.map(m => {
-        if (m.id === selectedModuleId) return { ...m, status: LessonStatus.COMPLETED };
-        const finishedIdx = modules.findIndex(mod => mod.id === selectedModuleId);
-        const nextIdx = finishedIdx + 1;
-        if (modules[nextIdx] && modules[nextIdx].id === m.id && m.status === LessonStatus.LOCKED) {
-            return { ...m, status: LessonStatus.IN_PROGRESS };
-        }
-        return m;
-      });
-      setModules(newModules);
-      saveToFirebase(user.uid, newModules, badges, solvedProblems, streak);
+  const handleLogout = () => {
+    if (isLocalSession) {
+      localStorage.removeItem('cq_local_user');
+      setUser(null);
+    } else if (auth) {
+      firebaseAuth.signOut(auth);
+    }
+  };
+
+  const handleStartLesson = (mid: string) => {
+    setSelectedModuleId(mid);
+    setCurrentView('lesson');
+  };
+
+  const handleLessonExit = async (completed?: boolean) => {
+    if (completed && selectedModuleId && user && profile) {
+      const xpGain = 150;
+      if (!isLocalSession && db) {
+        await FirebaseService.updateProgress(db, user.uid, selectedModuleId, LessonStatus.COMPLETED, xpGain, profile.email);
+      } else {
+        const newProgress = [...progress.filter(p => p.moduleId !== selectedModuleId), {
+          moduleId: selectedModuleId,
+          status: LessonStatus.COMPLETED,
+          completedSteps: 10,
+          lastAttempted: new Date().toISOString()
+        }];
+        const newProfile = { ...profile, xp: profile.xp + xpGain };
+        localStorage.setItem(`cq_progress_${user.uid}`, JSON.stringify(newProgress));
+        localStorage.setItem(`cq_profile_${user.uid}`, JSON.stringify(newProfile));
+        setProgress(newProgress);
+        setProfile(newProfile);
+      }
     }
     setCurrentView('dashboard');
     setSelectedModuleId(null);
   };
 
-  const handleQuizComplete = (score: number, total: number) => {
-    if (score === total) {
-      earnBadge('q1');
+  const handleProblemSelect = (pid: string) => {
+    setSelectedProblemId(pid);
+    setCurrentView('solving-problem');
+  };
+
+  const handleProblemSolved = async (pid: string) => {
+    if (user && profile) {
+      if (!isLocalSession && db) {
+        await FirebaseService.recordSubmission(db, user.uid, pid, "// SOLVED", preferredLanguage, true);
+      } else {
+        const newSolved = [...new Set([...solvedProblemIds, pid])];
+        setSolvedProblemIds(newSolved);
+        localStorage.setItem(`cq_solved_${user.uid}`, JSON.stringify(newSolved));
+        const newProfile = { ...profile, xp: profile.xp + 300 };
+        localStorage.setItem(`cq_profile_${user.uid}`, JSON.stringify(newProfile));
+        setProfile(newProfile);
+      }
     }
   };
 
-  if (isAuthLoading) {
-    return <div className="h-screen w-full flex items-center justify-center bg-background-dark text-primary font-black uppercase tracking-widest animate-pulse">Initializing...</div>;
-  }
+  const handleQuizComplete = async (score: number, total: number) => {
+    if (user && profile) {
+      const isPerfect = score === total;
+      const xpGain = Math.round((score / total) * 500);
+      if (!isLocalSession && db) {
+        await FirebaseService.updateProgress(db, user.uid, 'quiz_attempt', LessonStatus.COMPLETED, xpGain, profile.email);
+      } else {
+        const newProfile = { 
+          ...profile, 
+          xp: profile.xp + xpGain,
+          // Perfect score tracking for badge b13
+          lastQuizPerfect: isPerfect 
+        };
+        localStorage.setItem(`cq_profile_${user.uid}`, JSON.stringify(newProfile));
+        setProfile(newProfile);
+      }
+    }
+  };
 
-  if (!user) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-background-dark font-display p-6 overflow-hidden relative text-center">
-        <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[48px] shadow-2xl border-4 border-primary/20 max-w-md w-full relative z-10">
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tighter">CodeQuest</h1>
-          <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-8">
-            {authMode === 'login' ? 'Тавтай морилно уу' : 'Шинэ аялал эхлүүлцгээе'}
-          </p>
-          
-          <form onSubmit={handleAuth} className="space-y-4">
-            {authError && <div className="bg-red-500/10 text-red-500 p-4 rounded-2xl text-xs font-bold">{authError}</div>}
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800 border-2 rounded-2xl px-6 py-4 font-bold outline-none border-slate-100 dark:border-slate-800 focus:border-primary transition-colors"
-              placeholder="Email"
-              required
-            />
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800 border-2 rounded-2xl px-6 py-4 font-bold outline-none border-slate-100 dark:border-slate-800 focus:border-primary transition-colors"
-              placeholder="Password"
-              required
-            />
-            <button type="submit" className="w-full bg-primary text-slate-900 py-4 rounded-2xl font-black text-lg uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20">
-              {authMode === 'login' ? 'Нэвтрэх' : 'Бүртгүүлэх'}
-            </button>
-          </form>
+  const earnedBadges = INITIAL_BADGES.map(b => {
+    let isEarned = false;
+    
+    // Logic for lesson badges (b1, b2, b3, b4)
+    if (['b1', 'b2', 'b3', 'b4'].includes(b.id)) {
+      isEarned = progress.some(p => p.status === LessonStatus.COMPLETED && MODULE_DEFINITIONS.find(m => m.id === p.moduleId)?.badgeId === b.id);
+    }
+    // Logic for problem solving badges
+    else if (b.id === 'b5') isEarned = solvedProblemIds.length >= 1;
+    else if (b.id === 'b6') isEarned = solvedProblemIds.length >= 10;
+    else if (b.id === 'b7') isEarned = solvedProblemIds.length >= 50;
+    // Logic for XP and Streaks
+    else if (b.id === 'b11') isEarned = (profile?.streak || 0) >= 7;
+    else if (b.id === 'b12') isEarned = (profile?.streak || 0) >= 30;
+    else if (b.id === 'b16') isEarned = (profile?.xp || 0) >= 5000;
+    // Quiz perfect score
+    else if (b.id === 'b13') isEarned = (profile as any)?.lastQuizPerfect === true;
 
-          <div className="mt-8">
-             <button onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="text-primary font-black uppercase tracking-widest text-xs hover:underline">
-                {authMode === 'login' ? 'Шинээр бүртгүүлэх' : 'Хуучин хаягаар нэвтрэх'}
-             </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const activeProblem = selectedProblemId ? PROBLEMS.find(p => p.id === selectedProblemId) : null;
-  const activeQuiz = preferredLanguage === 'python' ? PYTHON_QUIZ : C_QUIZ;
+    return { ...b, isEarned };
+  });
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
-      {currentView !== 'lesson' && currentView !== 'solving-problem' && currentView !== 'quiz' && (
+    <div className="flex h-screen overflow-hidden bg-background-dark font-display text-slate-100">
+      {currentView !== 'lesson' && currentView !== 'solving-problem' && (
         <Sidebar 
           activeItem={currentView} 
-          streak={streak} 
-          userName={user.displayName || user.email?.split('@')[0] || "Hero"}
-          isSyncing={isSyncing}
+          streak={profile?.streak || 0} 
+          userName={profile?.email.split('@')[0] || "Hero"}
+          isSyncing={!isLocalSession}
           onNavChange={(v) => setCurrentView(v as any)} 
           onLogout={handleLogout}
         />
       )}
       
       <main className="flex-1 flex flex-col overflow-hidden">
-        {currentView === 'dashboard' ? (
+        {currentView === 'dashboard' && (
           <Dashboard 
-            modules={modules} 
-            badges={badges}
-            onStartLesson={(id) => { setSelectedModuleId(id); setCurrentView('lesson'); }} 
+            modules={MODULE_DEFINITIONS.map(m => ({...m, status: progress.find(p => p.moduleId === m.id)?.status || LessonStatus.LOCKED}))} 
+            badges={earnedBadges}
+            onStartLesson={handleStartLesson} 
             activePath={preferredLanguage}
             onPathChange={setPreferredLanguage}
             onViewBadges={() => setCurrentView('badges')}
+            userXP={profile?.xp}
           />
-        ) : currentView === 'lesson' ? (
+        )}
+        {currentView === 'lesson' && (
           <LessonView 
-            onExit={handleExitLesson} 
+            onExit={handleLessonExit} 
             moduleId={selectedModuleId} 
             initialLanguage={preferredLanguage}
             onLanguageChange={setPreferredLanguage}
           />
-        ) : currentView === 'problems' ? (
-          <ProblemBank 
-            onSelectProblem={(id) => { setSelectedProblemId(id); setCurrentView('solving-problem'); }} 
-            solvedProblems={solvedProblems} 
-          />
-        ) : currentView === 'solving-problem' && activeProblem ? (
-          <ProblemSolvingView 
-            problem={activeProblem} 
-            onBack={() => setCurrentView('problems')}
-            onSolve={handleSolveProblem}
-          />
-        ) : currentView === 'quiz' ? (
-          <QuizView 
-            user={user.uid}
-            quizData={activeQuiz}
-            onBack={() => setCurrentView('dashboard')} 
-            onComplete={handleQuizComplete}
-          />
-        ) : currentView === 'game' ? (
-          <GameView user={user} onBack={() => setCurrentView('dashboard')} onEarnBadge={earnBadge} />
-        ) : currentView === 'badges' ? (
-          <BadgesView badges={badges} onBack={() => setCurrentView('dashboard')} />
-        ) : (
+        )}
+        {currentView === 'sandbox' && (
           <Sandbox onBack={() => setCurrentView('dashboard')} />
+        )}
+        {currentView === 'problems' && (
+          <ProblemBank onSelectProblem={handleProblemSelect} solvedProblems={solvedProblemIds} />
+        )}
+        {currentView === 'solving-problem' && PROBLEMS.find(p => p.id === selectedProblemId) && (
+          <ProblemSolvingView 
+            problem={PROBLEMS.find(p => p.id === selectedProblemId)!} 
+            onBack={() => setCurrentView('problems')} 
+            onSolve={handleProblemSolved} 
+          />
+        )}
+        {currentView === 'quiz' && (
+          <QuizView 
+            user={user.uid} 
+            quizData={preferredLanguage === 'python' ? PYTHON_QUIZ : C_QUIZ} 
+            onBack={() => setCurrentView('dashboard')} 
+            onComplete={handleQuizComplete} 
+          />
+        )}
+        {currentView === 'game' && (
+          <GameView 
+            user={user as any} 
+            onBack={() => setCurrentView('dashboard')} 
+            onEarnBadge={(bid) => console.log("Earned badge:", bid)} 
+            initialLanguage={preferredLanguage === 'c' ? 'cpp' : preferredLanguage}
+          />
+        )}
+        {currentView === 'badges' && (
+          <BadgesView badges={earnedBadges} onBack={() => setCurrentView('dashboard')} />
         )}
       </main>
     </div>

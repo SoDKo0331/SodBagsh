@@ -5,7 +5,27 @@ export enum LessonStatus {
   LOCKED = 'locked'
 }
 
+export type UserRole = 'student' | 'admin' | 'tutor';
+export type SubscriptionStatus = 'free' | 'pro' | 'enterprise';
 export type Difficulty = 'easy' | 'medium' | 'hard';
+
+export interface UserProfile {
+  uid: string;
+  email: string;
+  role: UserRole; // Enforces role-based access control
+  subscriptionStatus: SubscriptionStatus;
+  xp: number;
+  streak: number;
+  lastActive: string;
+  stripeCustomerId?: string;
+}
+
+export interface UserProgress {
+  moduleId: string;
+  status: LessonStatus;
+  completedSteps: number;
+  lastAttempted: string;
+}
 
 export interface Problem {
   id: string;
@@ -37,17 +57,9 @@ export interface Module {
   number: number;
   title: string;
   description: string;
-  status: LessonStatus;
-  progressText?: string;
+  isPremium: boolean;
   icon: string;
-  lockedType?: 'default' | 'ultimate';
   badgeId?: string;
-}
-
-export interface QuizOption {
-  id: string;
-  text: string;
-  isCorrect: boolean;
 }
 
 export interface CodingTask {
@@ -58,25 +70,22 @@ export interface CodingTask {
   fileName: string;
 }
 
-export interface MiniGameData {
-  type: 'sorter' | 'matcher';
-  question: string;
-  items: { id: string; text: string; order?: number }[];
-  correctOrder?: string[]; // IDs in correct order
-}
-
 export interface StepContent {
   id: number;
   type: 'concept' | 'quiz' | 'coding' | 'minigame';
   title: string;
-  subtitle?: string;
   body: string;
-  minigame?: MiniGameData;
   quiz?: {
     question: string;
-    options: QuizOption[];
+    options: { id: string; text: string; isCorrect: boolean }[];
   };
   codingTasks?: CodingTask[];
+  minigame?: {
+    type: string;
+    question: string;
+    items: { id: string; text: string }[];
+    correctOrder: string[];
+  };
 }
 
 export interface FullLesson {

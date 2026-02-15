@@ -28,10 +28,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, streak, userName, isSynci
             <span className="material-symbols-outlined text-3xl font-black">rocket_launch</span>
           </div>
           <div>
-            <h1 className="font-display font-black text-2xl leading-none tracking-tight">CodeQuest</h1>
+            <h1 className="font-display font-black text-2xl leading-none tracking-tight text-slate-900 dark:text-white">CodeQuest</h1>
             <div className="flex items-center gap-1.5 mt-1">
-               <span className={`size-2 rounded-full ${isSyncing ? 'bg-primary animate-pulse' : 'bg-primary'}`}></span>
-               <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">Cloud Synced</p>
+               <span className={`size-2 rounded-full ${isSyncing ? 'bg-primary animate-pulse' : 'bg-orange-500'}`}></span>
+               <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${isSyncing ? 'text-primary' : 'text-orange-500'}`}>
+                 {isSyncing ? 'Cloud Synced' : 'Local Session'}
+               </p>
             </div>
           </div>
         </div>
@@ -44,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, streak, userName, isSynci
               className={`flex w-full items-center gap-4 px-5 py-4 rounded-2xl transition-all font-black text-sm uppercase tracking-widest ${
                 activeItem === item.id
                   ? 'bg-primary text-slate-900 shadow-lg shadow-primary/20'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <span className="material-symbols-outlined font-bold">{item.icon}</span>
@@ -72,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, streak, userName, isSynci
             style={{ backgroundImage: `url('https://api.dicebear.com/7.x/pixel-art/svg?seed=${userName}')` }}
           ></div>
           <div className="flex flex-col flex-1 overflow-hidden">
-            <span className="text-lg font-black leading-none truncate">{userName}</span>
+            <span className="text-lg font-black leading-none truncate text-slate-900 dark:text-white">{userName}</span>
             <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest mt-1">Level 1 Hero</span>
           </div>
           <button 

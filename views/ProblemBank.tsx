@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { PROBLEMS } from '../data/problems';
 import { Problem, Difficulty } from '../types';
@@ -18,16 +17,16 @@ const ProblemBank: React.FC<ProblemBankProps> = ({ onSelectProblem, solvedProble
   const getDifficultyColor = (diff: Difficulty) => {
     switch (diff) {
       case 'easy': return 'text-primary bg-primary/10';
-      case 'medium': return 'text-yellow-500 bg-yellow-500/10';
-      case 'hard': return 'text-red-500 bg-red-500/10';
+      case 'medium': return 'text-yellow-600 bg-yellow-500/10';
+      case 'hard': return 'text-red-600 bg-red-500/10';
     }
   };
 
   return (
     <div className="flex-1 overflow-y-auto p-10 bg-[#f8faf9] dark:bg-[#0d1a13]">
       <header className="mb-12">
-        <h1 className="text-4xl font-black tracking-tighter mb-4">Бодлогын сан 🧩</h1>
-        <p className="text-slate-500 font-bold uppercase tracking-widest">Өөрийгөө сорьж, кодын ур чадвараа ахиул.</p>
+        <h1 className="text-4xl font-black tracking-tighter mb-4 text-slate-950 dark:text-white">Бодлогын сан 🧩</h1>
+        <p className="text-slate-950 dark:text-slate-400 font-bold uppercase tracking-widest text-sm">Өөрийгөө сорьж, кодын ур чадвараа ахиул.</p>
       </header>
 
       <div className="flex gap-4 mb-10">
@@ -38,7 +37,7 @@ const ProblemBank: React.FC<ProblemBankProps> = ({ onSelectProblem, solvedProble
             className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
               filter === f 
                 ? 'bg-primary text-slate-900 shadow-lg' 
-                : 'bg-white dark:bg-slate-900 text-slate-400 hover:text-slate-600 border border-slate-100 dark:border-slate-800'
+                : 'bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-400 hover:text-slate-800 border border-slate-200 dark:border-slate-800 shadow-sm'
             }`}
           >
             {f === 'all' ? 'Бүгд' : f}
@@ -62,12 +61,12 @@ const ProblemBank: React.FC<ProblemBankProps> = ({ onSelectProblem, solvedProble
               )}
             </div>
             
-            <h3 className="text-xl font-black mb-3 group-hover:text-primary transition-colors">{problem.title}</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-8 line-clamp-2">{problem.description}</p>
+            <h3 className="text-xl font-black mb-3 text-slate-950 dark:text-white group-hover:text-primary transition-colors">{problem.title}</h3>
+            <p className="text-sm text-slate-950 dark:text-slate-400 font-medium mb-8 line-clamp-2">{problem.description}</p>
             
             <div className="mt-auto flex items-center justify-between">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{problem.category}</span>
-              <button className="bg-slate-100 dark:bg-slate-800 p-2 rounded-xl text-slate-400 group-hover:bg-primary group-hover:text-slate-900 transition-all">
+              <span className="text-[10px] font-black text-slate-950 uppercase tracking-widest">{problem.category}</span>
+              <button className="bg-slate-50 dark:bg-slate-800 p-2 rounded-xl text-slate-400 group-hover:bg-primary group-hover:text-slate-900 transition-all">
                 <span className="material-symbols-outlined">arrow_forward</span>
               </button>
             </div>

@@ -3,165 +3,145 @@ import React from 'react';
 import { Module, LessonStatus, Badge } from '../types';
 
 interface DashboardProps {
-  modules: Module[];
+  modules: (Module & { status: LessonStatus })[];
   badges: Badge[];
   onStartLesson: (moduleId: string) => void;
   activePath: 'python' | 'c' | 'cpp';
   onPathChange: (path: 'python' | 'c' | 'cpp') => void;
   onViewBadges: () => void;
+  userXP?: number;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ modules, badges, onStartLesson, activePath, onPathChange, onViewBadges }) => {
+const Dashboard: React.FC<DashboardProps> = ({ modules, badges, onStartLesson, activePath, onPathChange, onViewBadges, userXP = 0 }) => {
   const completedCount = modules.filter(m => m.status === LessonStatus.COMPLETED).length;
-  const progressPercent = Math.round((completedCount / modules.length) * 100);
-  const earnedBadgesCount = badges.filter(b => b.isEarned).length;
-
-  const handleContinue = () => {
-    // Хамгийн эхний "In Progress" модулийг олно
-    const currentModule = modules.find(m => m.status === LessonStatus.IN_PROGRESS) || modules[0];
-    onStartLesson(currentModule.id);
-  };
+  const progressPercent = Math.round((completedCount / (modules.length || 1)) * 100);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-[#f8faf9] dark:bg-[#0d1a13]">
-      <header className="h-24 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-10 shrink-0 sticky top-0 z-10">
-        <div>
-          <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Сайн уу! 👋</h2>
-          <p className="text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">Аялалдаа бэлэн үү?</p>
-        </div>
+    <div className="flex-1 flex flex-col bg-[#050a07] overflow-hidden">
+      <header className="h-20 border-b border-white/5 flex items-center justify-between px-10 shrink-0 bg-black/40 backdrop-blur-xl">
         <div className="flex items-center gap-6">
-          <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
-            {['python', 'c', 'cpp'].map((p) => (
+          <div>
+            <h2 className="text-xl font-black text-white tracking-tight italic">Миний аялал</h2>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Enterprise Edition v2.0</p>
+          </div>
+          <div className="h-10 w-px bg-white/10 hidden md:block"></div>
+          <div className="hidden md:flex items-center gap-2">
+             <span className="material-symbols-outlined text-primary text-sm">stars</span>
+             <span className="text-sm font-black text-white">{userXP.toLocaleString()} XP</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex bg-white/5 p-1 rounded-xl border border-white/5">
+            {['python', 'c', 'cpp'].map(p => (
               <button 
-                key={p}
-                onClick={() => onPathChange(p as any)}
-                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activePath === p ? 'bg-white dark:bg-slate-700 shadow-lg text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                key={p} 
+                onClick={() => onPathChange(p as any)} 
+                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${activePath === p ? 'bg-primary text-slate-900 shadow-lg' : 'text-slate-500 hover:text-white'}`}
               >
-                {p === 'cpp' ? 'C++' : p.toUpperCase()}
+                {p}
               </button>
             ))}
           </div>
-          <button 
-            onClick={handleContinue}
-            className="bg-primary hover:bg-primary/90 text-slate-900 px-8 py-3.5 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all flex items-center gap-3 hover:scale-105 active:scale-95 uppercase tracking-widest text-sm"
-          >
-            <span className="material-symbols-outlined text-2xl">play_circle</span>
-            Үргэлжлүүлэх
-          </button>
         </div>
       </header>
 
       <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-[32px] shadow-xl border-2 border-slate-100 dark:border-slate-800 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:rotate-12 transition-transform duration-700">
-               <span className="material-symbols-outlined text-[160px] text-primary">auto_stories</span>
+        {/* Progress Overview Card */}
+        <section className="mb-12 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-10 rounded-[48px] relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:scale-110 transition-transform duration-700">
+              <span className="material-symbols-outlined text-[200px] text-primary">analytics</span>
             </div>
-            <div className="flex items-center justify-between mb-6 relative z-10">
-              <div>
-                <h3 className="font-black text-2xl mb-2">{activePath === 'c' ? 'C Language' : activePath === 'cpp' ? 'C++' : 'Python'} Сурах Явц</h3>
-                <p className="text-sm text-slate-500 font-bold uppercase tracking-widest">Нийт {modules.length} хичээлээс {completedCount}-г дуусгав.</p>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="size-2 rounded-full bg-primary animate-pulse"></span>
+                <p className="text-[11px] font-black text-primary uppercase tracking-[0.3em]">Learning Velocity</p>
               </div>
-              <div className="text-right">
-                <span className="text-5xl font-black text-primary tracking-tighter">{progressPercent}%</span>
+              <h3 className="text-5xl font-black text-white mb-8 tracking-tighter italic">Таны ахиц {progressPercent}%</h3>
+              <div className="w-full h-3 bg-black/40 rounded-full overflow-hidden p-0.5 border border-white/5">
+                <div 
+                  className="h-full bg-primary shadow-[0_0_30px_rgba(19,236,128,0.5)] transition-all duration-1000 rounded-full" 
+                  style={{ width: `${progressPercent}%` }}
+                ></div>
               </div>
-            </div>
-            <div className="w-full h-6 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-1 border border-slate-200 dark:border-slate-700">
-              <div className="h-full bg-primary rounded-full shadow-[0_0_20px_rgba(19,236,128,0.6)] transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }}></div>
-            </div>
-            <div className="flex justify-between mt-4 px-2 relative z-10 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              <span>Эхлэл</span>
-              <span>Мастер</span>
             </div>
           </div>
 
-          <div className="bg-slate-900 text-white p-8 rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col justify-between">
+          <div className="bg-white/5 border border-white/10 p-10 rounded-[48px] flex flex-col justify-between backdrop-blur-sm relative overflow-hidden">
              <div className="relative z-10">
-                <h3 className="font-black text-xl mb-1">Миний Цолнууд</h3>
-                <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-6">Badges Unlocked</p>
-                <div className="flex -space-x-4">
-                  {badges.filter(b => b.isEarned).slice(0, 4).map(badge => (
-                    <div key={badge.id} className={`size-14 rounded-full border-4 border-slate-900 flex items-center justify-center ${badge.color} text-white shadow-xl`}>
-                      <span className="material-symbols-outlined text-2xl">{badge.icon}</span>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Сүүлийн амжилтууд</p>
+                <div className="flex -space-x-3 mb-8">
+                  {badges.filter(b => b.isEarned).slice(0, 4).map(b => (
+                    <div key={b.id} title={b.title} className={`size-14 rounded-3xl border-4 border-[#050a07] ${b.color} flex items-center justify-center text-white shadow-2xl transform hover:-translate-y-2 transition-transform cursor-help`}>
+                      <span className="material-symbols-outlined text-xl">{b.icon}</span>
                     </div>
                   ))}
-                  {earnedBadgesCount > 4 && (
-                    <div className="size-14 rounded-full border-4 border-slate-900 bg-slate-800 flex items-center justify-center text-xs font-black">+{earnedBadgesCount - 4}</div>
+                  {badges.filter(b => b.isEarned).length > 4 && (
+                    <div className="size-14 rounded-3xl border-4 border-[#050a07] bg-slate-800 flex items-center justify-center text-xs font-black">
+                      +{badges.filter(b => b.isEarned).length - 4}
+                    </div>
+                  )}
+                  {badges.filter(b => b.isEarned).length === 0 && (
+                    <p className="text-[10px] text-slate-600 font-black uppercase italic">No badges yet</p>
                   )}
                 </div>
              </div>
-             <button onClick={onViewBadges} className="mt-8 bg-white/10 hover:bg-white/20 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all text-center border border-white/10 relative z-10">
-               Бүх цолыг харах
-             </button>
-             <div className="absolute -bottom-10 -right-10 opacity-10 rotate-12">
-               <span className="material-symbols-outlined text-[140px] text-white">workspace_premium</span>
-             </div>
+             <button onClick={onViewBadges} className="w-full py-4 bg-white/5 hover:bg-primary hover:text-slate-900 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">Бүх цол харах</button>
           </div>
         </section>
 
+        {/* Module Grid */}
         <section>
-          <div className="flex items-center gap-3 mb-8">
-             <span className="material-symbols-outlined text-primary text-3xl font-black">map</span>
-             <h3 className="text-2xl font-black tracking-tight">Хичээлийн Газрын Зураг</h3>
+          <div className="flex items-center justify-between mb-10 px-2">
+             <div className="flex items-center gap-3">
+                <span className="size-2 rounded-full bg-primary"></span>
+                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 italic">Сургуулийн төлөвлөгөө</h4>
+             </div>
+             <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Нийт {modules.length} Модуль</div>
           </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {modules.map((mod) => (
-              <ModuleCard key={mod.id} module={mod} onClick={() => mod.status !== LessonStatus.LOCKED && onStartLesson(mod.id)} />
+            {modules.map(mod => (
+              <div 
+                key={mod.id} 
+                onClick={() => onStartLesson(mod.id)}
+                className={`group p-8 rounded-[40px] border-4 transition-all cursor-pointer relative overflow-hidden flex flex-col min-h-[320px] ${
+                  mod.status === LessonStatus.LOCKED 
+                  ? 'bg-black/40 border-white/5 opacity-50 grayscale hover:grayscale-0' 
+                  : mod.status === LessonStatus.COMPLETED 
+                  ? 'bg-primary/5 border-primary/20 hover:border-primary/40' 
+                  : 'bg-white/5 border-white/10 hover:border-primary hover:bg-white/[0.08] shadow-2xl'
+                }`}
+              >
+                <div className="flex justify-between items-start mb-6">
+                  <div className={`size-16 rounded-3xl flex items-center justify-center transition-all group-hover:scale-110 ${mod.status === LessonStatus.LOCKED ? 'bg-white/5 text-slate-600' : 'bg-primary/10 text-primary'}`}>
+                    <span className="material-symbols-outlined text-4xl font-bold">{mod.icon}</span>
+                  </div>
+                  {mod.isPremium && (
+                    <div className="bg-yellow-500 text-black px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg shadow-yellow-500/20">Pro</div>
+                  )}
+                </div>
+                
+                <h5 className="text-xl font-black mb-3 text-white italic tracking-tight">{mod.number}. {mod.title}</h5>
+                <p className="text-sm text-slate-500 font-medium leading-relaxed mb-10 line-clamp-2">{mod.description}</p>
+                
+                <div className="mt-auto flex items-center justify-between">
+                   <div className="flex flex-col">
+                      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-600">Статус</span>
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${mod.status === LessonStatus.COMPLETED ? 'text-primary' : 'text-slate-400'}`}>{mod.status}</span>
+                   </div>
+                   <div className="size-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-primary group-hover:text-slate-900 transition-all">
+                      <span className="material-symbols-outlined text-sm font-black">arrow_forward</span>
+                   </div>
+                </div>
+                
+                {mod.status === LessonStatus.LOCKED && (
+                  <div className="absolute top-4 right-4"><span className="material-symbols-outlined text-sm text-slate-700">lock</span></div>
+                )}
+              </div>
             ))}
           </div>
         </section>
-      </div>
-    </div>
-  );
-};
-
-const ModuleCard: React.FC<{ module: Module; onClick: () => void }> = ({ module, onClick }) => {
-  const isLocked = module.status === LessonStatus.LOCKED;
-  const isCompleted = module.status === LessonStatus.COMPLETED;
-  const isInProgress = module.status === LessonStatus.IN_PROGRESS;
-
-  return (
-    <div 
-      onClick={onClick}
-      className={`group relative p-8 rounded-[32px] shadow-lg border-4 transition-all flex flex-col cursor-pointer overflow-hidden ${
-        isLocked 
-          ? 'bg-slate-50/50 dark:bg-slate-800/10 border-dashed border-slate-200 dark:border-slate-800 grayscale pointer-events-none' 
-          : isInProgress 
-          ? 'bg-white dark:bg-slate-900 border-primary shadow-primary/10 hover:shadow-2xl hover:scale-[1.02]' 
-          : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-primary/40 hover:scale-[1.02]'
-      }`}
-    >
-      {isInProgress && (
-        <div className="absolute -top-3 -right-3 bg-primary text-slate-900 text-[9px] font-black px-4 py-3 rounded-bl-3xl uppercase tracking-widest shadow-lg">Идэвхтэй</div>
-      )}
-      <div className={`size-16 rounded-2xl flex items-center justify-center mb-6 shadow-inner ${isLocked ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 'bg-primary/10 text-primary border-2 border-primary/10'}`}>
-        <span className="material-symbols-outlined text-4xl font-bold">{module.icon}</span>
-      </div>
-      <h4 className={`font-black text-xl mb-3 tracking-tight ${isLocked ? 'text-slate-400' : 'text-slate-900 dark:text-white'}`}>
-        {module.number}. {module.title}
-      </h4>
-      <p className={`text-sm mb-8 flex-1 font-medium leading-relaxed ${isLocked ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>
-        {module.description}
-      </p>
-      <div className="flex items-center justify-between mt-auto">
-        {isCompleted ? (
-          <span className="flex items-center gap-1.5 text-primary text-xs font-black uppercase tracking-widest">
-            <span className="material-symbols-outlined text-sm font-bold">check_circle</span> Дууссан
-          </span>
-        ) : isLocked ? (
-          <span className="flex items-center gap-1.5 text-slate-400 text-xs font-black uppercase tracking-widest">
-            <span className="material-symbols-outlined text-sm">lock</span> Цоожтой
-          </span>
-        ) : (
-          <span className="text-[10px] font-black text-slate-400 italic uppercase tracking-widest">{module.progressText || "Эхлэх"}</span>
-        )}
-        {!isLocked && (
-          <button className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-            isInProgress ? 'bg-primary text-slate-900 shadow-lg' : 'bg-slate-100 dark:bg-slate-800'
-          }`}>
-            {isInProgress ? 'Үргэлжлүүлэх' : 'Үзэх'}
-          </button>
-        )}
       </div>
     </div>
   );

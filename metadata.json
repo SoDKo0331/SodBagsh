@@ -1,8 +1,9 @@
 {
-  "name": "CodeQuest Interactive Learning",
-  "description": "A gamified programming platform featuring interactive coding lessons in Python and C, progress tracking, and AI-powered tutoring.",
+  "name": "CodeQuest Enterprise",
+  "description": "Normalized, scalable AI coding education platform with Stripe integration and role-based access control.",
   "requestFramePermissions": [
     "camera",
-    "microphone"
+    "microphone",
+    "geolocation"
   ]
 }
