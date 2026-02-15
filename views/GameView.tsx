@@ -57,7 +57,6 @@ const BUG_FIXES: BugFix[] = [
   { code: "x = true\nif x:", options: ["Capitalize 'True'", "Remove if", "Change x to y", "No error"], correct: 0, description: "Python Boolean values are 'True' and 'False' with a capital first letter." },
   { code: "for i in range(5)\n    print(i)", options: ["Add colon : after (5)", "Change for to if", "Remove i", "Add brackets []"], correct: 0, description: "For loops require a colon after the iterable." },
   { code: "items = [1, 2]\nitems.append 3", options: ["Add parentheses ()", "Change .append to +", "Use brackets []", "No error"], correct: 0, description: "Method calls require parentheses: .append(3)." },
-  // Fix: Renamed 'explanation' to 'description' on line 60 to match BugFix interface
   { code: "print('It's a trap')", options: ["Use double quotes \"\"", "Escape with \\", "Both A and B", "Change print"], correct: 2, description: "A single quote inside a single-quoted string needs escaping or double quotes." },
   { code: "while x < 5\n    x += 1", options: ["Add colon : after 5", "Remove indent", "Use if instead", "Add break"], correct: 0, description: "While loops require a colon at the end of the condition." },
   { code: "x = [1, 2]\nprint(x[2])", options: ["Change index to 0 or 1", "Add brackets", "Use .get()", "Add append"], correct: 0, description: "Index 2 is out of range for a list with 2 elements (0 and 1)." },
@@ -433,7 +432,7 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
                   <div className="flex-1 space-y-2 md:space-y-3 font-mono text-[8px] md:text-[10px] overflow-y-auto custom-scrollbar">
                      {logs.map((log, i) => (
                         <div key={i} className={`flex gap-2 ${log.includes('damage') || log.includes('Success') ? 'text-primary' : log.includes('HP') || log.includes('Error') ? 'text-red-400' : 'text-slate-500'}`}>
-                           <span className="opacity-20 select-none">>>></span>
+                           <span className="opacity-20 select-none">{">>>"}</span>
                            <span className="leading-tight">{log}</span>
                         </div>
                      ))}
