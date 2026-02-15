@@ -25,20 +25,43 @@ interface BugFix {
 }
 
 const BATTLE_QUESTIONS: Question[] = [
+  // Existing & Basic Concepts
   { q: "print(type([])) юу буцаах вэ?", options: ["<class 'list'>", "<class 'tuple'>", "<class 'array'>", "Алдаа"], correct: 0, explanation: "[] бол Python-ийн list төрөл юм." },
   { q: "x = [1, 2] * 2; print(x) юу хэвлэх вэ?", options: ["[2, 4]", "[1, 2, 1, 2]", "[1, 1, 2, 2]", "Алдаа"], correct: 1, explanation: "List-ийг тоогоор үржихэд элементүүд нь давтагдана." },
   { q: "Python-д 2-ын 3 зэргийг яаж тооцох вэ?", options: ["2 ^ 3", "2 ** 3", "pow(2, 3)", "b ба c хоёулаа"], correct: 3, explanation: "** болон pow() функц хоёулаа зэрэг дэвшүүлнэ." },
-  { q: "x = {1, 2, 3}; x.add(2); print(len(x))?", options: ["4", "2", "3", "Алдаа"], correct: 2, explanation: "Set нь давхардсан утга хадгалдаггүй тул хэмжээ нь 3 хэвээр байна." },
   { q: "range(1, 5) функц ямар утгуудыг үүсгэх вэ?", options: ["1, 2, 3, 4, 5", "1, 2, 3, 4", "0, 1, 2, 3, 4", "1, 5"], correct: 1, explanation: "Range-ийн төгсгөлийн тоо орохгүй." },
-  { q: "bool([])-ийн утга юу вэ?", options: ["True", "False", "None", "0"], correct: 1, explanation: "Хоосон жагсаалт (list) логик утгаараа False байдаг." }
+  { q: "print(10 / 4) ямар хариу гаргах вэ?", options: ["2", "2.5", "2.0", "Алдаа"], correct: 1, explanation: "Python 3-т / тэмдэг нь үргэлж float буюу бутархай тоо буцаадаг." },
+  { q: "print(10 // 4) ямар хариу гаргах вэ?", options: ["2", "2.5", "3", "2.0"], correct: 0, explanation: "// оператор нь бүхэл хэсгийг нь авдаг (integer division)." },
+  { q: "print(7 % 3) ямар хариу гаргах вэ?", options: ["1", "2", "3", "0"], correct: 0, explanation: "% (modulo) оператор нь хуваалтын үлдэгдлийг олдог." },
+  { q: "input() функц ямар төрлийн өгөгдөл буцаадаг вэ?", options: ["int", "float", "string", "bool"], correct: 2, explanation: "input() функц хэрэглэгчийн оруулсан утгыг үргэлж тэмдэгт мөр (string) болгож авдаг." },
+  { q: "bool(0) юу буцаах вэ?", options: ["True", "False", "None", "0"], correct: 1, explanation: "Тоон утга 0 байх нь логик утгаараа False байдаг." },
+  { q: "Python-д 'үнэн' гэсэн утгыг яаж бичдэг вэ?", options: ["true", "True", "TRUE", "1"], correct: 1, explanation: "Python-ийн Boolean утгууд том үсгээр эхэлдэг: True, False." },
+  { q: "print(type(3.14)) юу хэвлэх вэ?", options: ["int", "double", "float", "decimal"], correct: 2, explanation: "Бутархай тоог Python-д float гэж нэрлэдэг." },
+  { q: "x = '10'; print(int(x) + 5) юу хэвлэх вэ?", options: ["105", "15", "Алдаа", "10 + 5"], correct: 1, explanation: "int() нь тэмдэгт мөрийг бүхэл тоо болгож хөрвүүлнэ." },
+  { q: "items = [10, 20, 30]; print(items[1]) юу хэвлэх вэ?", options: ["10", "20", "30", "Алдаа"], correct: 1, explanation: "List-ийн индекс 0-ээс эхэлдэг тул 1-р индекс нь 20 байна." },
+  { q: "len(range(5)) хэдтэй тэнцүү вэ?", options: ["4", "5", "6", "0"], correct: 1, explanation: "range(5) нь 0, 1, 2, 3, 4 гэсэн 5 элемент үүсгэнэ." },
+  { q: "print('Hi' + 5) юу болох вэ?", options: ["Hi5", "HiHiHiHiHi", "TypeError (Алдаа)", "Hi 5"], correct: 2, explanation: "String болон Integer-ийг нэмж (+) болдоггүй." },
+  { q: "x = {1, 2, 3}; x.add(2); print(len(x))?", options: ["4", "2", "3", "Алдаа"], correct: 2, explanation: "Set нь давхардсан утга хадгалдаггүй тул хэмжээ нь 3 хэвээр байна." },
+  { q: "isinstance(5, int) юу буцаах вэ?", options: ["True", "False", "int", "Алдаа"], correct: 0, explanation: "isinstance нь объектыг тухайн төрөл мөн эсэхийг шалгадаг." },
+  { q: "str(123) ямар төрлийн утга үүсгэх вэ?", options: ["int", "string", "float", "list"], correct: 1, explanation: "str() функц утгыг тэмдэгт мөр (string) болгоно." }
 ];
 
 const BUG_FIXES: BugFix[] = [
   { code: "print \"Hello World\"", options: ["Add parentheses ()", "Use single quotes", "Remove quotes", "No error in Py2"], correct: 0, description: "Python 3 requires print() as a function." },
   { code: "if x = 10:\n    print(x)", options: ["Use == for comparison", "Remove colon :", "Add indent", "Change if to while"], correct: 0, description: "Assignment '=' cannot be used inside 'if' condition." },
   { code: "for i in 10:\n    print(i)", options: ["Use range(10)", "Change in to =", "Add brackets", "Remove i"], correct: 0, description: "Integer is not iterable, range() is needed." },
+  { code: "x = input(\"Age: \")\ny = x + 1", options: ["Use int(x)", "Change x to y", "Remove quotes", "Add float(y)"], correct: 0, description: "input() returns a string; you must convert it to int to add numbers." },
   { code: "def my_func:\n    pass", options: ["Add parentheses ()", "Change def to func", "Remove indent", "No error"], correct: 0, description: "Function definitions require parentheses." },
-  { code: "x = (1, 2)\nx[0] = 5", options: ["Change tuple to list", "Use .set()", "Remove brackets", "Tuples are mutable"], correct: 0, description: "Tuples are immutable; they cannot be changed after creation." }
+  { code: "x = (1, 2)\nx[0] = 5", options: ["Change tuple to list", "Use .set()", "Remove brackets", "Tuples are mutable"], correct: 0, description: "Tuples are immutable; they cannot be changed after creation." },
+  { code: "if x > 5\n    print(x)", options: ["Add colon : after 5", "Remove indent", "Add else", "Use brackets ()"], correct: 0, description: "If statements require a colon at the end of the condition." },
+  { code: "x = true\nif x:", options: ["Capitalize 'True'", "Remove if", "Change x to y", "No error"], correct: 0, description: "Python Boolean values are 'True' and 'False' with a capital first letter." },
+  { code: "for i in range(5)\n    print(i)", options: ["Add colon : after (5)", "Change for to if", "Remove i", "Add brackets []"], correct: 0, description: "For loops require a colon after the iterable." },
+  { code: "items = [1, 2]\nitems.append 3", options: ["Add parentheses ()", "Change .append to +", "Use brackets []", "No error"], correct: 0, description: "Method calls require parentheses: .append(3)." },
+  // Fix: Renamed 'explanation' to 'description' on line 60 to match BugFix interface
+  { code: "print('It's a trap')", options: ["Use double quotes \"\"", "Escape with \\", "Both A and B", "Change print"], correct: 2, description: "A single quote inside a single-quoted string needs escaping or double quotes." },
+  { code: "while x < 5\n    x += 1", options: ["Add colon : after 5", "Remove indent", "Use if instead", "Add break"], correct: 0, description: "While loops require a colon at the end of the condition." },
+  { code: "x = [1, 2]\nprint(x[2])", options: ["Change index to 0 or 1", "Add brackets", "Use .get()", "Add append"], correct: 0, description: "Index 2 is out of range for a list with 2 elements (0 and 1)." },
+  { code: "x = 5 % 0", options: ["Division by zero error", "Change 0 to 1", "Remove %", "No error"], correct: 0, description: "You cannot perform modulo or division by zero." }
 ];
 
 const CLASSES: Record<PlayerClass, { name: string; hp: number; dmg: number; icon: string; color: string; ability: string; abilityDesc: string }> = {
@@ -123,7 +146,6 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
         return;
       }
 
-      // Зөв хариулсан бол Босс довтлохгүй, дараагийн асуулт руу шилжинэ
       setTimeout(() => {
         setFeedback(null);
         setIsShaking(null);
@@ -324,7 +346,6 @@ const GameView: React.FC<GameViewProps> = ({ user, onBack }) => {
           <div className="flex-1 flex flex-col gap-6 md:gap-10">
             {/* Health Bars & Avatars */}
             <div className="flex flex-col md:grid md:grid-cols-2 gap-10 md:gap-20 items-center relative py-2">
-               {/* VS Label */}
                <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-16 rounded-full bg-slate-900 border-4 border-primary items-center justify-center font-black italic text-2xl z-30">VS</div>
 
                <div className={`flex flex-col items-center w-full transition-all ${turn === 'player' ? 'scale-105' : 'opacity-40 grayscale'} ${isShaking === 'player' ? 'animate-shake' : ''}`}>
