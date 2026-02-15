@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import * as firebaseApp from "firebase/app";
 import * as firestore from "firebase/firestore";
@@ -290,63 +291,73 @@ const App: React.FC = () => {
     return { ...b, isEarned };
   });
 
-  if (isAuthLoading) return <div className="h-screen w-full flex items-center justify-center bg-background-dark text-primary font-black animate-pulse uppercase tracking-widest italic">Authenticating...</div>;
+  if (isAuthLoading) return (
+    <div className="h-screen w-full flex items-center justify-center bg-background text-primary font-bold animate-pulse uppercase tracking-widest text-sm">
+      Initializing System...
+    </div>
+  );
 
   if (!user) return (
-    <div className="h-screen w-full flex items-center justify-center bg-background-dark p-6 overflow-hidden">
-      <div className="bg-slate-900 p-10 md:p-12 rounded-[56px] border-4 border-primary/20 text-center max-w-md w-full relative z-10 shadow-[0_0_100px_rgba(19,236,128,0.1)]">
-        <h1 className="text-4xl font-black text-white mb-2 italic tracking-tighter uppercase">CodeQuest</h1>
-        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mb-10">Secure Portal</p>
+    <div className="h-screen w-full flex items-center justify-center bg-background p-6 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background"></div>
+      
+      <div className="bg-card p-10 md:p-12 rounded-[32px] border border-border text-center max-w-md w-full relative z-10 shadow-2xl">
+        <div className="size-16 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground mx-auto mb-6 shadow-glow">
+           <span className="material-symbols-outlined text-4xl">rocket_launch</span>
+        </div>
+        
+        <h1 className="text-3xl font-bold text-foreground mb-2 tracking-tight">CodeQuest</h1>
+        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-[0.2em] mb-10">Premium Learning Platform</p>
         
         <form onSubmit={handleAuthSubmit} className="space-y-4 text-left">
            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 mb-2 block">Имэйл хаяг</label>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-2 block">Email Address</label>
               <input 
                 type="email" 
                 value={authEmail}
                 onChange={e => setAuthEmail(e.target.value)}
-                className="w-full bg-white/5 border-2 border-white/5 rounded-2xl px-5 py-3 text-sm focus:border-primary transition-all outline-none text-white" 
-                placeholder="email@address.com"
+                className="w-full bg-muted border border-transparent focus:border-primary rounded-xl px-4 py-3 text-sm transition-all outline-none text-foreground placeholder:text-muted-foreground/50" 
+                placeholder="name@company.com"
                 required
               />
            </div>
            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 mb-2 block">Нууц үг</label>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-2 block">Password</label>
               <input 
                 type="password" 
                 value={authPassword}
                 onChange={e => setAuthPassword(e.target.value)}
-                className="w-full bg-white/5 border-2 border-white/5 rounded-2xl px-5 py-3 text-sm focus:border-primary transition-all outline-none text-white" 
+                className="w-full bg-muted border border-transparent focus:border-primary rounded-xl px-4 py-3 text-sm transition-all outline-none text-foreground placeholder:text-muted-foreground/50" 
                 placeholder="••••••••"
                 required
               />
            </div>
 
            {authError && (
-              <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl text-xs text-red-500 font-bold flex items-center gap-2">
+              <div className="bg-destructive/10 border border-destructive/20 p-3 rounded-lg text-xs text-destructive font-semibold flex items-center gap-2">
                  <span className="material-symbols-outlined text-sm">error</span>
                  {authError}
               </div>
            )}
 
-           <button type="submit" className="w-full bg-primary text-slate-900 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20">
-              {authMode === 'login' ? 'Нэвтрэх' : 'Бүртгүүлэх'}
+           <button type="submit" className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
+              {authMode === 'login' ? 'Sign In' : 'Create Account'}
            </button>
         </form>
 
         <div className="mt-8 flex flex-col gap-4">
-           <button onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')} className="text-[10px] font-black uppercase text-slate-500 hover:text-white transition-colors">
-              {authMode === 'login' ? "Бүртгэлгүй юу? Шинээр бүртгүүлэх" : "Аль хэдийн бүртгэлтэй юу? Нэвтрэх"}
+           <button onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')} className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+              {authMode === 'login' ? "New here? Create an account" : "Already have an account? Sign in"}
            </button>
-           <div className="h-px bg-white/5 w-full"></div>
-           <button onClick={handleGuestLogin} className="w-full bg-white/5 text-slate-400 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all border border-white/5">Зочноор нэвтрэх</button>
+           <div className="h-px bg-border w-full"></div>
+           <button onClick={handleGuestLogin} className="w-full bg-transparent text-muted-foreground hover:text-foreground py-3 rounded-xl font-bold text-xs uppercase tracking-widest border border-border hover:bg-muted transition-all">Continue as Guest</button>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background-dark font-display text-slate-100">
+    <div className="flex h-screen overflow-hidden bg-background font-sans text-foreground">
       {currentView !== 'lesson' && currentView !== 'solving-problem' && (
         <Sidebar 
           activeItem={currentView} 
@@ -358,7 +369,7 @@ const App: React.FC = () => {
         />
       )}
       
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden relative">
         {currentView === 'dashboard' && (
           <Dashboard 
             modules={MODULE_DEFINITIONS.map(m => ({...m, status: progress.find(p => p.moduleId === m.id)?.status || LessonStatus.LOCKED}))} 

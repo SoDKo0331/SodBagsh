@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface SidebarProps {
@@ -21,67 +20,70 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, streak, userName, isSynci
   ];
 
   return (
-    <aside className="w-80 bg-white dark:bg-slate-900 border-r-2 border-slate-100 dark:border-slate-800 flex flex-col shrink-0 z-40">
-      <div className="p-8">
-        <div className="flex items-center gap-4 mb-10">
-          <div className="size-14 rounded-[20px] bg-primary flex items-center justify-center text-slate-900 shadow-lg shadow-primary/30 rotate-3">
-            <span className="material-symbols-outlined text-3xl font-black">rocket_launch</span>
+    <aside className="w-72 bg-card border-r border-border flex flex-col shrink-0 z-40 h-full transition-all duration-300">
+      <div className="p-6">
+        {/* Brand Header */}
+        <div className="flex items-center gap-3 mb-10">
+          <div className="size-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-glow">
+            <span className="material-symbols-outlined text-2xl">rocket_launch</span>
           </div>
           <div>
-            <h1 className="font-display font-black text-2xl leading-none tracking-tight text-slate-900 dark:text-white">CodeQuest</h1>
-            <div className="flex items-center gap-1.5 mt-1">
-               <span className={`size-2 rounded-full ${isSyncing ? 'bg-primary animate-pulse' : 'bg-orange-500'}`}></span>
-               <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${isSyncing ? 'text-primary' : 'text-orange-500'}`}>
-                 {isSyncing ? 'Cloud Synced' : 'Local Session'}
+            <h1 className="font-bold text-xl tracking-tight leading-none">CodeQuest</h1>
+            <div className="flex items-center gap-1.5 mt-1.5">
+               <span className={`size-1.5 rounded-full ${isSyncing ? 'bg-primary' : 'bg-orange-500'}`}></span>
+               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                 {isSyncing ? 'Enterprise' : 'Local Mode'}
                </p>
             </div>
           </div>
         </div>
 
-        <nav className="space-y-2">
+        {/* Navigation */}
+        <nav className="space-y-1">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onNavChange(item.id)}
-              className={`flex w-full items-center gap-4 px-5 py-4 rounded-2xl transition-all font-black text-sm uppercase tracking-widest ${
+              className={`flex w-full items-center gap-3 px-4 py-3 rounded-lg transition-all text-sm font-medium ${
                 activeItem === item.id
-                  ? 'bg-primary text-slate-900 shadow-lg shadow-primary/20'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
             >
-              <span className="material-symbols-outlined font-bold">{item.icon}</span>
+              <span className={`material-symbols-outlined text-[20px] ${activeItem === item.id ? 'fill-1' : ''}`}>{item.icon}</span>
               <span>{item.label}</span>
             </button>
           ))}
         </nav>
       </div>
 
-      <div className="mt-auto p-8 space-y-6">
-        <div className="bg-slate-900 rounded-[24px] p-6 border-2 border-white/5 shadow-2xl relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 opacity-10 group-hover:scale-125 transition-transform">
-             <span className="material-symbols-outlined text-[80px] text-primary">local_fire_department</span>
+      {/* Footer / User Profile */}
+      <div className="mt-auto p-6 space-y-4 border-t border-border bg-muted/20">
+        {/* Streak Card */}
+        <div className="bg-card rounded-xl p-4 border border-border shadow-sm flex items-center justify-between">
+          <div>
+             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Current Streak</p>
+             <span className="text-lg font-bold text-foreground">{streak} Days</span>
           </div>
-          <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-3">Өнөөдрийн Стрик</p>
-          <div className="flex items-center gap-3 text-white">
-            <span className="material-symbols-outlined text-orange-500 fill-1 text-3xl">local_fire_department</span>
-            <span className="text-2xl font-black">{streak} Өдөр</span>
-          </div>
+          <span className="material-symbols-outlined text-orange-500 text-3xl">local_fire_department</span>
         </div>
 
-        <div className="flex items-center gap-4 px-2">
+        {/* User Info */}
+        <div className="flex items-center gap-3">
           <div 
-            className="size-14 rounded-2xl bg-slate-200 bg-cover bg-center border-4 border-white shadow-xl rotate-[-2deg]"
-            style={{ backgroundImage: `url('https://api.dicebear.com/7.x/pixel-art/svg?seed=${userName}')` }}
+            className="size-10 rounded-full bg-muted bg-cover bg-center border border-border shrink-0"
+            style={{ backgroundImage: `url('https://api.dicebear.com/7.x/notionists/svg?seed=${userName}&backgroundColor=e5e7eb')` }}
           ></div>
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <span className="text-lg font-black leading-none truncate text-slate-900 dark:text-white">{userName}</span>
-            <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest mt-1">Level 1 Hero</span>
+          <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+            <span className="text-sm font-semibold truncate text-foreground">{userName}</span>
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Pro Plan</span>
           </div>
           <button 
             onClick={onLogout}
-            className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 group transition-colors"
+            className="size-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-colors"
+            title="Log out"
           >
-            <span className="material-symbols-outlined text-slate-400 group-hover:text-red-500">logout</span>
+            <span className="material-symbols-outlined text-[18px]">logout</span>
           </button>
         </div>
       </div>

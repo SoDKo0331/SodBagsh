@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Module, LessonStatus, Badge } from '../types';
 
@@ -17,131 +16,153 @@ const Dashboard: React.FC<DashboardProps> = ({ modules, badges, onStartLesson, a
   const progressPercent = Math.round((completedCount / (modules.length || 1)) * 100);
 
   return (
-    <div className="flex-1 flex flex-col bg-[#050a07] overflow-hidden">
-      <header className="h-20 border-b border-white/5 flex items-center justify-between px-10 shrink-0 bg-black/40 backdrop-blur-xl">
+    <div className="flex-1 flex flex-col bg-background overflow-hidden">
+      {/* Header */}
+      <header className="h-16 border-b border-border flex items-center justify-between px-8 bg-background/80 backdrop-blur-md sticky top-0 z-30">
         <div className="flex items-center gap-6">
-          <div>
-            <h2 className="text-xl font-black text-white tracking-tight italic">Миний аялал</h2>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Enterprise Edition v2.0</p>
-          </div>
-          <div className="h-10 w-px bg-white/10 hidden md:block"></div>
-          <div className="hidden md:flex items-center gap-2">
-             <span className="material-symbols-outlined text-primary text-sm">stars</span>
-             <span className="text-sm font-black text-white">{userXP.toLocaleString()} XP</span>
+          <h2 className="text-lg font-semibold text-foreground tracking-tight">Learning Path</h2>
+          <div className="h-6 w-px bg-border hidden md:block"></div>
+          <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50 border border-border">
+             <span className="material-symbols-outlined text-primary text-[18px]">stars</span>
+             <span className="text-xs font-bold text-foreground">{userXP.toLocaleString()} XP</span>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex bg-white/5 p-1 rounded-xl border border-white/5">
-            {['python', 'c', 'cpp'].map(p => (
-              <button 
-                key={p} 
-                onClick={() => onPathChange(p as any)} 
-                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${activePath === p ? 'bg-primary text-slate-900 shadow-lg' : 'text-slate-500 hover:text-white'}`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
+        
+        {/* Language Toggle */}
+        <div className="flex bg-muted p-1 rounded-lg border border-border">
+          {['python', 'c', 'cpp'].map(p => (
+            <button 
+              key={p} 
+              onClick={() => onPathChange(p as any)} 
+              className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${
+                activePath === p 
+                ? 'bg-background text-foreground shadow-sm' 
+                : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {p}
+            </button>
+          ))}
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
-        {/* Progress Overview Card */}
-        <section className="mb-12 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-10 rounded-[48px] relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:scale-110 transition-transform duration-700">
-              <span className="material-symbols-outlined text-[200px] text-primary">analytics</span>
-            </div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="size-2 rounded-full bg-primary animate-pulse"></span>
-                <p className="text-[11px] font-black text-primary uppercase tracking-[0.3em]">Learning Velocity</p>
-              </div>
-              <h3 className="text-5xl font-black text-white mb-8 tracking-tighter italic">Таны ахиц {progressPercent}%</h3>
-              <div className="w-full h-3 bg-black/40 rounded-full overflow-hidden p-0.5 border border-white/5">
-                <div 
-                  className="h-full bg-primary shadow-[0_0_30px_rgba(19,236,128,0.5)] transition-all duration-1000 rounded-full" 
-                  style={{ width: `${progressPercent}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/5 border border-white/10 p-10 rounded-[48px] flex flex-col justify-between backdrop-blur-sm relative overflow-hidden">
-             <div className="relative z-10">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Сүүлийн амжилтууд</p>
-                <div className="flex -space-x-3 mb-8">
-                  {badges.filter(b => b.isEarned).slice(0, 4).map(b => (
-                    <div key={b.id} title={b.title} className={`size-14 rounded-3xl border-4 border-[#050a07] ${b.color} flex items-center justify-center text-white shadow-2xl transform hover:-translate-y-2 transition-transform cursor-help`}>
-                      <span className="material-symbols-outlined text-xl">{b.icon}</span>
-                    </div>
-                  ))}
-                  {badges.filter(b => b.isEarned).length > 4 && (
-                    <div className="size-14 rounded-3xl border-4 border-[#050a07] bg-slate-800 flex items-center justify-center text-xs font-black">
-                      +{badges.filter(b => b.isEarned).length - 4}
-                    </div>
-                  )}
-                  {badges.filter(b => b.isEarned).length === 0 && (
-                    <p className="text-[10px] text-slate-600 font-black uppercase italic">No badges yet</p>
-                  )}
-                </div>
-             </div>
-             <button onClick={onViewBadges} className="w-full py-4 bg-white/5 hover:bg-primary hover:text-slate-900 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">Бүх цол харах</button>
-          </div>
-        </section>
-
-        {/* Module Grid */}
-        <section>
-          <div className="flex items-center justify-between mb-10 px-2">
-             <div className="flex items-center gap-3">
-                <span className="size-2 rounded-full bg-primary"></span>
-                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 italic">Сургуулийн төлөвлөгөө</h4>
-             </div>
-             <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Нийт {modules.length} Модуль</div>
-          </div>
+      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <div className="max-w-7xl mx-auto space-y-10">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {modules.map(mod => (
-              <div 
-                key={mod.id} 
-                onClick={() => onStartLesson(mod.id)}
-                className={`group p-8 rounded-[40px] border-4 transition-all cursor-pointer relative overflow-hidden flex flex-col min-h-[320px] ${
-                  mod.status === LessonStatus.LOCKED 
-                  ? 'bg-black/40 border-white/5 opacity-50 grayscale hover:grayscale-0' 
-                  : mod.status === LessonStatus.COMPLETED 
-                  ? 'bg-primary/5 border-primary/20 hover:border-primary/40' 
-                  : 'bg-white/5 border-white/10 hover:border-primary hover:bg-white/[0.08] shadow-2xl'
-                }`}
-              >
-                <div className="flex justify-between items-start mb-6">
-                  <div className={`size-16 rounded-3xl flex items-center justify-center transition-all group-hover:scale-110 ${mod.status === LessonStatus.LOCKED ? 'bg-white/5 text-slate-600' : 'bg-primary/10 text-primary'}`}>
-                    <span className="material-symbols-outlined text-4xl font-bold">{mod.icon}</span>
-                  </div>
-                  {mod.isPremium && (
-                    <div className="bg-yellow-500 text-black px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg shadow-yellow-500/20">Pro</div>
-                  )}
-                </div>
-                
-                <h5 className="text-xl font-black mb-3 text-white italic tracking-tight">{mod.number}. {mod.title}</h5>
-                <p className="text-sm text-slate-500 font-medium leading-relaxed mb-10 line-clamp-2">{mod.description}</p>
-                
-                <div className="mt-auto flex items-center justify-between">
-                   <div className="flex flex-col">
-                      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-600">Статус</span>
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${mod.status === LessonStatus.COMPLETED ? 'text-primary' : 'text-slate-400'}`}>{mod.status}</span>
-                   </div>
-                   <div className="size-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-primary group-hover:text-slate-900 transition-all">
-                      <span className="material-symbols-outlined text-sm font-black">arrow_forward</span>
-                   </div>
-                </div>
-                
-                {mod.status === LessonStatus.LOCKED && (
-                  <div className="absolute top-4 right-4"><span className="material-symbols-outlined text-sm text-slate-700">lock</span></div>
-                )}
+          {/* Hero / Stats Section */}
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Progress Card */}
+            <div className="lg:col-span-2 bg-gradient-to-br from-card to-muted border border-border p-8 rounded-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+                <span className="material-symbols-outlined text-[180px]">analytics</span>
               </div>
-            ))}
-          </div>
-        </section>
+              
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="size-2 rounded-full bg-primary animate-pulse"></span>
+                  <p className="text-xs font-bold text-primary uppercase tracking-wider">Active Session</p>
+                </div>
+                
+                <h3 className="text-3xl font-bold text-foreground mb-6 tracking-tight">
+                  You've completed {progressPercent}% of the {activePath === 'cpp' ? 'C++' : activePath.charAt(0).toUpperCase() + activePath.slice(1)} course.
+                </h3>
+                
+                <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary rounded-full transition-all duration-1000 ease-out" 
+                    style={{ width: `${progressPercent}%` }}
+                  ></div>
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground font-medium">Keep going! You're 2 modules away from the next certificate.</p>
+              </div>
+            </div>
+
+            {/* Badges Widget */}
+            <div className="bg-card border border-border p-6 rounded-2xl flex flex-col h-full">
+               <div className="flex justify-between items-center mb-6">
+                  <h4 className="text-sm font-bold text-foreground">Recent Achievements</h4>
+                  <button onClick={onViewBadges} className="text-xs font-semibold text-primary hover:text-primary-hover">View All</button>
+               </div>
+               
+               <div className="flex-1 flex items-center justify-center gap-3">
+                  {badges.filter(b => b.isEarned).length > 0 ? (
+                    badges.filter(b => b.isEarned).slice(0, 3).map(b => (
+                      <div key={b.id} title={b.title} className={`size-16 rounded-xl border-2 border-border ${b.color} flex items-center justify-center text-white shadow-sm`}>
+                        <span className="material-symbols-outlined text-2xl">{b.icon}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-6">
+                      <div className="size-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                         <span className="material-symbols-outlined text-muted-foreground">lock</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Complete lessons to earn badges</p>
+                    </div>
+                  )}
+               </div>
+            </div>
+          </section>
+
+          {/* Modules Grid */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+               <h3 className="text-xl font-bold text-foreground tracking-tight">Core Modules</h3>
+               <span className="px-3 py-1 rounded-full bg-muted border border-border text-xs font-semibold text-muted-foreground">
+                 {modules.length} Units
+               </span>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {modules.map(mod => (
+                <div 
+                  key={mod.id} 
+                  onClick={() => onStartLesson(mod.id)}
+                  className={`group relative p-6 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col h-full ${
+                    mod.status === LessonStatus.LOCKED 
+                    ? 'bg-muted/30 border-border opacity-60' 
+                    : 'bg-card border-border hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5'
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-6">
+                    <div className={`size-12 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${
+                      mod.status === LessonStatus.LOCKED 
+                        ? 'bg-muted text-muted-foreground' 
+                        : 'bg-primary/10 text-primary'
+                    }`}>
+                      <span className="material-symbols-outlined text-2xl">{mod.icon}</span>
+                    </div>
+                    {mod.isPremium && (
+                      <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                        Pro
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mb-8 flex-1">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 block">Level {mod.number}</span>
+                    <h5 className="text-lg font-bold text-foreground mb-2 leading-tight">{mod.title}</h5>
+                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">{mod.description}</p>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/50">
+                     <span className={`text-xs font-bold uppercase tracking-wider ${
+                       mod.status === LessonStatus.COMPLETED ? 'text-primary' : 'text-muted-foreground'
+                     }`}>
+                       {mod.status === LessonStatus.IN_PROGRESS ? 'Resume' : mod.status}
+                     </span>
+                     
+                     {mod.status === LessonStatus.LOCKED ? (
+                       <span className="material-symbols-outlined text-sm text-muted-foreground">lock</span>
+                     ) : (
+                       <span className="material-symbols-outlined text-sm text-primary group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                     )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+        </div>
       </div>
     </div>
   );

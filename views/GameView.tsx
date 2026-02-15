@@ -1,5 +1,7 @@
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+
+// --- TYPES & CONFIGURATION ---
 
 interface GameViewProps {
   user: { uid: string; email: string | null };
@@ -8,415 +10,575 @@ interface GameViewProps {
   initialLanguage?: 'python' | 'cpp';
 }
 
-type GameMode = 'raid' | 'bug-hunter';
+type ViewState = 'lobby' | 'mode-select' | 'raid-briefing' | 'raid-battle' | 'blitz-briefing' | 'blitz-battle' | 'victory' | 'defeat';
 type PlayerClass = 'knight' | 'mage' | 'rogue' | 'techno';
-type ProgrammingLanguage = 'python' | 'cpp';
-type LogType = 'player' | 'boss' | 'system' | 'success' | 'ability' | 'error';
+type LeagueTier = 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Diamond' | 'Master' | 'Grandmaster';
 
-interface GameLog {
-  id: string;
-  msg: string;
-  type: LogType;
-  timestamp: string;
-}
+const LEAGUES: Record<LeagueTier, { minXp: number; color: string; icon: string }> = {
+  Bronze: { minXp: 0, color: 'text-orange-700', icon: 'shield' },
+  Silver: { minXp: 500, color: 'text-slate-300', icon: 'shield' },
+  Gold: { minXp: 1500, color: 'text-yellow-400', icon: 'local_police' },
+  Platinum: { minXp: 3000, color: 'text-cyan-400', icon: 'verified' },
+  Diamond: { minXp: 5000, color: 'text-indigo-400', icon: 'diamond' },
+  Master: { minXp: 8000, color: 'text-rose-500', icon: 'military_tech' },
+  Grandmaster: { minXp: 12000, color: 'text-amber-500', icon: 'workspace_premium' },
+};
 
-interface Question {
-  q: string;
-  options: string[];
-  correct: number;
-  explanation: string;
-  category: 'data-type' | 'io' | 'list' | 'range' | 'logic';
-}
+const CLASSES: Record<PlayerClass, { name: string; hp: number; dmg: number; icon: string; color: string; ability: string; description: string }> = {
+  knight: { name: 'Syntax Tank', hp: 200, dmg: 25, icon: 'shield', color: 'text-blue-400', ability: 'Firewall', description: 'Blocks 80% of incoming damage.' },
+  mage: { name: 'Logic Mage', hp: 100, dmg: 60, icon: 'auto_fix', color: 'text-purple-400', ability: 'Overclock', description: 'Next attack deals 2.5x damage.' },
+  rogue: { name: 'Bug Hunter', hp: 140, dmg: 40, icon: 'bug_report', color: 'text-yellow-400', ability: 'Hotfix', description: '50% chance to dodge damage.' },
+  techno: { name: 'Net Runner', hp: 160, dmg: 30, icon: 'memory', color: 'text-emerald-400', ability: 'Reboot', description: 'Heals 50 HP instantly.' },
+};
 
-const BATTLE_QUESTIONS: Record<ProgrammingLanguage, Question[]> = {
+const QUESTIONS = {
   python: [
-    // I. Өгөгдлийн төрөл (data-type) - Knight Preferred
-    { q: "type(10) ямар төрөл вэ?", options: ["float", "int", "str", "bool"], correct: 1, explanation: "Бүхэл тоо бол int (integer) төрөл юм.", category: 'data-type' },
-    { q: "type(\"15\") ямар төрөл вэ?", options: ["int", "float", "str", "bool"], correct: 2, explanation: "Хашилтанд байгаа утга бол str (string) юм.", category: 'data-type' },
-    { q: "type(3.14) ямар төрөл вэ?", options: ["int", "float", "str", "bool"], correct: 1, explanation: "Бутархай тоо бол float төрөл юм.", category: 'data-type' },
-    { q: "type(True) ямар төрөл вэ?", options: ["int", "float", "str", "bool"], correct: 3, explanation: "True/False утга бол bool (boolean) юм.", category: 'data-type' },
-    { q: "\"5\" + \"3\" ямар үр дүн өгөх вэ?", options: ["8", "53", "error", "5 3"], correct: 1, explanation: "Тэмдэгт мөрүүдийг залгахад 53 гарна.", category: 'data-type' },
-    { q: "int(\"7\") + 3 ямар үр дүн өгөх вэ?", options: ["10", "73", "error", "7"], correct: 0, explanation: "Тэмдэгт мөрийг тоо болгож нэмж байна.", category: 'data-type' },
-    { q: "float(5) ямар утга буцаах вэ?", options: ["5", "5.0", "\"5.0\"", "error"], correct: 1, explanation: "Бүхэл тоог бутархай болгож байна.", category: 'data-type' },
-    { q: "bool(0) ямар утга вэ?", options: ["True", "False", "0", "error"], correct: 1, explanation: "Тэг утга логик төрөлд False болдог.", category: 'data-type' },
-    
-    // II. Input / Output (io) - Techno Preferred
-    { q: "name = \"Sodoo\"; print(\"Hello\", name) юу хэвлэх вэ?", options: ["Hello", "HelloSodoo", "Hello Sodoo", "Sodoo Hello"], correct: 2, explanation: "Таслалаар заагласан утгууд зайтай хэвлэгдэнэ.", category: 'io' },
-    { q: "a = input(\"Enter number: \"); print(type(a)) -> 5 гэж оруулбал?", options: ["int", "float", "str", "bool"], correct: 2, explanation: "input() үргэлж тэмдэгт мөр (str) буцаана.", category: 'io' },
-    { q: "a=int(input()); b=int(input()); print(a+b) -> 2 ба 3-ыг оруулбал?", options: ["23", "5", "error", "6"], correct: 1, explanation: "Тоон төрөл рүү шилжүүлж нэмж байна.", category: 'io' },
-    { q: "x = 4; print(\"x =\", x) юу хэвлэх вэ?", options: ["x4", "x = 4", "4 = x", "error"], correct: 1, explanation: "Текст болон хувьсагчийг зэрэг хэвлэж байна.", category: 'io' },
-    { q: "print(5, 6, 7) ямар гаралт өгөх вэ?", options: ["567", "5 6 7", "5,6,7", "error"], correct: 1, explanation: "Зайтай хэвлэгдэнэ.", category: 'io' },
-    { q: "input() функц ямар төрлийн утга буцаадаг вэ?", options: ["int", "str", "float", "bool"], correct: 1, explanation: "input() нь үргэлж тэмдэгт мөр (str) буцаадаг.", category: 'io' },
-
-    // III. List (list) - Rogue Preferred
-    { q: "a = [1, 2, 3] энэ ямар төрөл вэ?", options: ["int", "list", "tuple", "str"], correct: 1, explanation: "Дөрвөлжин хаалтанд жагсаалт хадгалагддаг.", category: 'list' },
-    { q: "a = [10, 20, 30]; a[1] ямар утга вэ?", options: ["10", "20", "30", "error"], correct: 1, explanation: "Индекс 0-ээс эхэлдэг тул 1-р элемент нь 20.", category: 'list' },
-    { q: "a = [1,2,3]; a.append(4) хийвэл list ямар болно?", options: ["[1,2,3]", "[1,2,3,4]", "[4,1,2,3]", "error"], correct: 1, explanation: "append() ард нь элемент нэмдэг.", category: 'list' },
-    { q: "len([5,6,7,8]) хэд вэ?", options: ["3", "4", "5", "error"], correct: 1, explanation: "Нийт 4 элементтэй байна.", category: 'list' },
-    { q: "a = [1,2,3]; a[0] = 10; a ямар болно?", options: ["[1,2,3]", "[10,2,3]", "[1,10,3]", "error"], correct: 1, explanation: "Эхний элементийг сольж байна.", category: 'list' },
-    { q: "a = [1,2,3]; a.pop() хийвэл юу устах вэ?", options: ["1", "2", "3", "бүхэл list"], correct: 2, explanation: "pop() сүүлийн элементийг устгана.", category: 'list' },
-    { q: "a = [1,2] + [3,4] ямар үр дүн вэ?", options: ["[1,2,3,4]", "[4,6]", "error", "[1,2][3,4]"], correct: 0, explanation: "Жагсаалтуудыг нэмэхэд залгагдана.", category: 'list' },
-    { q: "a = [1,2,3,4]; a[1:3] ямар үр дүн вэ?", options: ["[1,2]", "[2,3]", "[3,4]", "error"], correct: 1, explanation: "1-ээс 3 хүртэл (3 орохгүй) буюу 2, 3.", category: 'list' },
-
-    // IV. Range (range) - Mage Preferred
-    { q: "range(5) хэдэн тоо үүсгэнэ?", options: ["4", "5", "6", "0"], correct: 1, explanation: "0, 1, 2, 3, 4 буюу 5 тоо.", category: 'range' },
-    { q: "list(range(3)) ямар үр дүн вэ?", options: ["[1,2,3]", "[0,1,2]", "[0,1,2,3]", "error"], correct: 1, explanation: "0-ээс эхлээд 3 хүртэл (3 орохгүй).", category: 'range' },
-    { q: "list(range(2,6)) ямар вэ?", options: ["[2,3,4,5]", "[2,3,4,5,6]", "[3,4,5]", "error"], correct: 0, explanation: "2-оос эхлээд 6 хүртэл (6 орохгүй).", category: 'range' },
-    { q: "list(range(1,10,2)) ямар вэ?", options: ["[1,3,5,7,9]", "[2,4,6,8]", "[1,2,3,4,5]", "error"], correct: 0, explanation: "1-ээс 10 хүртэл 2-ын алхамтай.", category: 'range' },
-    { q: "for i in range(3): print(i) юу хэвлэх вэ?", options: ["1 2 3", "0 1 2", "0 1 2 3", "error"], correct: 1, explanation: "0-ээс эхэлнэ.", category: 'range' },
-    { q: "range(5,0,-1) ямар дараалал вэ?", options: ["5 4 3 2 1", "0 1 2 3 4", "5 4 3 2", "error"], correct: 0, explanation: "5-аас 0 хүртэл (0 орохгүй) буурна.", category: 'range' },
-    { q: "for i in range(1,4): print(i*2) гаралт?", options: ["2 4 6", "1 2 3", "2 3 4", "error"], correct: 0, explanation: "1*2, 2*2, 3*2 = 2 4 6.", category: 'range' },
-    { q: "sum(range(1,5)) хэд вэ?", options: ["10", "15", "5", "error"], correct: 0, explanation: "1+2+3+4 = 10.", category: 'range' }
+    { q: "type(3.14) returns?", options: ["int", "float", "str", "double"], correct: 1, category: "Data Types" },
+    { q: "len('Hello')", options: ["4", "5", "6", "Error"], correct: 1, category: "Functions" },
+    { q: "x = [1,2]; x.append(3)", options: ["[1,2,3]", "[3,1,2]", "[1,2]", "Error"], correct: 0, category: "Lists" },
+    { q: "True and False", options: ["True", "False", "None", "Error"], correct: 1, category: "Logic" },
+    { q: "5 // 2", options: ["2.5", "2", "3", "2.0"], correct: 1, category: "Math" },
+    { q: "What closes a loop?", options: ["stop", "exit", "break", "end"], correct: 2, category: "Control Flow" },
+    { q: "def func():", options: ["Function", "Class", "Variable", "Loop"], correct: 0, category: "Syntax" },
+    { q: "'a' in 'apple'", options: ["True", "False", "Error", "None"], correct: 0, category: "Operators" },
   ],
   cpp: [
-    { q: "int* p; гэж юуг зарлаж байна вэ?", options: ["Integer", "Array", "Pointer", "Reference"], correct: 2, explanation: "Pointer variables store memory addresses.", category: 'data-type' },
-    { q: "std::vector<int> v; v.size() initial value?", options: ["1", "0", "NULL", "Error"], correct: 1, explanation: "A new vector is empty by default.", category: 'list' },
-    { q: "What is the result of 10 / 3 in C++ (int)?", options: ["3.33", "3", "4", "0"], correct: 1, explanation: "Integer division truncates decimal parts.", category: 'logic' },
-    { q: "Which symbol is used for logical AND?", options: ["&", "&&", "and", "||"], correct: 1, explanation: "&& is the logical AND operator in C++.", category: 'logic' }
+    { q: "int x = 5.5;", options: ["x is 5", "x is 6", "x is 5.5", "Error"], correct: 0, category: "Types" },
+    { q: "std::cout <<", options: ["Input", "Output", "Error", "File"], correct: 1, category: "IO" },
+    { q: "vector size()", options: ["Length", "Capacity", "Elements", "Bytes"], correct: 2, category: "STL" },
+    { q: "&& operator", options: ["OR", "AND", "NOT", "XOR"], correct: 1, category: "Logic" },
+    { q: "Pointer size (64-bit)", options: ["2 bytes", "4 bytes", "8 bytes", "16 bytes"], correct: 2, category: "Memory" },
   ]
 };
 
-const CLASSES: Record<PlayerClass, { name: string; hp: number; dmg: number; icon: string; color: string; ability: string; abilityDesc: string, preferredCategory: string }> = {
-  knight: { name: 'Code Knight', hp: 220, dmg: 20, icon: 'shield', color: 'text-blue-400', ability: 'Hard Disk Shield', abilityDesc: 'Next boss hit deals -80% damage.', preferredCategory: 'data-type' },
-  mage: { name: 'Logic Mage', hp: 110, dmg: 55, icon: 'magic_button', color: 'text-purple-400', ability: 'Logic Burst', abilityDesc: 'Next hit deals 2x damage.', preferredCategory: 'range' },
-  rogue: { name: 'Syntax Rogue', hp: 135, dmg: 35, icon: 'bolt', color: 'text-yellow-400', ability: 'Dodge Trace', abilityDesc: '50% chance to avoid next hit.', preferredCategory: 'list' },
-  techno: { name: 'AI Techno', hp: 165, dmg: 28, icon: 'memory', color: 'text-primary', ability: 'Self Repair', abilityDesc: 'Recover 60 HP instantly.', preferredCategory: 'io' }
-};
-
-const BOSS = { name: 'The System Architect', hp: 1000, maxHp: 1000, dmg: 40, icon: 'token' };
+// --- COMPONENT ---
 
 const GameView: React.FC<GameViewProps> = ({ user, onBack, onEarnBadge, initialLanguage = 'python' }) => {
-  const [view, setView] = useState<'setup' | 'hero' | 'battle' | 'result'>('setup');
-  const [selectedLang, setSelectedLang] = useState<ProgrammingLanguage>(initialLanguage);
-  const [p1Class, setP1Class] = useState<PlayerClass>('knight');
+  // Global State
+  const [view, setView] = useState<ViewState>('lobby');
+  const [playerXp, setPlayerXp] = useState(1250); // Demo initial XP
+  const [streak, setStreak] = useState(3);
+  const [selectedLang, setSelectedLang] = useState(initialLanguage);
+  const [selectedClass, setSelectedClass] = useState<PlayerClass>('knight');
   
-  const [playerHp, setPlayerHp] = useState(100);
-  const [playerMaxHp, setPlayerMaxHp] = useState(100);
-  const [playerMana, setPlayerMana] = useState(0);
-  const [bossHp, setBossHp] = useState(BOSS.hp);
+  // Battle State (Raid)
+  const [hp, setHp] = useState(100);
+  const [maxHp, setMaxHp] = useState(100);
+  const [mana, setMana] = useState(0);
+  const [bossHp, setBossHp] = useState(1000);
+  const [bossMaxHp, setBossMaxHp] = useState(1000);
   const [turn, setTurn] = useState<'player' | 'boss'>('player');
-  const [logs, setLogs] = useState<GameLog[]>([]);
+  const [logs, setLogs] = useState<string[]>([]);
   const [qIdx, setQIdx] = useState(0);
-  const [isShieldActive, setIsShieldActive] = useState(false);
-  const [isBurstActive, setIsBurstActive] = useState(false);
-  const [isShaking, setIsShaking] = useState<'player' | 'boss' | null>(null);
-  const [battleQuestions, setBattleQuestions] = useState<Question[]>([]);
+  
+  // Blitz State
+  const [blitzScore, setBlitzScore] = useState(0);
+  const [blitzTimeLeft, setBlitzTimeLeft] = useState(60);
+  const [isBlitzActive, setIsBlitzActive] = useState(false);
 
-  const addLog = (msg: string, type: LogType) => {
-    setLogs(prev => [{ id: Math.random().toString(), msg, type, timestamp: new Date().toLocaleTimeString() }, ...prev].slice(0, 10));
-  };
+  // Computed
+  const currentLeague = useMemo(() => {
+    const tiers = Object.keys(LEAGUES) as LeagueTier[];
+    for (let i = tiers.length - 1; i >= 0; i--) {
+      if (playerXp >= LEAGUES[tiers[i]].minXp) return tiers[i];
+    }
+    return 'Bronze';
+  }, [playerXp]);
 
-  const startBattle = () => {
-    const hero = CLASSES[p1Class];
-    setPlayerHp(hero.hp);
-    setPlayerMaxHp(hero.hp);
-    setPlayerMana(0);
-    setBossHp(BOSS.hp);
+  const nextLeagueXp = useMemo(() => {
+    const tiers = Object.keys(LEAGUES) as LeagueTier[];
+    const idx = tiers.indexOf(currentLeague);
+    return idx < tiers.length - 1 ? LEAGUES[tiers[idx + 1]].minXp : 20000;
+  }, [currentLeague]);
+
+  // --- LOGIC: RAID MODE ---
+
+  const initRaid = () => {
+    const hero = CLASSES[selectedClass];
+    setHp(hero.hp);
+    setMaxHp(hero.hp);
+    setBossHp(1000);
+    setBossMaxHp(1000);
+    setMana(50);
     setTurn('player');
-    const shuffled = [...BATTLE_QUESTIONS[selectedLang]].sort(() => Math.random() - 0.5);
-    setBattleQuestions(shuffled);
+    setLogs(["System initialized. Boss detected."]);
     setQIdx(0);
-    setLogs([]);
-    addLog("Battle started! Defeat The System Architect.", 'system');
-    setView('battle');
+    setView('raid-battle');
   };
 
-  const handleAnswer = (optionIdx: number) => {
+  const handleRaidAnswer = (isCorrect: boolean) => {
     if (turn !== 'player') return;
-    const currentQ = battleQuestions[qIdx];
-    const isCorrect = optionIdx === currentQ.correct;
-    const hero = CLASSES[p1Class];
 
     if (isCorrect) {
-      let damage = hero.dmg;
-      if (isBurstActive) {
-        damage *= 2;
-        setIsBurstActive(false);
-        addLog("Critical Burst! Double damage.", 'ability');
-      }
-      
-      // Category Bonus
-      if (currentQ.category === hero.preferredCategory) {
-        damage = Math.floor(damage * 1.5);
-        addLog(`Category Mastery! Extra damage from ${currentQ.category}.`, 'success');
-      }
+      const dmg = CLASSES[selectedClass].dmg * (Math.random() > 0.8 ? 2 : 1); // Crit chance
+      const newBossHp = Math.max(0, bossHp - dmg);
+      setBossHp(newBossHp);
+      setLogs(prev => [`> HIT! Dealt ${dmg} damage.`, ...prev.slice(0, 4)]);
+      setMana(m => Math.min(100, m + 20));
 
-      setBossHp(prev => Math.max(0, prev - damage));
-      setIsShaking('boss');
-      addLog(`You used ${currentQ.category} knowledge! Dealt ${damage} damage.`, 'player');
-      setPlayerMana(prev => Math.min(100, prev + 25));
+      if (newBossHp === 0) {
+        handleVictory(500); // 500 XP for boss kill
+        return;
+      }
     } else {
-      addLog("Logic Error! Your attack failed.", 'error');
-    }
-
-    setTimeout(() => setIsShaking(null), 500);
-    
-    // Check win condition
-    if (bossHp <= 0) {
-      setView('result');
-      return;
+      setLogs(prev => [`> MISS! Syntax error detected.`, ...prev.slice(0, 4)]);
     }
 
     setTurn('boss');
-    setTimeout(bossTurn, 1000);
+    setTimeout(processBossTurn, 800);
   };
 
-  const bossTurn = () => {
-    let damage = BOSS.dmg + Math.floor(Math.random() * 20);
-    
-    if (isShieldActive) {
-      damage = Math.floor(damage * 0.2);
-      setIsShieldActive(false);
-      addLog("Shield held! Blocked 80% damage.", 'ability');
-    }
-
-    // Rogue Dodge Chance
-    if (p1Class === 'rogue' && Math.random() > 0.5) {
-      addLog("Syntax Rogue dodged the trace!", 'ability');
-      damage = 0;
-    }
-
-    setPlayerHp(prev => Math.max(0, prev - damage));
-    setIsShaking('player');
-    addLog(`The System Architect executed an interrupt! Dealt ${damage} damage.`, 'boss');
-    
-    setTimeout(() => {
-      setIsShaking(null);
-      setTurn('player');
-      setQIdx(prev => (prev + 1) % battleQuestions.length);
-    }, 500);
+  const processBossTurn = () => {
+    // Boss Logic
+    const dmg = 25 + Math.floor(Math.random() * 15);
+    setHp(prev => {
+      const newHp = Math.max(0, prev - dmg);
+      if (newHp <= 0) {
+        setTimeout(() => setView('defeat'), 100);
+      }
+      return newHp;
+    });
+    setLogs(prev => [`> WARNING! Took ${dmg} damage.`, ...prev.slice(0, 4)]);
+    setTurn('player');
+    setQIdx(prev => prev + 1); // Next question
   };
 
   const useAbility = () => {
-    if (playerMana < 100 || turn !== 'player') return;
-    const hero = CLASSES[p1Class];
-    setPlayerMana(0);
+    if (mana < 100) return;
+    setMana(0);
+    setLogs(prev => [`> ULTIMATE: ${CLASSES[selectedClass].ability} activated!`, ...prev]);
     
-    switch (p1Class) {
-      case 'knight': setIsShieldActive(true); break;
-      case 'mage': setIsBurstActive(true); break;
-      case 'techno': setPlayerHp(prev => Math.min(playerMaxHp, prev + 60)); break;
-      case 'rogue': addLog("Rogue agility increased!", 'ability'); break;
-    }
-    addLog(`Special Ability Activated: ${hero.ability}!`, 'ability');
+    // Ability Logic
+    if (selectedClass === 'techno') setHp(h => Math.min(maxHp, h + 50));
+    if (selectedClass === 'mage') setBossHp(h => Math.max(0, h - 150)); // Big nuke
+    // Others handled in dmg calc logic (simplified here for brevity)
   };
 
-  if (view === 'setup') {
+  // --- LOGIC: BLITZ MODE ---
+
+  const initBlitz = () => {
+    setBlitzScore(0);
+    setBlitzTimeLeft(60);
+    setIsBlitzActive(true);
+    setQIdx(0);
+    setView('blitz-battle');
+  };
+
+  useEffect(() => {
+    let interval: any;
+    if (isBlitzActive && blitzTimeLeft > 0) {
+      interval = setInterval(() => setBlitzTimeLeft(t => t - 1), 1000);
+    } else if (isBlitzActive && blitzTimeLeft === 0) {
+      setIsBlitzActive(false);
+      handleVictory(blitzScore * 20); // 20 XP per correct answer
+    }
+    return () => clearInterval(interval);
+  }, [isBlitzActive, blitzTimeLeft, blitzScore]);
+
+  const handleBlitzAnswer = (isCorrect: boolean) => {
+    if (isCorrect) {
+      setBlitzScore(s => s + 1);
+    } else {
+      setBlitzTimeLeft(t => Math.max(0, t - 5)); // Penalty
+    }
+    setQIdx(prev => prev + 1);
+  };
+
+  // --- SHARED HELPERS ---
+
+  const handleVictory = (xpGain: number) => {
+    setPlayerXp(prev => prev + xpGain);
+    if (xpGain > 400) onEarnBadge('b8'); // Badge for big wins
+    setView('victory');
+  };
+
+  // --- RENDERERS ---
+
+  if (view === 'lobby') {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 bg-background-dark text-white font-display relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
-        <div className="relative z-10 text-center max-w-2xl">
-          <h1 className="text-6xl font-black italic tracking-tighter mb-4 uppercase text-primary drop-shadow-[0_0_15px_rgba(19,236,128,0.5)]">Architect Raid</h1>
-          <p className="text-slate-400 font-bold uppercase tracking-[0.3em] mb-12">The Ultimate RPG Battle for Coders</p>
-          
-          <div className="bg-slate-900/80 p-10 rounded-[48px] border-4 border-primary/20 backdrop-blur-xl">
-            <h3 className="text-sm font-black uppercase text-slate-500 mb-8">Select Learning Path</h3>
-            <div className="flex gap-4 mb-12">
-              {(['python', 'cpp'] as const).map(l => (
-                <button key={l} onClick={() => setSelectedLang(l)} className={`flex-1 py-4 rounded-2xl font-black uppercase transition-all border-4 ${selectedLang === l ? 'bg-primary text-slate-900 border-primary' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'}`}>
-                  {l === 'cpp' ? 'C++' : l}
-                </button>
-              ))}
+      <div className="flex-1 bg-[#09090b] text-white font-sans overflow-hidden relative flex flex-col">
+        {/* Background FX */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/5 blur-3xl pointer-events-none"></div>
+
+        {/* Navbar */}
+        <div className="h-20 border-b border-white/10 flex items-center justify-between px-8 z-10 bg-[#09090b]/80 backdrop-blur-md">
+          <div className="flex items-center gap-4">
+            <button onClick={onBack} className="hover:bg-white/10 p-2 rounded-full transition-colors">
+              <span className="material-symbols-outlined text-slate-400">arrow_back</span>
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center shadow-lg shadow-primary/20">
+                <span className="material-symbols-outlined font-bold">swords</span>
+              </div>
+              <div>
+                <h1 className="font-bold text-lg leading-none tracking-tight">GAME ARENA</h1>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Season 4 • Week 2</span>
+              </div>
             </div>
-            <button onClick={() => setView('hero')} className="w-full bg-primary text-slate-900 py-5 rounded-2xl font-black uppercase tracking-widest text-lg shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">Choose Your Hero</button>
+          </div>
+
+          <div className="flex items-center gap-6">
+            {/* Streak Widget */}
+            <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-4 py-1.5 rounded-full">
+               <span className="material-symbols-outlined text-orange-500 text-lg">local_fire_department</span>
+               <span className="text-xs font-bold text-orange-400">{streak} Day Streak</span>
+            </div>
+            
+            {/* Profile Widget */}
+            <div className="text-right">
+               <div className="text-xs font-bold text-slate-400 uppercase">{user.email?.split('@')[0]}</div>
+               <div className={`text-sm font-black ${LEAGUES[currentLeague].color}`}>{currentLeague} League</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-y-auto p-8 z-10 custom-scrollbar">
+          <div className="max-w-6xl mx-auto grid grid-cols-12 gap-8">
+            
+            {/* Left Col: Rank Card */}
+            <div className="col-span-12 md:col-span-4 space-y-6">
+              <div className="bg-[#18181b] rounded-3xl p-1 border border-white/10 relative overflow-hidden group hover:border-primary/50 transition-colors">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80 z-10"></div>
+                <div className={`absolute inset-0 opacity-10 bg-current ${LEAGUES[currentLeague].color}`}></div>
+                
+                <div className="relative z-20 p-6 flex flex-col items-center text-center">
+                   <span className={`material-symbols-outlined text-8xl mb-4 ${LEAGUES[currentLeague].color} drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]`}>
+                     {LEAGUES[currentLeague].icon}
+                   </span>
+                   <h2 className={`text-3xl font-black uppercase tracking-tighter mb-1 ${LEAGUES[currentLeague].color}`}>{currentLeague}</h2>
+                   <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-6">Global Ranking: #1,204</p>
+                   
+                   {/* Progress Bar */}
+                   <div className="w-full bg-black/50 h-3 rounded-full overflow-hidden mb-2 border border-white/5">
+                     <div 
+                       className={`h-full ${LEAGUES[currentLeague].color.replace('text', 'bg')} transition-all duration-1000`} 
+                       style={{ width: `${Math.min(100, (playerXp / nextLeagueXp) * 100)}%` }}
+                     ></div>
+                   </div>
+                   <div className="flex justify-between w-full text-[10px] font-mono text-slate-500">
+                     <span>{playerXp} XP</span>
+                     <span>{nextLeagueXp} XP</span>
+                   </div>
+                </div>
+              </div>
+
+              {/* Stats Mini */}
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="bg-[#18181b] p-4 rounded-2xl border border-white/5">
+                    <div className="text-slate-500 text-[10px] uppercase font-bold mb-1">Win Rate</div>
+                    <div className="text-2xl font-bold text-white">68%</div>
+                 </div>
+                 <div className="bg-[#18181b] p-4 rounded-2xl border border-white/5">
+                    <div className="text-slate-500 text-[10px] uppercase font-bold mb-1">Total Kills</div>
+                    <div className="text-2xl font-bold text-emerald-400">42</div>
+                 </div>
+              </div>
+            </div>
+
+            {/* Right Col: Game Modes */}
+            <div className="col-span-12 md:col-span-8">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">sports_esports</span>
+                Select Mode
+              </h3>
+
+              <div className="grid gap-4">
+                {/* Raid Card */}
+                <button 
+                  onClick={() => setView('mode-select')}
+                  className="group relative h-40 rounded-3xl overflow-hidden text-left transition-all hover:scale-[1.01]"
+                >
+                   <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b')] bg-cover bg-center transition-transform duration-700 group-hover:scale-110"></div>
+                   <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent"></div>
+                   <div className="absolute inset-0 border-2 border-white/10 rounded-3xl group-hover:border-primary/50 transition-colors"></div>
+                   
+                   <div className="relative z-10 p-8 flex flex-col justify-center h-full">
+                      <div className="flex items-center gap-3 mb-2">
+                         <span className="px-2 py-1 rounded bg-red-500 text-white text-[10px] font-black uppercase">Ranked</span>
+                         <h4 className="text-3xl font-black italic tracking-tighter text-white">BOSS RAID</h4>
+                      </div>
+                      <p className="text-slate-300 text-sm max-w-md">Battle AI Architects in turn-based combat. Use syntax knowledge to deal damage.</p>
+                   </div>
+                </button>
+
+                {/* Blitz Card */}
+                <button 
+                  onClick={initBlitz}
+                  className="group relative h-40 rounded-3xl overflow-hidden text-left transition-all hover:scale-[1.01]"
+                >
+                   <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1518770660439-4636190af475')] bg-cover bg-center transition-transform duration-700 group-hover:scale-110"></div>
+                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-950 via-indigo-950/80 to-transparent"></div>
+                   <div className="absolute inset-0 border-2 border-white/10 rounded-3xl group-hover:border-indigo-400/50 transition-colors"></div>
+                   
+                   <div className="relative z-10 p-8 flex flex-col justify-center h-full">
+                      <div className="flex items-center gap-3 mb-2">
+                         <span className="px-2 py-1 rounded bg-cyan-500 text-black text-[10px] font-black uppercase">Speed</span>
+                         <h4 className="text-3xl font-black italic tracking-tighter text-white">SYNTAX BLITZ</h4>
+                      </div>
+                      <p className="text-slate-300 text-sm max-w-md">60 seconds. Unlimited questions. How fast can you debug?</p>
+                   </div>
+                </button>
+              </div>
+              
+              {/* Leaderboard Teaser */}
+              <div className="mt-8 bg-[#18181b] rounded-3xl border border-white/5 p-6">
+                 <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-bold text-sm uppercase tracking-wider text-slate-400">Global Top 3</h4>
+                    <button className="text-xs text-primary font-bold hover:underline">View All</button>
+                 </div>
+                 {[
+                   { name: "CodeNinja_99", xp: "15,420", rank: 1 },
+                   { name: "Python_Gawd", xp: "14,100", rank: 2 },
+                   { name: "Algo_Rhythm", xp: "13,850", rank: 3 },
+                 ].map((p, i) => (
+                   <div key={i} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
+                      <div className="flex items-center gap-4">
+                         <span className={`font-black font-mono text-lg w-6 ${i===0 ? 'text-yellow-400': i===1 ? 'text-slate-300' : 'text-orange-700'}`}>#{p.rank}</span>
+                         <span className="font-bold text-sm">{p.name}</span>
+                      </div>
+                      <span className="font-mono text-xs text-slate-500">{p.xp} XP</span>
+                   </div>
+                 ))}
+              </div>
+
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  if (view === 'hero') {
+  // --- MODE SELECT (HERO SELECT) ---
+  if (view === 'mode-select') {
     return (
-      <div className="flex-1 flex flex-col p-10 bg-background-dark font-display text-white overflow-y-auto custom-scrollbar">
-        <header className="mb-12 flex justify-between items-end">
-          <div>
-            <button onClick={() => setView('setup')} className="text-xs font-black uppercase text-slate-500 hover:text-primary mb-2 flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">arrow_back</span> Back
-            </button>
-            <h2 className="text-4xl font-black uppercase tracking-tighter">Choose Your Character</h2>
-          </div>
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Active Path: {selectedLang.toUpperCase()}</p>
+      <div className="flex-1 bg-[#09090b] p-8 flex flex-col">
+        <header className="mb-8">
+           <button onClick={() => setView('lobby')} className="text-slate-400 hover:text-white flex items-center gap-2 mb-4 text-xs font-bold uppercase tracking-widest">
+             <span className="material-symbols-outlined text-sm">arrow_back</span> Return to Lobby
+           </button>
+           <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Choose Loadout</h2>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {(Object.keys(CLASSES) as PlayerClass[]).map(key => {
-            const c = CLASSES[key];
-            const isSelected = p1Class === key;
-            return (
-              <div 
-                key={key} 
-                onClick={() => setP1Class(key)}
-                className={`p-8 rounded-[40px] border-4 cursor-pointer transition-all flex flex-col relative overflow-hidden group ${isSelected ? 'bg-primary/10 border-primary shadow-[0_0_30px_rgba(19,236,128,0.2)]' : 'bg-white/5 border-white/5 hover:border-white/20'}`}
-              >
-                <div className={`size-20 rounded-3xl mb-6 flex items-center justify-center bg-white/5 ${c.color} group-hover:scale-110 transition-transform`}>
-                  <span className="material-symbols-outlined text-5xl font-black">{c.icon}</span>
-                </div>
-                <h3 className="text-xl font-black italic mb-2">{c.name}</h3>
-                <div className="flex gap-4 mb-6">
-                  <div className="flex items-center gap-1 text-[10px] font-black text-red-400">
-                    <span className="material-symbols-outlined text-sm">favorite</span> {c.hp}
-                  </div>
-                  <div className="flex items-center gap-1 text-[10px] font-black text-orange-400">
-                    <span className="material-symbols-outlined text-sm">swords</span> {c.dmg}
-                  </div>
-                </div>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Ability</p>
-                <p className="text-xs font-medium text-slate-300 mb-6">{c.abilityDesc}</p>
-                <div className="mt-auto pt-4 border-t border-white/5">
-                  <span className="text-[9px] font-black uppercase text-primary">Mastery: {c.preferredCategory}</span>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
+           {(Object.keys(CLASSES) as PlayerClass[]).map(key => {
+             const c = CLASSES[key];
+             const isSel = selectedClass === key;
+             return (
+               <div 
+                 key={key}
+                 onClick={() => setSelectedClass(key)}
+                 className={`cursor-pointer rounded-3xl p-6 border-2 flex flex-col transition-all relative overflow-hidden group ${isSel ? 'bg-primary/10 border-primary' : 'bg-[#18181b] border-white/5 hover:border-white/20'}`}
+               >
+                 <div className={`size-16 rounded-2xl flex items-center justify-center mb-6 text-3xl ${c.color} bg-white/5 group-hover:scale-110 transition-transform`}>
+                    <span className="material-symbols-outlined">{c.icon}</span>
+                 </div>
+                 <h3 className="text-xl font-black text-white uppercase italic mb-1">{c.name}</h3>
+                 <p className="text-xs text-slate-400 mb-6">{c.description}</p>
+                 
+                 <div className="mt-auto space-y-2">
+                    <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500">
+                      <span>HP</span>
+                      <span className="text-white">{c.hp}</span>
+                    </div>
+                    <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                       <div className="h-full bg-red-500" style={{width: `${(c.hp/200)*100}%`}}></div>
+                    </div>
+                    <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500 pt-1">
+                      <span>DMG</span>
+                      <span className="text-white">{c.dmg}</span>
+                    </div>
+                    <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                       <div className="h-full bg-orange-500" style={{width: `${(c.dmg/80)*100}%`}}></div>
+                    </div>
+                 </div>
+               </div>
+             );
+           })}
         </div>
         
-        <button onClick={startBattle} className="bg-primary text-slate-900 py-5 rounded-[32px] font-black uppercase tracking-[0.2em] text-xl shadow-2xl hover:scale-[1.02] active:scale-95 transition-all w-full md:w-auto md:px-20 mx-auto">Enter The Arena</button>
+        <div className="mt-8 flex justify-center">
+           <button onClick={initRaid} className="bg-primary hover:bg-primary-hover text-black px-12 py-4 rounded-2xl font-black uppercase tracking-widest text-lg shadow-xl shadow-primary/20 hover:scale-105 transition-all">
+             Start Match
+           </button>
+        </div>
       </div>
     );
   }
 
-  if (view === 'battle') {
-    const hero = CLASSES[p1Class];
-    const currentQ = battleQuestions[qIdx];
-    
+  // --- BATTLE UI (RAID) ---
+  if (view === 'raid-battle') {
+    const hero = CLASSES[selectedClass];
+    // Modulo arithmetic for infinite question looping
+    const qData = QUESTIONS[selectedLang];
+    const question = qData[qIdx % qData.length];
+
     return (
-      <div className="flex-1 flex flex-col bg-slate-950 font-display text-white overflow-hidden relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
-        
-        {/* Battle Stage */}
-        <div className="h-[45%] relative flex items-center justify-between px-20 overflow-hidden">
-           <div className="absolute inset-0 opacity-10 grayscale pointer-events-none bg-[url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=2000')] bg-center bg-cover"></div>
-           
-           {/* Player Hero */}
-           <div className={`flex flex-col items-center gap-6 transition-transform duration-300 ${isShaking === 'player' ? 'animate-bounce' : ''}`}>
-              <div className="relative">
-                 <div className={`size-32 rounded-[40px] bg-slate-900 border-4 border-white/10 flex items-center justify-center ${hero.color} relative z-10 overflow-hidden shadow-2xl`}>
-                    <span className="material-symbols-outlined text-7xl font-black">{hero.icon}</span>
-                    {isShieldActive && <div className="absolute inset-0 bg-blue-500/30 animate-pulse"></div>}
-                 </div>
-                 <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-2 bg-black/40 blur-md rounded-full"></div>
+      <div className="flex-1 bg-slate-950 flex flex-col font-sans relative overflow-hidden">
+        {/* Background Atmosphere */}
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/20 to-black pointer-events-none"></div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-full border-x border-white/5 pointer-events-none"></div>
+
+        {/* Top HUD */}
+        <div className="h-24 px-8 flex items-center justify-between relative z-10">
+           {/* Boss HP */}
+           <div className="w-1/3">
+              <div className="flex justify-between text-xs font-bold uppercase text-red-400 mb-1">
+                <span>System Architect</span>
+                <span>{bossHp}/{bossMaxHp}</span>
               </div>
-              <div className="w-48">
-                 <div className="flex justify-between items-center mb-1 text-[10px] font-black uppercase">
-                    <span>{hero.name}</span>
-                    <span className="text-red-400">{playerHp}/{playerMaxHp}</span>
-                 </div>
-                 <div className="h-3 bg-white/5 rounded-full p-0.5 border border-white/10 overflow-hidden">
-                    <div className="h-full bg-red-500 rounded-full transition-all duration-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]" style={{ width: `${(playerHp/playerMaxHp)*100}%` }}></div>
-                 </div>
-                 {/* Mana Bar */}
-                 <div className="h-1.5 bg-white/5 rounded-full mt-2 overflow-hidden">
-                    <div className="h-full bg-primary transition-all duration-300" style={{ width: `${playerMana}%` }}></div>
-                 </div>
+              <div className="h-4 bg-slate-900 rounded-full border border-white/10 overflow-hidden relative">
+                 <div className="absolute inset-0 bg-red-900/50"></div>
+                 <div className="h-full bg-red-500 transition-all duration-300" style={{width: `${(bossHp/bossMaxHp)*100}%`}}></div>
               </div>
            </div>
 
-           {/* VS Divider */}
-           <div className="flex flex-col items-center gap-2 opacity-20">
-              <span className="text-6xl font-black italic tracking-tighter">VS</span>
-              <div className="h-px w-20 bg-white"></div>
-           </div>
+           {/* VS Indicator */}
+           <div className="text-4xl font-black italic text-white/10 tracking-tighter select-none">VS</div>
 
-           {/* Boss */}
-           <div className={`flex flex-col items-center gap-6 transition-transform duration-300 ${isShaking === 'boss' ? 'animate-ping' : ''}`}>
-              <div className="relative">
-                 <div className="size-48 rounded-full bg-slate-900 border-8 border-red-500/20 flex items-center justify-center text-red-500 relative z-10 shadow-[0_0_100px_rgba(239,68,68,0.1)]">
-                    <span className="material-symbols-outlined text-9xl font-black">{BOSS.icon}</span>
-                 </div>
-                 <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-full h-4 bg-black/40 blur-lg rounded-full"></div>
+           {/* Player HP */}
+           <div className="w-1/3 text-right">
+              <div className="flex justify-between text-xs font-bold uppercase text-blue-400 mb-1">
+                <span>{hero.name}</span>
+                <span>{hp}/{maxHp}</span>
               </div>
-              <div className="w-64">
-                 <div className="flex justify-between items-center mb-1 text-[10px] font-black uppercase">
-                    <span className="text-red-500">{BOSS.name}</span>
-                    <span className="text-red-500">{bossHp}/{BOSS.maxHp}</span>
-                 </div>
-                 <div className="h-4 bg-white/5 rounded-full p-1 border border-white/10 overflow-hidden">
-                    <div className="h-full bg-red-600 rounded-full transition-all duration-500 shadow-[0_0_20px_rgba(239,68,68,0.6)]" style={{ width: `${(bossHp/BOSS.maxHp)*100}%` }}></div>
-                 </div>
+              <div className="h-4 bg-slate-900 rounded-full border border-white/10 overflow-hidden relative">
+                 <div className="absolute inset-0 bg-blue-900/50"></div>
+                 <div className="h-full bg-blue-500 transition-all duration-300" style={{width: `${(hp/maxHp)*100}%`}}></div>
               </div>
            </div>
         </div>
 
-        {/* Action Panel */}
-        <div className="flex-1 bg-white border-t-4 border-slate-200 p-10 flex gap-10 text-slate-900">
-           {/* Question Section */}
-           <div className="flex-1 flex flex-col">
-              <div className="flex items-center gap-4 mb-8">
-                 <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${currentQ.category === hero.preferredCategory ? 'bg-primary text-slate-900' : 'bg-slate-100 text-slate-500'}`}>
-                    {currentQ.category}
-                 </span>
-                 {currentQ.category === hero.preferredCategory && (
-                   <span className="text-[10px] font-black text-primary uppercase animate-pulse">Bonus Active!</span>
-                 )}
+        {/* Middle: Visuals */}
+        <div className="flex-1 flex items-center justify-center relative z-10 gap-32">
+           {/* Boss Visual */}
+           <div className={`transition-transform duration-500 ${turn === 'boss' ? 'scale-110 drop-shadow-[0_0_50px_rgba(239,68,68,0.5)]' : 'scale-100 opacity-80'}`}>
+              <div className="size-40 rounded-full bg-slate-900 border-4 border-red-500 flex items-center justify-center shadow-2xl">
+                 <span className="material-symbols-outlined text-8xl text-red-500">token</span>
               </div>
-              <h3 className="text-2xl font-black mb-8 leading-tight italic text-black">"{currentQ.q}"</h3>
+           </div>
+
+           {/* Player Visual */}
+           <div className={`transition-transform duration-500 ${turn === 'player' ? 'scale-110 drop-shadow-[0_0_50px_rgba(59,130,246,0.5)]' : 'scale-100 opacity-80'}`}>
+              <div className={`size-32 rounded-3xl bg-slate-900 border-4 ${hero.color.replace('text', 'border')} flex items-center justify-center shadow-2xl`}>
+                 <span className={`material-symbols-outlined text-6xl ${hero.color}`}>{hero.icon}</span>
+              </div>
+           </div>
+        </div>
+
+        {/* Console Log */}
+        <div className="absolute top-28 left-1/2 -translate-x-1/2 w-96 h-24 overflow-hidden text-center space-y-1 mask-linear-fade">
+           {logs.map((log, i) => (
+             <div key={i} className={`text-xs font-mono font-bold ${log.includes('HIT') ? 'text-green-400' : log.includes('WARNING') ? 'text-red-400' : 'text-slate-500'} animate-in slide-in-from-bottom-2 fade-in`}>{log}</div>
+           ))}
+        </div>
+
+        {/* Bottom: Controls */}
+        <div className="h-[45%] bg-white/5 backdrop-blur-md border-t border-white/10 p-8 flex gap-8 relative z-20">
+           {/* Question */}
+           <div className="flex-1 flex flex-col justify-center">
+              <span className="text-primary text-[10px] font-black uppercase tracking-widest mb-2">Target Protocol: {question.category}</span>
+              <h3 className="text-2xl font-mono text-white mb-8">{question.q}</h3>
               <div className="grid grid-cols-2 gap-4">
-                 {currentQ.options.map((opt, i) => (
-                    <button 
-                      key={i} 
-                      onClick={() => handleAnswer(i)}
-                      disabled={turn !== 'player'}
-                      className="p-6 rounded-3xl bg-slate-50 border-2 border-slate-100 hover:border-primary text-left font-bold transition-all disabled:opacity-50 text-black shadow-sm group"
-                    >
-                       <div className="flex gap-4 items-center">
-                          <span className="size-8 rounded-lg bg-slate-200 flex items-center justify-center text-xs font-black text-slate-500 group-hover:bg-primary group-hover:text-slate-900 transition-colors">{String.fromCharCode(65 + i)}</span>
-                          <span>{opt}</span>
-                       </div>
-                    </button>
+                 {question.options.map((opt, i) => (
+                   <button 
+                     key={i}
+                     disabled={turn !== 'player'}
+                     onClick={() => handleRaidAnswer(i === question.correct)}
+                     className="bg-slate-900/50 border border-white/10 hover:border-primary hover:bg-primary/10 text-white py-4 px-6 rounded-xl font-bold text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-4"
+                   >
+                     <span className="bg-white/10 size-6 rounded flex items-center justify-center text-xs">{String.fromCharCode(65+i)}</span>
+                     {opt}
+                   </button>
                  ))}
               </div>
            </div>
 
-           {/* Sidebar Controls & Logs */}
-           <div className="w-80 flex flex-col gap-6">
-              <button 
-                onClick={useAbility}
-                disabled={playerMana < 100 || turn !== 'player'}
-                className={`w-full py-6 rounded-[32px] border-4 font-black uppercase tracking-widest text-sm flex flex-col items-center gap-2 transition-all ${playerMana >= 100 ? 'bg-primary border-primary text-slate-900 shadow-lg shadow-primary/20' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'}`}
-              >
-                 <span className="material-symbols-outlined text-4xl">{hero.icon}</span>
-                 <span>Special Ability</span>
-              </button>
-
-              <div className="flex-1 bg-slate-900 rounded-[32px] p-6 font-mono text-xs overflow-y-auto custom-scrollbar border border-slate-200 text-slate-300">
-                 <p className="text-[9px] font-black uppercase text-slate-500 mb-4 tracking-widest">System Logs</p>
-                 <div className="space-y-3">
-                    {logs.map(log => (
-                       <div key={log.id} className={`flex flex-col gap-1 ${log.type === 'boss' ? 'text-red-400' : log.type === 'player' ? 'text-blue-400' : log.type === 'ability' ? 'text-purple-400 font-bold' : log.type === 'success' ? 'text-primary' : 'text-slate-500'}`}>
-                          <span className="text-[8px] opacity-30">{log.timestamp}</span>
-                          <p className="leading-relaxed">{log.msg}</p>
-                       </div>
-                    ))}
+           {/* Abilities */}
+           <div className="w-64 border-l border-white/10 pl-8 flex flex-col justify-center gap-4">
+              <div className="text-center mb-2">
+                 <div className="text-[10px] font-bold uppercase text-slate-500 mb-1">Ultimate Charge</div>
+                 <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                    <div className="h-full bg-yellow-400 transition-all" style={{width: `${mana}%`}}></div>
                  </div>
               </div>
+              <button 
+                disabled={mana < 100 || turn !== 'player'}
+                onClick={useAbility}
+                className={`w-full py-8 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${mana >= 100 ? 'bg-yellow-400 border-yellow-400 text-black shadow-[0_0_30px_rgba(250,204,21,0.4)] animate-pulse' : 'bg-slate-800 border-slate-700 text-slate-500 opacity-50 cursor-not-allowed'}`}
+              >
+                 <span className="material-symbols-outlined text-4xl">{hero.icon}</span>
+                 <span className="font-black uppercase text-xs tracking-widest">{hero.ability}</span>
+              </button>
+              <button onClick={() => setView('lobby')} className="text-xs text-red-500 font-bold uppercase hover:underline text-center">Forfeit Match</button>
            </div>
-        </div>
-
-        {/* Turn Indicator */}
-        <div className={`absolute top-10 left-1/2 -translate-x-1/2 px-10 py-3 rounded-full font-black uppercase tracking-[0.4em] text-xs backdrop-blur-xl border-2 transition-all duration-500 ${turn === 'player' ? 'bg-primary/20 border-primary text-primary' : 'bg-red-500/20 border-red-500 text-red-500'}`}>
-           {turn === 'player' ? 'Your Execution Turn' : 'System Architect Interrupting...'}
         </div>
       </div>
     );
   }
 
-  if (view === 'result') {
-    const win = bossHp <= 0;
+  // --- BLITZ MODE UI ---
+  if (view === 'blitz-battle') {
+    const qData = QUESTIONS[selectedLang];
+    const question = qData[qIdx % qData.length];
+
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-10 bg-background-dark text-white font-display text-center">
-         <div className={`size-48 rounded-[56px] flex items-center justify-center mb-10 rotate-6 shadow-2xl ${win ? 'bg-primary text-slate-900 shadow-primary/30' : 'bg-red-500 text-white shadow-red-500/30'}`}>
-            <span className="material-symbols-outlined text-8xl font-black">{win ? 'workspace_premium' : 'heart_broken'}</span>
+      <div className="flex-1 bg-indigo-950 flex flex-col items-center justify-center relative overflow-hidden">
+         {/* Timer Background */}
+         <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+            <span className="text-[20rem] font-black text-white tabular-nums">{blitzTimeLeft}</span>
          </div>
-         <h2 className="text-6xl font-black italic tracking-tighter mb-4 uppercase">{win ? 'Victory!' : 'Defeat'}</h2>
-         <p className="text-xl text-slate-400 font-medium mb-12 max-w-md mx-auto">
-            {win 
-              ? `You have successfully dismantled The System Architect using ${selectedLang.toUpperCase()} logic. You earned 500 XP!` 
-              : "The System Architect found a bug in your logic. Don't give up, refine your code and try again!"}
-         </p>
-         <div className="flex gap-4">
-            <button onClick={onBack} className="bg-primary text-slate-900 px-12 py-5 rounded-2xl font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all">Return To Base</button>
-            <button onClick={() => setView('setup')} className="bg-white/5 border-2 border-white/5 px-12 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-white/10 transition-all">Try Again</button>
+
+         <div className="relative z-10 w-full max-w-2xl px-6">
+            <div className="flex justify-between items-end mb-8 text-white">
+               <div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest opacity-60">Current Score</div>
+                  <div className="text-6xl font-black">{blitzScore}</div>
+               </div>
+               <div className="text-right">
+                  <div className="text-[10px] font-bold uppercase tracking-widest opacity-60">Time Remaining</div>
+                  <div className={`text-4xl font-black tabular-nums ${blitzTimeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>{blitzTimeLeft}s</div>
+               </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-10 rounded-[40px] shadow-2xl">
+               <h3 className="text-2xl font-bold text-white mb-8 text-center">{question.q}</h3>
+               <div className="grid grid-cols-1 gap-3">
+                  {question.options.map((opt, i) => (
+                    <button 
+                      key={i}
+                      onClick={() => handleBlitzAnswer(i === question.correct)}
+                      className="bg-black/20 hover:bg-white/20 text-white font-bold py-4 rounded-xl border border-white/10 transition-transform active:scale-95"
+                    >
+                      {opt}
+                    </button>
+                  ))}
+               </div>
+            </div>
          </div>
+      </div>
+    );
+  }
+
+  // --- VICTORY / DEFEAT ---
+  if (view === 'victory' || view === 'defeat') {
+    const isWin = view === 'victory';
+    return (
+      <div className="flex-1 bg-black flex items-center justify-center relative overflow-hidden">
+        <div className={`absolute inset-0 opacity-20 bg-cover bg-center ${isWin ? 'bg-green-900' : 'bg-red-900'}`}></div>
+        <div className="relative z-10 text-center text-white">
+           <span className={`material-symbols-outlined text-9xl mb-6 ${isWin ? 'text-yellow-400' : 'text-red-500'}`}>
+             {isWin ? 'emoji_events' : 'sentiment_broken'}
+           </span>
+           <h1 className="text-8xl font-black uppercase italic tracking-tighter mb-4">{isWin ? 'VICTORY' : 'DEFEATED'}</h1>
+           <p className="text-xl text-slate-400 font-bold uppercase tracking-widest mb-12">
+             {isWin ? '+500 XP Gained' : 'System Logic Failed'}
+           </p>
+           <button onClick={() => setView('lobby')} className="bg-white text-black px-12 py-4 rounded-full font-black uppercase tracking-widest hover:scale-105 transition-transform">
+             Return to Lobby
+           </button>
+        </div>
       </div>
     );
   }
