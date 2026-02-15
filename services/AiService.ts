@@ -1,7 +1,4 @@
-
 import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export interface GradeResult {
   success: boolean;
@@ -18,6 +15,9 @@ export const AiService = {
     expectedOutput: string,
     context?: string
   ): Promise<GradeResult> {
+    // API дуудлага хийх бүрт шинэ instance үүсгэх
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
     const prompt = `
       ACT: Automated Pedagogical Code Judge.
       LANG: ${language}
@@ -61,6 +61,8 @@ export const AiService = {
   },
 
   async askTutor(message: string, code: string, stepTitle: string) {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
     const prompt = `You are an expert programming mentor for Mongolian students. 
     Context: Current lesson is "${stepTitle}".
     User's Code: \n${code}\n

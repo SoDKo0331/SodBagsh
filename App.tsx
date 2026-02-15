@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import * as firebaseApp from "firebase/app";
 import * as firestore from "firebase/firestore";
@@ -175,6 +174,8 @@ const App: React.FC = () => {
         case 'auth/invalid-credential': setAuthError('Нэвтрэх нэр эсвэл нууц үг буруу байна.'); break;
         case 'auth/email-already-in-use': setAuthError('Энэ имэйл хаяг аль хэдийн бүртгэгдсэн байна.'); break;
         case 'auth/weak-password': setAuthError('Нууц үг хэтэрхий богино байна.'); break;
+        case 'auth/invalid-email': setAuthError('Имэйл хаяг буруу байна.'); break;
+        case 'auth/user-not-found': setAuthError('Хэрэглэгч олдсонгүй.'); break;
         default: setAuthError('Алдаа гарлаа. Дахин оролдоно уу.');
       }
     } finally {
@@ -264,7 +265,6 @@ const App: React.FC = () => {
         const newProfile = { 
           ...profile, 
           xp: profile.xp + xpGain,
-          // Perfect score tracking for badge b13
           lastQuizPerfect: isPerfect 
         };
         localStorage.setItem(`cq_profile_${user.uid}`, JSON.stringify(newProfile));
@@ -276,23 +276,74 @@ const App: React.FC = () => {
   const earnedBadges = INITIAL_BADGES.map(b => {
     let isEarned = false;
     
-    // Logic for lesson badges (b1, b2, b3, b4)
     if (['b1', 'b2', 'b3', 'b4'].includes(b.id)) {
       isEarned = progress.some(p => p.status === LessonStatus.COMPLETED && MODULE_DEFINITIONS.find(m => m.id === p.moduleId)?.badgeId === b.id);
     }
-    // Logic for problem solving badges
     else if (b.id === 'b5') isEarned = solvedProblemIds.length >= 1;
     else if (b.id === 'b6') isEarned = solvedProblemIds.length >= 10;
     else if (b.id === 'b7') isEarned = solvedProblemIds.length >= 50;
-    // Logic for XP and Streaks
     else if (b.id === 'b11') isEarned = (profile?.streak || 0) >= 7;
     else if (b.id === 'b12') isEarned = (profile?.streak || 0) >= 30;
     else if (b.id === 'b16') isEarned = (profile?.xp || 0) >= 5000;
-    // Quiz perfect score
     else if (b.id === 'b13') isEarned = (profile as any)?.lastQuizPerfect === true;
 
     return { ...b, isEarned };
   });
+
+  if (isAuthLoading) return <div className="h-screen w-full flex items-center justify-center bg-background-dark text-primary font-black animate-pulse uppercase tracking-widest italic">Authenticating...</div>;
+
+  if (!user) return (
+    <div className="h-screen w-full flex items-center justify-center bg-background-dark p-6 overflow-hidden">
+      <div className="bg-slate-900 p-10 md:p-12 rounded-[56px] border-4 border-primary/20 text-center max-w-md w-full relative z-10 shadow-[0_0_100px_rgba(19,236,128,0.1)]">
+        <h1 className="text-4xl font-black text-white mb-2 italic tracking-tighter uppercase">CodeQuest</h1>
+        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mb-10">Secure Portal</p>
+        
+        <form onSubmit={handleAuthSubmit} className="space-y-4 text-left">
+           <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 mb-2 block">Имэйл хаяг</label>
+              <input 
+                type="email" 
+                value={authEmail}
+                onChange={e => setAuthEmail(e.target.value)}
+                className="w-full bg-white/5 border-2 border-white/5 rounded-2xl px-5 py-3 text-sm focus:border-primary transition-all outline-none text-white" 
+                placeholder="email@address.com"
+                required
+              />
+           </div>
+           <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 mb-2 block">Нууц үг</label>
+              <input 
+                type="password" 
+                value={authPassword}
+                onChange={e => setAuthPassword(e.target.value)}
+                className="w-full bg-white/5 border-2 border-white/5 rounded-2xl px-5 py-3 text-sm focus:border-primary transition-all outline-none text-white" 
+                placeholder="••••••••"
+                required
+              />
+           </div>
+
+           {authError && (
+              <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl text-xs text-red-500 font-bold flex items-center gap-2">
+                 <span className="material-symbols-outlined text-sm">error</span>
+                 {authError}
+              </div>
+           )}
+
+           <button type="submit" className="w-full bg-primary text-slate-900 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20">
+              {authMode === 'login' ? 'Нэвтрэх' : 'Бүртгүүлэх'}
+           </button>
+        </form>
+
+        <div className="mt-8 flex flex-col gap-4">
+           <button onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')} className="text-[10px] font-black uppercase text-slate-500 hover:text-white transition-colors">
+              {authMode === 'login' ? "Бүртгэлгүй юу? Шинээр бүртгүүлэх" : "Аль хэдийн бүртгэлтэй юу? Нэвтрэх"}
+           </button>
+           <div className="h-px bg-white/5 w-full"></div>
+           <button onClick={handleGuestLogin} className="w-full bg-white/5 text-slate-400 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all border border-white/5">Зочноор нэвтрэх</button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-dark font-display text-slate-100">
@@ -333,14 +384,14 @@ const App: React.FC = () => {
         {currentView === 'problems' && (
           <ProblemBank onSelectProblem={handleProblemSelect} solvedProblems={solvedProblemIds} />
         )}
-        {currentView === 'solving-problem' && PROBLEMS.find(p => p.id === selectedProblemId) && (
+        {currentView === 'solving-problem' && selectedProblemId && PROBLEMS.find(p => p.id === selectedProblemId) && (
           <ProblemSolvingView 
             problem={PROBLEMS.find(p => p.id === selectedProblemId)!} 
             onBack={() => setCurrentView('problems')} 
             onSolve={handleProblemSolved} 
           />
         )}
-        {currentView === 'quiz' && (
+        {currentView === 'quiz' && user && (
           <QuizView 
             user={user.uid} 
             quizData={preferredLanguage === 'python' ? PYTHON_QUIZ : C_QUIZ} 
@@ -348,7 +399,7 @@ const App: React.FC = () => {
             onComplete={handleQuizComplete} 
           />
         )}
-        {currentView === 'game' && (
+        {currentView === 'game' && user && (
           <GameView 
             user={user as any} 
             onBack={() => setCurrentView('dashboard')} 
